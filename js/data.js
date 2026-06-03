@@ -1,4 +1,4 @@
-const DATA_URL = '/world_cup_data.json';
+const DATA_URL = './world_cup_data.json';
 
 const TEAM_META = {
   'Mexico':                 { flag: '🇲🇽', code: 'MEX' },

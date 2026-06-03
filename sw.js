@@ -1,19 +1,19 @@
 const CACHE_NAME = 'cupverse-v2';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/app.js',
-  '/js/data.js',
-  '/js/storage.js',
-  '/js/ui.js',
-  '/js/countdown.js',
-  '/js/shareCard.js',
-  '/js/router.js',
-  '/world_cup_data.json',
-  '/manifest.json',
-  '/assets/placeholder-stadium.jpg',
+  './',
+  './index.html',
+  './css/styles.css',
+  './js/app.js',
+  './js/data.js',
+  './js/storage.js',
+  './js/ui.js',
+  './js/countdown.js',
+  './js/shareCard.js',
+  './js/router.js',
+  './world_cup_data.json',
+  './manifest.json',
+  './assets/placeholder-stadium.jpg',
 ];
 
 self.addEventListener('install', event => {
@@ -35,7 +35,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
-  if (url.includes('/world_cup_data.json')) {
+  if (url.includes('world_cup_data.json')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
