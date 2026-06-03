@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cupverse-v2';
+const CACHE_NAME = 'cupverse-v3';
 
 const STATIC_ASSETS = [
   './',
@@ -17,8 +17,18 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
+  // Use no-cache so the SW always fetches fresh files from the network,
+  // bypassing any stale browser HTTP cache entries.
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.all(
+        STATIC_ASSETS.map(url =>
+          fetch(url, { cache: 'no-cache' })
+            .then(res => { if (res.ok) cache.put(url, res); })
+            .catch(() => {})
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
