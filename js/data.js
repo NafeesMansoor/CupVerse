@@ -200,3 +200,68 @@ export function getTeamNextMatch(teamName) {
     .map(enrichMatch)
     .filter(Boolean)[0] || null;
 }
+
+export function getGroupStandings(storedScores = {}) {
+  // Build per-group team records
+  const groups = {};
+  rawTeams.forEach(t => {
+    if (!t.group) return;
+    const meta = teamMeta(t.name);
+    if (!groups[t.group]) groups[t.group] = {};
+    groups[t.group][t.name] = {
+      name: t.name,
+      flag: meta.flag,
+      code: meta.code,
+      mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0,
+    };
+  });
+
+  // Process completed group-stage matches
+  rawMatches
+    .filter(m => m.group && m.homeTeam && m.awayTeam && m.datetime)
+    .forEach(raw => {
+      const g = raw.group;
+      if (!groups[g]) return;
+
+      const storedScore = storedScores[String(raw.id)];
+      const score = storedScore || raw.score;
+      if (!score) return;
+
+      const hg = Number(score.home ?? score.homeScore ?? 0);
+      const ag = Number(score.away ?? score.awayScore ?? 0);
+      const hName = raw.homeTeam;
+      const aName = raw.awayTeam;
+      if (!groups[g][hName] || !groups[g][aName]) return;
+
+      groups[g][hName].mp++;
+      groups[g][hName].gf += hg;
+      groups[g][hName].ga += ag;
+      groups[g][aName].mp++;
+      groups[g][aName].gf += ag;
+      groups[g][aName].ga += hg;
+
+      if (hg > ag) {
+        groups[g][hName].w++;  groups[g][hName].pts += 3;
+        groups[g][aName].l++;
+      } else if (ag > hg) {
+        groups[g][aName].w++;  groups[g][aName].pts += 3;
+        groups[g][hName].l++;
+      } else {
+        groups[g][hName].d++;  groups[g][hName].pts++;
+        groups[g][aName].d++;  groups[g][aName].pts++;
+      }
+    });
+
+  // Sort each group: Pts → GD → GF → name
+  const result = {};
+  Object.keys(groups).sort().forEach(g => {
+    result[g] = Object.values(groups[g]).sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      const gdA = a.gf - a.ga, gdB = b.gf - b.ga;
+      if (gdB !== gdA) return gdB - gdA;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.name.localeCompare(b.name);
+    });
+  });
+  return result;
+}

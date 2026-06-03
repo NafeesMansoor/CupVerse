@@ -1,7 +1,7 @@
 import {
   getMatches, getMatchById, getNextMatch, getTodaysMatches,
   getTournamentStats, getTeams, getTeamSquad, getTeamNextMatch,
-  getMatchesByDate, getAllMatchDates,
+  getMatchesByDate, getAllMatchDates, getGroupStandings,
 } from './data.js';
 import {
   getScore, setScore, clearScore, getAllScores,
@@ -149,7 +149,7 @@ export function renderHomeDashboard() {
   let heroHTML = '<div class="empty-state"><div class="empty-state-icon">🏆</div><p class="empty-state-text">Tournament complete!</p></div>';
   if (next) {
     heroHTML = `
-      <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Next Match · ${next.stage}</div>
+      <div class="hero-label">Next Match · ${next.stage}</div>
       <div class="hero-teams">
         <div class="hero-team">
           <span class="hero-team-flag">${next.homeTeam.flag}</span>
@@ -167,6 +167,7 @@ export function renderHomeDashboard() {
         <span class="hero-meta-item">📅 ${fmtDate(next.datetime)}</span>
         <span class="hero-meta-item">⏰ ${fmtTime(next.datetime)}</span>
       </div>
+      <button class="hero-cta" data-action="open-match" data-id="${next.id}">View Match →</button>
     `;
   }
 
@@ -684,10 +685,110 @@ export function renderSettings() {
   `);
 }
 
+// ── STANDINGS ─────────────────────────────────────────────
+export function renderStandings() {
+  const storedScores = getAllScores();
+  const standings = getGroupStandings(storedScores);
+  const groups = Object.keys(standings);
+
+  if (!groups.length) {
+    return makeSection(`
+      <div class="glass-card">
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <p class="empty-state-text">Group standings will appear once match data loads.</p>
+        </div>
+      </div>
+    `);
+  }
+
+  const groupsHTML = groups.map(g => {
+    const teams = standings[g];
+    const color = groupColor(g);
+
+    const rows = teams.map((team, i) => {
+      const gd = team.gf - team.ga;
+      const gdStr = gd > 0 ? `+${gd}` : String(gd);
+      const gdClass = gd > 0 ? 'gd-pos' : gd < 0 ? 'gd-neg' : '';
+      // Top 2 advance, 3rd may qualify as best third-place
+      const rowClass = i < 2 ? `standing-q${i + 1}` : i === 2 ? 'standing-q3' : '';
+      return `
+        <tr class="${rowClass}">
+          <td class="standings-pos">${i + 1}</td>
+          <td>
+            <div class="standings-team-cell">
+              <span class="standings-team-flag">${team.flag}</span>
+              <span class="standings-team-name">${team.name}</span>
+            </div>
+          </td>
+          <td class="standings-num">${team.mp}</td>
+          <td class="standings-num">${team.w}</td>
+          <td class="standings-num">${team.d}</td>
+          <td class="standings-num">${team.l}</td>
+          <td class="standings-num">${team.gf}</td>
+          <td class="standings-num">${team.ga}</td>
+          <td class="standings-num ${gdClass}">${gdStr}</td>
+          <td class="standings-pts">${team.pts}</td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <div class="glass-card">
+        <div class="stage-group-header">
+          <div class="group-dot" style="background:${color}"></div>
+          <h3>Group ${g}</h3>
+          <span class="section-badge">${teams.length} teams</span>
+        </div>
+        <div class="standings-table-wrap">
+          <table class="standings-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th class="standings-th-team">Team</th>
+                <th title="Matches Played">MP</th>
+                <th title="Wins">W</th>
+                <th title="Draws">D</th>
+                <th title="Losses">L</th>
+                <th title="Goals For">GF</th>
+                <th title="Goals Against">GA</th>
+                <th title="Goal Difference">GD</th>
+                <th title="Points">Pts</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return makeSection(`
+    <div class="standings-legend">
+      <div class="legend-item">
+        <span class="legend-dot" style="background:var(--accent-success)"></span>
+        Advances to Round of 32
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:var(--accent-gold)"></span>
+        Potential 3rd-place qualification
+      </div>
+      <div class="legend-item" style="margin-left:auto;">
+        <span style="font-size:0.7rem;color:var(--text-muted);">Enter scores in match detail to update standings</span>
+      </div>
+    </div>
+    ${groupsHTML}
+  `);
+}
+
 // ── Nav active link ────────────────────────────────────────
 export function updateNavActive(page) {
   document.querySelectorAll('.nav-link').forEach(a => {
     const href = a.getAttribute('href');
     a.classList.toggle('active', href === `#${page}` || (page === 'home' && href === '#home'));
+  });
+  document.querySelectorAll('.bottom-nav-item').forEach(a => {
+    const dp = a.dataset.page;
+    a.classList.toggle('active', dp === page || (page === 'home' && dp === 'home'));
   });
 }

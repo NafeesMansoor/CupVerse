@@ -2,7 +2,7 @@ import { loadMatches, getMatchById, getMatches } from './data.js';
 import {
   renderApp, renderHomeDashboard, renderMatches, renderMatchesList,
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
-  renderSettings, updateNavActive,
+  renderSettings, renderStandings, updateNavActive,
 } from './ui.js';
 import { parseRoute, navigateTo } from './router.js';
 import { createCountdown } from './countdown.js';
@@ -42,13 +42,14 @@ function renderCurrentRoute() {
   const route = parseRoute();
   let view;
   switch (route.page) {
-    case 'matches': view = renderMatches(); break;
-    case 'match':   view = renderMatchDetail(route.params.id); break;
-    case 'teams':   view = renderTeams(); break;
-    case 'calendar':view = renderCalendar(); break;
-    case 'scorers': view = renderScorers(); break;
-    case 'settings':view = renderSettings(); break;
-    default:        view = renderHomeDashboard(); break;
+    case 'matches':   view = renderMatches(); break;
+    case 'match':     view = renderMatchDetail(route.params.id); break;
+    case 'teams':     view = renderTeams(); break;
+    case 'calendar':  view = renderCalendar(); break;
+    case 'scorers':   view = renderScorers(); break;
+    case 'standings': view = renderStandings(); break;
+    case 'settings':  view = renderSettings(); break;
+    default:          view = renderHomeDashboard(); break;
   }
   renderApp(view);
   updateNavActive(route.page === 'match' ? 'matches' : route.page || 'home');
