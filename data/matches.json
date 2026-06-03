@@ -1,0 +1,1178 @@
+[
+  {
+    "id": "1",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "Mexico",
+      "code": "MEX",
+      "flag": "🇲🇽"
+    },
+    "awayTeam": {
+      "name": "South Africa",
+      "code": "RSA",
+      "flag": "🇿🇦"
+    },
+    "date": "2026-06-12",
+    "time": "18:00",
+    "stadium": "Mexico Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "2",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "Korea Republic",
+      "code": "KOR",
+      "flag": "🇰🇷"
+    },
+    "awayTeam": {
+      "name": "Czechia",
+      "code": "CZE",
+      "flag": "🇨🇿"
+    },
+    "date": "2026-06-13",
+    "time": "20:00",
+    "stadium": "Korea Republic Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "3",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "Mexico",
+      "code": "MEX",
+      "flag": "🇲🇽"
+    },
+    "awayTeam": {
+      "name": "Korea Republic",
+      "code": "KOR",
+      "flag": "🇰🇷"
+    },
+    "date": "2026-06-14",
+    "time": "22:00",
+    "stadium": "Mexico Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "4",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "South Africa",
+      "code": "RSA",
+      "flag": "🇿🇦"
+    },
+    "awayTeam": {
+      "name": "Czechia",
+      "code": "CZE",
+      "flag": "🇨🇿"
+    },
+    "date": "2026-06-15",
+    "time": "18:00",
+    "stadium": "South Africa Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "5",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "Mexico",
+      "code": "MEX",
+      "flag": "🇲🇽"
+    },
+    "awayTeam": {
+      "name": "Czechia",
+      "code": "CZE",
+      "flag": "🇨🇿"
+    },
+    "date": "2026-06-16",
+    "time": "20:00",
+    "stadium": "Mexico Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "6",
+    "stage": "Group A",
+    "homeTeam": {
+      "name": "South Africa",
+      "code": "RSA",
+      "flag": "🇿🇦"
+    },
+    "awayTeam": {
+      "name": "Korea Republic",
+      "code": "KOR",
+      "flag": "🇰🇷"
+    },
+    "date": "2026-06-17",
+    "time": "22:00",
+    "stadium": "South Africa Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "7",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Canada",
+      "code": "CAN",
+      "flag": "🇨🇦"
+    },
+    "awayTeam": {
+      "name": "Bosnia and Herzegovina",
+      "code": "BIH",
+      "flag": "🇧🇦"
+    },
+    "date": "2026-06-18",
+    "time": "18:00",
+    "stadium": "Canada Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "8",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Qatar",
+      "code": "QAT",
+      "flag": "🇶🇦"
+    },
+    "awayTeam": {
+      "name": "Switzerland",
+      "code": "SUI",
+      "flag": "🇨🇭"
+    },
+    "date": "2026-06-19",
+    "time": "20:00",
+    "stadium": "Qatar Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "9",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Canada",
+      "code": "CAN",
+      "flag": "🇨🇦"
+    },
+    "awayTeam": {
+      "name": "Qatar",
+      "code": "QAT",
+      "flag": "🇶🇦"
+    },
+    "date": "2026-06-20",
+    "time": "22:00",
+    "stadium": "Canada Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "10",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Bosnia and Herzegovina",
+      "code": "BIH",
+      "flag": "🇧🇦"
+    },
+    "awayTeam": {
+      "name": "Switzerland",
+      "code": "SUI",
+      "flag": "🇨🇭"
+    },
+    "date": "2026-06-21",
+    "time": "18:00",
+    "stadium": "Bosnia and Herzegovina Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "11",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Canada",
+      "code": "CAN",
+      "flag": "🇨🇦"
+    },
+    "awayTeam": {
+      "name": "Switzerland",
+      "code": "SUI",
+      "flag": "🇨🇭"
+    },
+    "date": "2026-06-22",
+    "time": "20:00",
+    "stadium": "Canada Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "12",
+    "stage": "Group B",
+    "homeTeam": {
+      "name": "Bosnia and Herzegovina",
+      "code": "BIH",
+      "flag": "🇧🇦"
+    },
+    "awayTeam": {
+      "name": "Qatar",
+      "code": "QAT",
+      "flag": "🇶🇦"
+    },
+    "date": "2026-06-23",
+    "time": "22:00",
+    "stadium": "Bosnia and Herzegovina Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "13",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "BRA",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Morocco",
+      "code": "MAR",
+      "flag": "🇲🇦"
+    },
+    "date": "2026-06-24",
+    "time": "18:00",
+    "stadium": "Brazil Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "14",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Haiti",
+      "code": "HAI",
+      "flag": "🇭🇹"
+    },
+    "awayTeam": {
+      "name": "Scotland",
+      "code": "SCO",
+      "flag": "🏴"
+    },
+    "date": "2026-06-25",
+    "time": "20:00",
+    "stadium": "Haiti Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "15",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "BRA",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Haiti",
+      "code": "HAI",
+      "flag": "🇭🇹"
+    },
+    "date": "2026-06-26",
+    "time": "22:00",
+    "stadium": "Brazil Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "16",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Morocco",
+      "code": "MAR",
+      "flag": "🇲🇦"
+    },
+    "awayTeam": {
+      "name": "Scotland",
+      "code": "SCO",
+      "flag": "🏴"
+    },
+    "date": "2026-06-27",
+    "time": "18:00",
+    "stadium": "Morocco Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "17",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "BRA",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Scotland",
+      "code": "SCO",
+      "flag": "🏴"
+    },
+    "date": "2026-06-28",
+    "time": "20:00",
+    "stadium": "Brazil Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "18",
+    "stage": "Group C",
+    "homeTeam": {
+      "name": "Morocco",
+      "code": "MAR",
+      "flag": "🇲🇦"
+    },
+    "awayTeam": {
+      "name": "Haiti",
+      "code": "HAI",
+      "flag": "🇭🇹"
+    },
+    "date": "2026-06-29",
+    "time": "22:00",
+    "stadium": "Morocco Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "19",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "USA",
+      "code": "USA",
+      "flag": "🇺🇸"
+    },
+    "awayTeam": {
+      "name": "Paraguay",
+      "code": "PAR",
+      "flag": "🇵🇾"
+    },
+    "date": "2026-06-30",
+    "time": "18:00",
+    "stadium": "USA Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "20",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "Australia",
+      "code": "AUS",
+      "flag": "🇦🇺"
+    },
+    "awayTeam": {
+      "name": "Türkiye",
+      "code": "TUR",
+      "flag": "🇹🇷"
+    },
+    "date": "2026-07-01",
+    "time": "20:00",
+    "stadium": "Australia Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "21",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "USA",
+      "code": "USA",
+      "flag": "🇺🇸"
+    },
+    "awayTeam": {
+      "name": "Australia",
+      "code": "AUS",
+      "flag": "🇦🇺"
+    },
+    "date": "2026-07-02",
+    "time": "22:00",
+    "stadium": "USA Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "22",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "Paraguay",
+      "code": "PAR",
+      "flag": "🇵🇾"
+    },
+    "awayTeam": {
+      "name": "Türkiye",
+      "code": "TUR",
+      "flag": "🇹🇷"
+    },
+    "date": "2026-07-03",
+    "time": "18:00",
+    "stadium": "Paraguay Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "23",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "USA",
+      "code": "USA",
+      "flag": "🇺🇸"
+    },
+    "awayTeam": {
+      "name": "Türkiye",
+      "code": "TUR",
+      "flag": "🇹🇷"
+    },
+    "date": "2026-07-04",
+    "time": "20:00",
+    "stadium": "USA Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "24",
+    "stage": "Group D",
+    "homeTeam": {
+      "name": "Paraguay",
+      "code": "PAR",
+      "flag": "🇵🇾"
+    },
+    "awayTeam": {
+      "name": "Australia",
+      "code": "AUS",
+      "flag": "🇦🇺"
+    },
+    "date": "2026-07-05",
+    "time": "22:00",
+    "stadium": "Paraguay Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "25",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Germany",
+      "code": "GER",
+      "flag": "🇩🇪"
+    },
+    "awayTeam": {
+      "name": "Cote D'Voire",
+      "code": "CIV",
+      "flag": "🇨🇮"
+    },
+    "date": "2026-07-06",
+    "time": "18:00",
+    "stadium": "Germany Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "26",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Ecuador",
+      "code": "ECU",
+      "flag": "🇪🇨"
+    },
+    "awayTeam": {
+      "name": "Curacao",
+      "code": "CUR",
+      "flag": "🇨🇼"
+    },
+    "date": "2026-07-07",
+    "time": "20:00",
+    "stadium": "Ecuador Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "27",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Germany",
+      "code": "GER",
+      "flag": "🇩🇪"
+    },
+    "awayTeam": {
+      "name": "Ecuador",
+      "code": "ECU",
+      "flag": "🇪🇨"
+    },
+    "date": "2026-07-08",
+    "time": "22:00",
+    "stadium": "Germany Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "28",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Cote D'Voire",
+      "code": "CIV",
+      "flag": "🇨🇮"
+    },
+    "awayTeam": {
+      "name": "Curacao",
+      "code": "CUR",
+      "flag": "🇨🇼"
+    },
+    "date": "2026-07-09",
+    "time": "18:00",
+    "stadium": "Cote D'Voire Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "29",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Germany",
+      "code": "GER",
+      "flag": "🇩🇪"
+    },
+    "awayTeam": {
+      "name": "Curacao",
+      "code": "CUR",
+      "flag": "🇨🇼"
+    },
+    "date": "2026-07-10",
+    "time": "20:00",
+    "stadium": "Germany Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "30",
+    "stage": "Group E",
+    "homeTeam": {
+      "name": "Cote D'Voire",
+      "code": "CIV",
+      "flag": "🇨🇮"
+    },
+    "awayTeam": {
+      "name": "Ecuador",
+      "code": "ECU",
+      "flag": "🇪🇨"
+    },
+    "date": "2026-07-11",
+    "time": "22:00",
+    "stadium": "Cote D'Voire Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "31",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "awayTeam": {
+      "name": "Japan",
+      "code": "JPN",
+      "flag": "🇯🇵"
+    },
+    "date": "2026-07-12",
+    "time": "18:00",
+    "stadium": "Netherlands Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "32",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Sweden",
+      "code": "SWE",
+      "flag": "🇸🇪"
+    },
+    "awayTeam": {
+      "name": "Tunisia",
+      "code": "TUN",
+      "flag": "🇹🇳"
+    },
+    "date": "2026-07-13",
+    "time": "20:00",
+    "stadium": "Sweden Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "33",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "awayTeam": {
+      "name": "Sweden",
+      "code": "SWE",
+      "flag": "🇸🇪"
+    },
+    "date": "2026-07-14",
+    "time": "22:00",
+    "stadium": "Netherlands Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "34",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Japan",
+      "code": "JPN",
+      "flag": "🇯🇵"
+    },
+    "awayTeam": {
+      "name": "Tunisia",
+      "code": "TUN",
+      "flag": "🇹🇳"
+    },
+    "date": "2026-07-15",
+    "time": "18:00",
+    "stadium": "Japan Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "35",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "awayTeam": {
+      "name": "Tunisia",
+      "code": "TUN",
+      "flag": "🇹🇳"
+    },
+    "date": "2026-07-16",
+    "time": "20:00",
+    "stadium": "Netherlands Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "36",
+    "stage": "Group F",
+    "homeTeam": {
+      "name": "Japan",
+      "code": "JPN",
+      "flag": "🇯🇵"
+    },
+    "awayTeam": {
+      "name": "Sweden",
+      "code": "SWE",
+      "flag": "🇸🇪"
+    },
+    "date": "2026-07-17",
+    "time": "22:00",
+    "stadium": "Japan Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "37",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Belgium",
+      "code": "BEL",
+      "flag": "🇧🇪"
+    },
+    "awayTeam": {
+      "name": "Egypt",
+      "code": "EGY",
+      "flag": "🇪🇬"
+    },
+    "date": "2026-07-18",
+    "time": "18:00",
+    "stadium": "Belgium Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "38",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Iran",
+      "code": "IRN",
+      "flag": "🇮🇷"
+    },
+    "awayTeam": {
+      "name": "New Zealand",
+      "code": "NZL",
+      "flag": "🇳🇿"
+    },
+    "date": "2026-07-19",
+    "time": "20:00",
+    "stadium": "Iran Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "39",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Belgium",
+      "code": "BEL",
+      "flag": "🇧🇪"
+    },
+    "awayTeam": {
+      "name": "Iran",
+      "code": "IRN",
+      "flag": "🇮🇷"
+    },
+    "date": "2026-06-12",
+    "time": "22:00",
+    "stadium": "Belgium Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "40",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Egypt",
+      "code": "EGY",
+      "flag": "🇪🇬"
+    },
+    "awayTeam": {
+      "name": "New Zealand",
+      "code": "NZL",
+      "flag": "🇳🇿"
+    },
+    "date": "2026-06-13",
+    "time": "18:00",
+    "stadium": "Egypt Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "41",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Belgium",
+      "code": "BEL",
+      "flag": "🇧🇪"
+    },
+    "awayTeam": {
+      "name": "New Zealand",
+      "code": "NZL",
+      "flag": "🇳🇿"
+    },
+    "date": "2026-06-14",
+    "time": "20:00",
+    "stadium": "Belgium Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "42",
+    "stage": "Group G",
+    "homeTeam": {
+      "name": "Egypt",
+      "code": "EGY",
+      "flag": "🇪🇬"
+    },
+    "awayTeam": {
+      "name": "Iran",
+      "code": "IRN",
+      "flag": "🇮🇷"
+    },
+    "date": "2026-06-15",
+    "time": "22:00",
+    "stadium": "Egypt Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "43",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "awayTeam": {
+      "name": "Uruguay",
+      "code": "URU",
+      "flag": "🇺🇾"
+    },
+    "date": "2026-06-16",
+    "time": "18:00",
+    "stadium": "Spain Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "44",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Saudi Arabia",
+      "code": "KSA",
+      "flag": "🇸🇦"
+    },
+    "awayTeam": {
+      "name": "Cabo Verde",
+      "code": "CPV",
+      "flag": "🇨🇻"
+    },
+    "date": "2026-06-17",
+    "time": "20:00",
+    "stadium": "Saudi Arabia Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "45",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "awayTeam": {
+      "name": "Saudi Arabia",
+      "code": "KSA",
+      "flag": "🇸🇦"
+    },
+    "date": "2026-06-18",
+    "time": "22:00",
+    "stadium": "Spain Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "46",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Uruguay",
+      "code": "URU",
+      "flag": "🇺🇾"
+    },
+    "awayTeam": {
+      "name": "Cabo Verde",
+      "code": "CPV",
+      "flag": "🇨🇻"
+    },
+    "date": "2026-06-19",
+    "time": "18:00",
+    "stadium": "Uruguay Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "47",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "awayTeam": {
+      "name": "Cabo Verde",
+      "code": "CPV",
+      "flag": "🇨🇻"
+    },
+    "date": "2026-06-20",
+    "time": "20:00",
+    "stadium": "Spain Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "48",
+    "stage": "Group H",
+    "homeTeam": {
+      "name": "Uruguay",
+      "code": "URU",
+      "flag": "🇺🇾"
+    },
+    "awayTeam": {
+      "name": "Saudi Arabia",
+      "code": "KSA",
+      "flag": "🇸🇦"
+    },
+    "date": "2026-06-21",
+    "time": "22:00",
+    "stadium": "Uruguay Arena",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "49",
+    "stage": "Round of 16",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "MEX",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "date": "2026-06-22",
+    "time": "20:00",
+    "stadium": "Brazil Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "50",
+    "stage": "Round of 16",
+    "homeTeam": {
+      "name": "USA",
+      "code": "USA",
+      "flag": "🇺🇸"
+    },
+    "awayTeam": {
+      "name": "Germany",
+      "code": "GER",
+      "flag": "🇩🇪"
+    },
+    "date": "2026-06-23",
+    "time": "22:00",
+    "stadium": "USA Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "51",
+    "stage": "Round of 16",
+    "homeTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "awayTeam": {
+      "name": "Belgium",
+      "code": "BEL",
+      "flag": "🇧🇪"
+    },
+    "date": "2026-06-24",
+    "time": "20:00",
+    "stadium": "Netherlands Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "52",
+    "stage": "Round of 16",
+    "homeTeam": {
+      "name": "Japan",
+      "code": "JPN",
+      "flag": "🇯🇵"
+    },
+    "awayTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "date": "2026-06-25",
+    "time": "22:00",
+    "stadium": "Japan Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "53",
+    "stage": "Quarterfinals",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "MEX",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Germany",
+      "code": "GER",
+      "flag": "🇩🇪"
+    },
+    "date": "2026-06-26",
+    "time": "20:00",
+    "stadium": "Brazil Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "54",
+    "stage": "Quarterfinals",
+    "homeTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "awayTeam": {
+      "name": "Japan",
+      "code": "JPN",
+      "flag": "🇯🇵"
+    },
+    "date": "2026-06-27",
+    "time": "22:00",
+    "stadium": "Netherlands Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "55",
+    "stage": "Semifinals",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "MEX",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Netherlands",
+      "code": "NED",
+      "flag": "🇳🇱"
+    },
+    "date": "2026-06-28",
+    "time": "20:00",
+    "stadium": "Brazil Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  },
+  {
+    "id": "56",
+    "stage": "Final",
+    "homeTeam": {
+      "name": "Brazil",
+      "code": "MEX",
+      "flag": "🇧🇷"
+    },
+    "awayTeam": {
+      "name": "Spain",
+      "code": "ESP",
+      "flag": "🇪🇸"
+    },
+    "date": "2026-06-29",
+    "time": "22:00",
+    "stadium": "Brazil Stadium",
+    "status": "upcoming",
+    "score": null,
+    "goals": [],
+    "potm": null
+  }
+]
