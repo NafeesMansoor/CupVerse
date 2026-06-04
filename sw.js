@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cupverse-v4';
+const CACHE_NAME = 'cupverse-v5';
 
 const STATIC_ASSETS = [
   './',

@@ -1187,6 +1187,198 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ══════════════════════════════════════════════════
+   MATCH DETAIL — ENLARGED HERO (Tier 1)
+   ══════════════════════════════════════════════════ */
+
+.detail-hero {
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 36px 24px 28px;
+  text-align: center;
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.07);
+  position: relative;
+  overflow: hidden;
+}
+.detail-hero-teams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.detail-hero-team { text-align: center; flex: 1; min-width: 100px; max-width: 160px; }
+.detail-hero-flag { font-size: 4.5rem; display: block; margin-bottom: 8px; line-height: 1; }
+.detail-hero-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.detail-hero-center { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.detail-hero-score {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-blue);
+  line-height: 1;
+}
+.detail-hero-countdown {
+  font-size: 3rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.detail-hero-kickoff {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.detail-hero-status {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Win probability bar inside hero */
+.hero-win-prob { width: 100%; max-width: 340px; margin: 0 auto; }
+.hwp-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  background: var(--bg-elevated);
+}
+.hwp-home { background: var(--accent-blue); transition: width 0.6s ease; }
+.hwp-draw { background: var(--text-muted); opacity: 0.6; transition: width 0.6s ease; }
+.hwp-away { background: var(--accent-gold); transition: width 0.6s ease; }
+.hwp-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.hwp-labels span:first-child { color: var(--accent-blue); font-weight: 700; }
+.hwp-labels span:last-child  { color: var(--accent-gold); font-weight: 700; }
+
+/* Score entry inside hero */
+.hero-score-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* ══════════════════════════════════════════════════
+   FORM COMPARISON CARD
+   ══════════════════════════════════════════════════ */
+.form-compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+}
+.form-team-side { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.form-team-side.right { align-items: flex-end; }
+.form-team-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.form-strip { display: flex; gap: 5px; }
+.form-badge {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+.form-w { background: rgba(61,220,151,0.18); color: var(--accent-success); border: 1px solid rgba(61,220,151,0.35); }
+.form-d { background: rgba(107,118,138,0.18); color: var(--text-muted); border: 1px solid rgba(107,118,138,0.3); }
+.form-l { background: rgba(255,77,77,0.14); color: var(--accent-live); border: 1px solid rgba(255,77,77,0.25); }
+.form-divider-label { font-size: 0.68rem; color: var(--text-muted); text-align: center; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+
+/* ══════════════════════════════════════════════════
+   FIXTURES — LIVE NOW + TODAY SECTIONS
+   ══════════════════════════════════════════════════ */
+.live-now-wrap {
+  background: linear-gradient(135deg, rgba(255,77,77,0.15) 0%, rgba(255,77,77,0.05) 100%);
+  border: 1px solid rgba(255,77,77,0.3);
+  border-radius: var(--border-radius);
+  padding: 20px;
+}
+.live-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.live-now-badge {
+  background: var(--accent-live);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: livePulse 1.5s infinite;
+}
+.live-section-title { font-size: 1rem; font-weight: 700; }
+.today-section-header { margin-bottom: 14px; }
+.today-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.today-section-title { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+
+/* ── Match card featured (first card per group) ── */
+.match-card-featured {
+  background: linear-gradient(135deg, rgba(77,163,255,0.1) 0%, var(--bg-card) 60%);
+  border-color: rgba(77,163,255,0.22);
+}
+.match-card-featured .match-team-name { font-size: 1rem; }
+.match-card-featured .match-team-flag { font-size: 1.6rem; }
+
+/* ── View Match CTA on cards ── */
+.match-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.match-cta-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  letter-spacing: 0.01em;
+}
+.match-card-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ══════════════════════════════════════════════════
    MATCH INTELLIGENCE ENGINE
    ══════════════════════════════════════════════════ */
 

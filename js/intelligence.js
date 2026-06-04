@@ -4,6 +4,32 @@
 //  AI storylines, prediction bars. No external API required.
 // ══════════════════════════════════════════════════════════════
 
+// ─── Team Primary Colors (for national identity gradients) ──
+const TEAM_COLORS = {
+  Argentina:'#74ACDF',  France:'#002395',      England:'#CF091F',
+  Brazil:'#009c3b',     Belgium:'#ED2939',      Portugal:'#006600',
+  Netherlands:'#FF6600',Spain:'#AA151B',        Morocco:'#C1272D',
+  Germany:'#1a1a1a',    USA:'#002868',          Mexico:'#006847',
+  Uruguay:'#5EB6E4',    Senegal:'#00853F',      Switzerland:'#FF0000',
+  Iran:'#239F40',       Australia:'#00008B',    Japan:'#BC002D',
+  Colombia:'#FCD116',   Canada:'#FF0000',       Norway:'#EF2B2D',
+  Sweden:'#006AA7',     Tunisia:'#E70013',      Czechia:'#D7141A',
+  Ecuador:'#FFD100',    Algeria:'#006233',      Austria:'#ED2939',
+  Jordan:'#007A3D',     Ghana:'#006B3F',        Croatia:'#FF0000',
+  Scotland:'#003087',   Paraguay:'#D52B1E',     Egypt:'#EE1C25',
+  'Korea Republic':'#C60C30',  'Saudi Arabia':'#006C35',
+  'South Africa':'#007A4D',    'Bosnia and Herzegovina':'#002395',
+  Curacao:'#003DA5',           "Cote D'Voire":'#009A44',
+  Iraq:'#007A3D',              'New Zealand':'#000000',
+  'Cabo Verde':'#003893',      'DR Congo':'#007FFF',
+  Uzbekistan:'#1EB53A',        Haiti:'#00209F',
+  Panama:'#DA121A',            Türkiye:'#E30A17',
+  Turkey:'#E30A17',            Qatar:'#8D1B3D',
+};
+
+export function getTeamColor(name) { return TEAM_COLORS[name] || '#4DA3FF'; }
+export function getTeamData(name)  { return { ...team(name), color: getTeamColor(name) }; }
+
 // ─── Team Knowledge Base ───────────────────────────────────
 // rank: FIFA ranking · conf: confederation · wcApps: WC appearances
 // wcBest: best WC finish · style: tactical identity · form: last 5

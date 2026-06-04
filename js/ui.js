@@ -13,7 +13,7 @@ import {
   isAiEnabled, setAiEnabled, clearStorage,
 } from './storage.js';
 import { navigateTo } from './router.js';
-import { getMatchIntelligence } from './intelligence.js';
+import { getMatchIntelligence, getTeamColor, getTeamData } from './intelligence.js';
 
 const app = document.getElementById('app');
 
@@ -91,16 +91,17 @@ function effectiveScore(match) {
 }
 
 // ── Match Card HTML ───────────────────────────────────────
-function matchCardHTML(match, compact = false) {
+function matchCardHTML(match, { compact = false, featured = false } = {}) {
   const status = effectiveStatus(match);
   const score = effectiveScore(match);
   const starred = isMatchFavorite(match.id);
   const statusClass = `status-${status}`;
-  const statusLabel = status === 'live' ? 'LIVE' : status === 'completed' ? 'Final' : 'Upcoming';
+  const statusLabel = status === 'live' ? '🔴 LIVE' : status === 'completed' ? 'Full Time' : 'Upcoming';
   const scoreDisplay = score ? `<span class="match-score-display">${score.home} – ${score.away}</span>` : '';
   const time = fmtTime(match.datetime);
+  const featuredClass = featured ? ' match-card-featured' : '';
   return `
-    <article class="match-card" data-action="open-match" data-id="${match.id}">
+    <article class="match-card${featuredClass}" data-action="open-match" data-id="${match.id}">
       <div class="match-teams">
         <div class="match-team">
           <span class="match-team-flag">${match.homeTeam.flag}</span>
@@ -113,11 +114,17 @@ function matchCardHTML(match, compact = false) {
         </div>
       </div>
       <div class="match-meta">
-        <span class="match-meta-text">${compact ? '' : fmtDate(match.datetime) + ' · '} ${time}</span>
+        <span class="match-meta-text">${compact ? '' : fmtDate(match.datetime) + ' · '}${time}</span>
         <span class="match-meta-text">${match.stadium}</span>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="status-badge ${statusClass}">${statusLabel}</span>
           ${starred ? '<span title="Starred">⭐</span>' : ''}
+        </div>
+      </div>
+      <div class="match-card-footer">
+        <span class="match-cta-link">View Match →</span>
+        <div class="match-card-actions">
+          <span style="font-size:0.8rem;color:var(--text-muted);">${match.stage}${match.group ? ` · Group ${match.group}` : ''}</span>
         </div>
       </div>
     </article>
@@ -282,15 +289,51 @@ export function renderMatchesList(filtered) {
     return;
   }
 
-  // Group by stage
+  const today = new Date().toISOString().slice(0, 10);
+  const live    = filtered.filter(m => effectiveStatus(m) === 'live');
+  const todayMs = filtered.filter(m => m.date === today && effectiveStatus(m) !== 'live');
+  const rest    = filtered.filter(m => m.date !== today && effectiveStatus(m) !== 'live');
+
+  // ── Live Now ──
+  let html = '';
+  if (live.length) {
+    html += `
+      <div class="live-now-wrap">
+        <div class="live-section-header">
+          <span class="live-now-badge">Live Now</span>
+          <span class="live-section-title">${live.length} match${live.length > 1 ? 'es' : ''} in progress</span>
+        </div>
+        <div class="match-grid">
+          ${live.map((m, i) => matchCardHTML(m, { featured: i === 0 })).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ── Today's Matches ──
+  if (todayMs.length) {
+    const dt = new Date(today + 'T12:00:00');
+    const label = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    html += `
+      <div class="glass-card">
+        <div class="today-section-header">
+          <div class="today-section-label">Today's Matches</div>
+          <div class="today-section-title">${label}</div>
+        </div>
+        <div class="match-grid">
+          ${todayMs.map((m, i) => matchCardHTML(m, { featured: i === 0 })).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ── Rest grouped by stage/group ──
   const byStage = {};
-  filtered.forEach(m => {
-    const key = m.stage + (m.group ? ` – Group ${m.group}` : '');
+  rest.forEach(m => {
+    const key = m.stage + (m.group ? `|${m.group}` : '');
     if (!byStage[key]) byStage[key] = { stage: m.stage, group: m.group, matches: [] };
     byStage[key].matches.push(m);
   });
 
-  const stageOrder = ['Group Stage', 'Round of 32', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Third Place', 'Final', 'knockout'];
+  const stageOrder = ['Group Stage','Round of 32','Round of 16','Quarterfinals','Semifinals','Third Place','Final','knockout'];
   const sortedKeys = Object.keys(byStage).sort((a, b) => {
     const ai = stageOrder.indexOf(byStage[a].stage);
     const bi = stageOrder.indexOf(byStage[b].stage);
@@ -298,9 +341,9 @@ export function renderMatchesList(filtered) {
     return (byStage[a].group || '').localeCompare(byStage[b].group || '');
   });
 
-  list.innerHTML = sortedKeys.map(key => {
+  html += sortedKeys.map(key => {
     const { stage, group, matches } = byStage[key];
-    const color = group ? groupColor(group) : '#3b6fd4';
+    const color = group ? groupColor(group) : '#4DA3FF';
     return `
       <div class="glass-card">
         <div class="stage-group-header">
@@ -309,11 +352,12 @@ export function renderMatchesList(filtered) {
           <span class="section-badge">${matches.length}</span>
         </div>
         <div class="match-grid">
-          ${matches.map(m => matchCardHTML(m)).join('')}
+          ${matches.map((m, i) => matchCardHTML(m, { featured: i === 0 })).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
+
+  list.innerHTML = html;
 }
 
 // ── MATCH DETAIL ─────────────────────────────────────────
@@ -321,127 +365,166 @@ export function renderMatchDetail(id) {
   const match = getMatchById(id);
   if (!match) return makeSection('<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">❌</div><p>Match not found.</p></div></div>');
 
-  const score = getScore(match.id);
-  const status = effectiveStatus(match);
-  const note = getNote(match.id) || { text: '', photos: [] };
-  const starred = isMatchFavorite(match.id);
+  const score    = getScore(match.id);
+  const status   = effectiveStatus(match);
+  const note     = getNote(match.id) || { text: '', photos: [] };
+  const starred  = isMatchFavorite(match.id);
   const homeSquad = getTeamSquad(match.homeTeam.name);
   const awaySquad = getTeamSquad(match.awayTeam.name);
   const vi = match.venueInfo;
+  const intel = getMatchIntelligence(match);
 
   const statusClass = `status-${status}`;
-  const statusLabel = status === 'live' ? 'LIVE' : status === 'completed' ? 'Final' : 'Upcoming';
+  const statusLabel = status === 'live' ? '🔴 LIVE' : status === 'completed' ? 'Full Time' : 'Upcoming';
 
-  let scoreSection = '';
+  // ── National identity gradient ──
+  const hc = getTeamColor(match.homeTeam.name);
+  const ac = getTeamColor(match.awayTeam.name);
+  const natGrad = `background:linear-gradient(135deg,${hc}30 0%,transparent 42%,transparent 58%,${ac}30 100%),linear-gradient(180deg,rgba(11,18,32,0.3) 0%,rgba(11,18,32,0.7) 100%)`;
+
+  // ── Center column of hero ──
+  let heroCenter = '';
   if (score) {
-    scoreSection = `
-      <div class="detail-score">${score.home} – ${score.away}</div>
-      <button class="btn btn-sm" data-action="clear-score" data-id="${match.id}" style="margin-top:8px;">Edit Score</button>
+    heroCenter = `
+      <div class="detail-hero-score">${score.home}&nbsp;–&nbsp;${score.away}</div>
+      <button class="btn btn-sm" data-action="clear-score" data-id="${match.id}" style="margin-top:10px;">Edit Score</button>
+    `;
+  } else if (status === 'live') {
+    heroCenter = `
+      <div class="detail-hero-score" style="color:var(--accent-live)">LIVE</div>
+      <div class="hero-score-entry">
+        <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
+        <span class="score-entry-dash">–</span>
+        <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
+        <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save</button>
+      </div>
     `;
   } else {
-    scoreSection = `
-      <div class="score-entry" id="score-entry-${match.id}">
+    const probHTML = intel ? `
+      <div class="hero-win-prob">
+        <div class="hwp-bar">
+          <div class="hwp-home" style="width:${intel.prediction.home}%"></div>
+          <div class="hwp-draw" style="width:${intel.prediction.draw}%"></div>
+          <div class="hwp-away" style="width:${intel.prediction.away}%"></div>
+        </div>
+        <div class="hwp-labels">
+          <span>${intel.prediction.home}%</span>
+          <span>${intel.prediction.draw}% Draw</span>
+          <span>${intel.prediction.away}%</span>
+        </div>
+      </div>` : '';
+    heroCenter = `
+      <div class="detail-hero-countdown" data-countdown-target="${match.datetime}">00:00:00</div>
+      <div class="detail-hero-kickoff">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
+      ${probHTML}
+      <div class="hero-score-entry" style="margin-top:14px;">
         <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
         <span class="score-entry-dash">–</span>
         <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
         <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
       </div>
     `;
-    if (status === 'upcoming') {
-      const countdownAttr = `data-countdown-target="${match.datetime}"`;
-      scoreSection = `
-        <div class="hero-countdown" ${countdownAttr}>00:00:00</div>
-        <div class="score-entry" style="margin-top:12px;">
-          <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
-          <span class="score-entry-dash">–</span>
-          <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
-          <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
-        </div>
-      `;
-    }
   }
 
-  const squadHTML = (squad, teamName) => squad.length ? `
-    <h4 style="margin-bottom:8px;">${teamName} Squad</h4>
-    <div class="squad-list">
-      ${squad.map(p => `<span class="player-pill" data-action="add-scorer-prefill" data-player="${p}" data-team="${teamName}">${p}</span>`).join('')}
-    </div>
-  ` : '';
+  // ── Form comparison ──
+  const hData = getTeamData(match.homeTeam.name);
+  const aData = getTeamData(match.awayTeam.name);
+  const formBadge = c => {
+    const cls = c === 'W' ? 'form-w' : c === 'D' ? 'form-d' : 'form-l';
+    return `<span class="form-badge ${cls}">${c}</span>`;
+  };
+  const formCard = `
+    <div class="glass-card">
+      <div class="intel-section-label">Recent Form</div>
+      <div class="form-compare">
+        <div class="form-team-side">
+          <span class="form-team-label">${match.homeTeam.flag} ${match.homeTeam.name}</span>
+          <div class="form-strip">${(hData.form || 'WDWLW').split('').map(formBadge).join('')}</div>
+        </div>
+        <div class="form-divider-label">Last 5</div>
+        <div class="form-team-side right">
+          <span class="form-team-label">${match.awayTeam.name} ${match.awayTeam.flag}</span>
+          <div class="form-strip">${(aData.form || 'WDWLW').split('').map(formBadge).join('')}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── Squad block (collapsed) ──
+  const squadPills = (squad, teamName) => squad.length ? `
+    <details style="margin-bottom:10px;">
+      <summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:6px 0;list-style:none;display:flex;align-items:center;gap:8px;">
+        <span>${teamName} Squad</span>
+        <span class="section-badge">${squad.length}</span>
+      </summary>
+      <div class="squad-list" style="margin-top:10px;">
+        ${squad.map(p => `<span class="player-pill" data-action="add-scorer-prefill" data-player="${p}" data-team="${teamName}">${p}</span>`).join('')}
+      </div>
+    </details>` : '';
 
   const photoThumbsHTML = note.photos && note.photos.length
     ? note.photos.map(src => `<img class="photo-thumb" src="${src}" alt="photo" />`).join('')
     : '';
 
   return makeSection(`
-    <div class="detail-header">
-      <div class="detail-stage">${match.stage}${match.group ? ` · Group ${match.group}` : ''} · <span class="status-badge ${statusClass}">${statusLabel}</span></div>
-      <div class="detail-teams">
-        <div class="detail-team">
-          <span class="detail-team-flag">${match.homeTeam.flag}</span>
-          <div class="detail-team-name">${match.homeTeam.name}</div>
+
+    <!-- ── TIER 1: Hero — fills first viewport ── -->
+    <div class="detail-hero" style="${natGrad}">
+      <div class="detail-hero-status">
+        ${match.stage}${match.group ? ` · Group ${match.group}` : ''}
+        &nbsp;·&nbsp;
+        <span class="status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="detail-hero-teams">
+        <div class="detail-hero-team">
+          <span class="detail-hero-flag">${match.homeTeam.flag}</span>
+          <div class="detail-hero-name">${match.homeTeam.name}</div>
         </div>
-        ${scoreSection}
-        <div class="detail-team">
-          <span class="detail-team-flag">${match.awayTeam.flag}</span>
-          <div class="detail-team-name">${match.awayTeam.name}</div>
+        <div class="detail-hero-center">${heroCenter}</div>
+        <div class="detail-hero-team">
+          <span class="detail-hero-flag">${match.awayTeam.flag}</span>
+          <div class="detail-hero-name">${match.awayTeam.name}</div>
         </div>
       </div>
     </div>
 
+    <!-- ── TIER 2: Insights ── -->
+    ${formCard}
+    ${renderMatchIntelligence(match)}
+
+    <!-- ── TIER 3: Reference ── -->
+    ${homeSquad.length || awaySquad.length ? `
     <div class="glass-card">
-      <div class="section-header"><h2>Venue</h2></div>
-      <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">${vi.flag} ${vi.fullName || vi.name}</div>
+      <div class="intel-section-label">Squads</div>
+      ${squadPills(homeSquad, match.homeTeam.name)}
+      ${squadPills(awaySquad, match.awayTeam.name)}
+    </div>` : ''}
+
+    <div class="glass-card">
+      <div class="intel-section-label">Venue</div>
+      <div style="font-size:1rem;font-weight:700;margin-bottom:12px;">${vi.flag} ${vi.fullName || vi.name}</div>
       <div class="venue-grid">
-        <div class="venue-stat">
-          <div class="venue-stat-label">City</div>
-          <div class="venue-stat-value">${vi.city || '—'}</div>
-        </div>
-        <div class="venue-stat">
-          <div class="venue-stat-label">Country</div>
-          <div class="venue-stat-value">${vi.country || '—'}</div>
-        </div>
-        <div class="venue-stat">
-          <div class="venue-stat-label">Capacity</div>
-          <div class="venue-stat-value">${vi.capacity ? vi.capacity.toLocaleString() : '—'}</div>
-        </div>
-        <div class="venue-stat">
-          <div class="venue-stat-label">Surface</div>
-          <div class="venue-stat-value">${vi.surface || '—'}</div>
-        </div>
-        <div class="venue-stat">
-          <div class="venue-stat-label">Kickoff (local)</div>
-          <div class="venue-stat-value">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
-        </div>
-        <div class="venue-stat">
-          <div class="venue-stat-label">Opened</div>
-          <div class="venue-stat-value">${vi.opened || '—'}</div>
-        </div>
+        <div class="venue-stat"><div class="venue-stat-label">City</div><div class="venue-stat-value">${vi.city || '—'}</div></div>
+        <div class="venue-stat"><div class="venue-stat-label">Country</div><div class="venue-stat-value">${vi.country || '—'}</div></div>
+        <div class="venue-stat"><div class="venue-stat-label">Capacity</div><div class="venue-stat-value">${vi.capacity ? vi.capacity.toLocaleString() : '—'}</div></div>
+        <div class="venue-stat"><div class="venue-stat-label">Surface</div><div class="venue-stat-value">${vi.surface || '—'}</div></div>
+        <div class="venue-stat"><div class="venue-stat-label">Opened</div><div class="venue-stat-value">${vi.opened || '—'}</div></div>
+        <div class="venue-stat"><div class="venue-stat-label">Kickoff</div><div class="venue-stat-value">${fmtTime(match.datetime)}</div></div>
       </div>
       <div style="margin-top:12px;">
         <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName || vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View Map</a>
       </div>
     </div>
 
-    ${homeSquad.length || awaySquad.length ? `
     <div class="glass-card">
-      <div class="section-header"><h2>Squads</h2></div>
-      ${squadHTML(homeSquad, match.homeTeam.name)}
-      ${homeSquad.length && awaySquad.length ? '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">' : ''}
-      ${squadHTML(awaySquad, match.awayTeam.name)}
-    </div>
-    ` : ''}
-
-    <div class="glass-card">
-      <div class="section-header"><h2>Match Notes</h2></div>
+      <div class="intel-section-label">Match Notes</div>
       <textarea class="notes-area" id="match-note-${match.id}" placeholder="Add your match notes here…">${note.text}</textarea>
       <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-sm" style="cursor:pointer;">
-          📷 Add Photo
+        <label class="btn btn-sm" style="cursor:pointer;">📷 Add Photo
           <input type="file" id="note-photos-${match.id}" accept="image/*" multiple style="display:none;" />
         </label>
         <button class="btn btn-primary btn-sm" data-action="save-note" data-id="${match.id}">Save Note</button>
       </div>
-      ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : '<div class="photo-preview" id="photo-preview-${match.id}"></div>'}
+      ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
     </div>
 
     <div class="glass-card">
@@ -453,8 +536,6 @@ export function renderMatchDetail(id) {
         <button class="btn" data-action="export-pdf" data-id="${match.id}">📄 Export PDF</button>
       </div>
     </div>
-
-    ${renderMatchIntelligence(match)}
   `);
 }
 
