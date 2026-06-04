@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cupverse-v3';
+const CACHE_NAME = 'cupverse-v4';
 
 const STATIC_ASSETS = [
   './',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   './js/countdown.js',
   './js/shareCard.js',
   './js/router.js',
+  './js/intelligence.js',
   './world_cup_data.json',
   './manifest.json',
   './assets/placeholder-stadium.jpg',

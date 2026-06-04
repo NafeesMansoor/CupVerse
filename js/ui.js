@@ -13,6 +13,7 @@ import {
   isAiEnabled, setAiEnabled, clearStorage,
 } from './storage.js';
 import { navigateTo } from './router.js';
+import { getMatchIntelligence } from './intelligence.js';
 
 const app = document.getElementById('app');
 
@@ -452,7 +453,139 @@ export function renderMatchDetail(id) {
         <button class="btn" data-action="export-pdf" data-id="${match.id}">📄 Export PDF</button>
       </div>
     </div>
+
+    ${renderMatchIntelligence(match)}
   `);
+}
+
+// ── MATCH INTELLIGENCE ────────────────────────────────────
+function renderMatchIntelligence(match) {
+  const intel = getMatchIntelligence(match);
+  if (!intel) return '';
+
+  const { h2h, rivalry, headline, narrative, facts, prediction } = intel;
+
+  // ── Rivalry meter ──
+  const starsHTML = Array.from({ length: 5 }, (_, i) =>
+    `<span class="rivalry-star ${i < rivalry.stars ? 'lit' : ''}">★</span>`
+  ).join('');
+
+  // ── H2H bar widths ──
+  const total = h2h.homeWins + h2h.draws + h2h.awayWins || 1;
+  const hw = Math.round(h2h.homeWins / total * 100);
+  const dw = Math.round(h2h.draws   / total * 100);
+  const aw = 100 - hw - dw;
+
+  // ── Last 5 meetings ──
+  const COMP_LABEL = { WC:'World Cup', WCQ:'WC Qualifier', EURO:'Euro', NL:'Nations Lg',
+    CA:'Copa América', FR:'Friendly', AFCON:'AFCON', CONC:'Gold Cup' };
+  const meetingsHTML = h2h.last5.length ? h2h.last5.slice(0, 5).map(m => `
+    <div class="meeting-row">
+      <span class="meeting-year">${m.y}</span>
+      <span class="meeting-comp">${COMP_LABEL[m.comp] || m.comp}</span>
+      <span class="meeting-score">${m.homeScore} – ${m.awayScore}</span>
+      ${m.note ? `<span class="meeting-note">${m.note}</span>` : ''}
+    </div>
+  `).join('') : `<p class="text-muted" style="font-size:0.85rem;padding:8px 0;">No previous meetings recorded.</p>`;
+
+  // ── Facts ──
+  const FACT_ICONS = ['⚡','📖','🏆','🔥'];
+  const factsHTML = facts.map((f, i) => `
+    <div class="intel-fact">
+      <span class="intel-fact-icon">${FACT_ICONS[i % FACT_ICONS.length]}</span>
+      <span>${f}</span>
+    </div>
+  `).join('');
+
+  return `
+    <!-- ── AI Storyline ── -->
+    <div class="intel-storyline">
+      <div class="intel-section-label">Match Intelligence</div>
+      <div class="intel-headline">${headline}</div>
+      <div class="intel-narrative">${narrative}</div>
+    </div>
+
+    <!-- ── Rivalry Meter ── -->
+    <div class="glass-card">
+      <div class="intel-section-label">Rivalry Meter</div>
+      <div class="rivalry-meter">
+        <div class="rivalry-stars">${starsHTML}</div>
+        <div class="rivalry-label">${rivalry.label}</div>
+      </div>
+      ${h2h.famous ? `<div class="rivalry-famous">${h2h.famous}</div>` : ''}
+    </div>
+
+    <!-- ── Head-to-Head ── -->
+    <div class="glass-card">
+      <div class="intel-section-label">Head-to-Head Record</div>
+      ${h2h.played > 0 ? `
+      <div class="h2h-summary">
+        <div class="h2h-team-block">
+          <span class="h2h-team-flag">${match.homeTeam.flag}</span>
+          <div class="h2h-team-wins">${h2h.homeWins}</div>
+          <div class="h2h-team-name">${match.homeTeam.name}</div>
+        </div>
+        <div class="h2h-centre">
+          <div class="h2h-draws-val">${h2h.draws}</div>
+          <div class="h2h-draws-label">Draws</div>
+        </div>
+        <div class="h2h-team-block">
+          <span class="h2h-team-flag">${match.awayTeam.flag}</span>
+          <div class="h2h-team-wins">${h2h.awayWins}</div>
+          <div class="h2h-team-name">${match.awayTeam.name}</div>
+        </div>
+      </div>
+      <div class="h2h-bar-wrap">
+        <div class="h2h-bar-home" style="width:${hw}%"></div>
+        <div class="h2h-bar-draw" style="width:${dw}%"></div>
+        <div class="h2h-bar-away" style="width:${aw}%"></div>
+      </div>
+      <div class="h2h-meta">
+        <span>${match.homeTeam.name}</span>
+        <span>${h2h.played} played · ${h2h.wcMeetings} WC meetings</span>
+        <span>${match.awayTeam.name}</span>
+      </div>
+      ` : `<p class="text-muted" style="font-size:0.85rem;">No previous meetings recorded between these sides.</p>`}
+    </div>
+
+    <!-- ── Last 5 Meetings ── -->
+    ${h2h.last5.length ? `
+    <div class="glass-card">
+      <div class="intel-section-label">Recent Meetings</div>
+      <div class="last-meetings">${meetingsHTML}</div>
+    </div>` : ''}
+
+    <!-- ── Prediction ── -->
+    <div class="glass-card">
+      <div class="intel-section-label">Prediction Indicator</div>
+      <div class="prediction-row">
+        <div class="pred-team">
+          <div class="pred-pct">${prediction.home}%</div>
+          <div class="pred-label">${match.homeTeam.flag} Win</div>
+        </div>
+        <div class="pred-draw">
+          <div class="pred-draw-pct">${prediction.draw}%</div>
+          <div class="pred-draw-label">Draw</div>
+        </div>
+        <div class="pred-team">
+          <div class="pred-pct" style="color:var(--accent-gold)">${prediction.away}%</div>
+          <div class="pred-label">${match.awayTeam.flag} Win</div>
+        </div>
+      </div>
+      <div class="pred-bar-wrap">
+        <div class="pred-bar-home" style="width:${prediction.home}%"></div>
+        <div class="pred-bar-draw" style="width:${prediction.draw}%"></div>
+        <div class="pred-bar-away" style="width:${prediction.away}%"></div>
+      </div>
+      <p class="pred-disclaimer">Based on FIFA rankings, H2H record & recent form. For entertainment only.</p>
+    </div>
+
+    <!-- ── Match Facts ── -->
+    <div class="glass-card">
+      <div class="intel-section-label">Match Facts</div>
+      <div class="intel-facts">${factsHTML}</div>
+    </div>
+  `;
 }
 
 // ── TEAMS ─────────────────────────────────────────────────
