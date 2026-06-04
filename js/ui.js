@@ -169,7 +169,16 @@ export function renderHomeDashboard() {
           <div class="hero-team-name">${next.awayTeam.name}</div>
         </div>
       </div>
-      <div class="hero-countdown" data-countdown-target="${next.datetime}">00:00:00</div>
+      <div class="cd-kickoff-label">Kicks off in</div>
+      <div class="countdown-blocks" data-countdown-target="${next.datetime}">
+        <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
+      </div>
       <div class="hero-meta">
         <span class="hero-meta-item">🏟️ ${next.stadium}</span>
         <span class="hero-meta-item">📅 ${fmtDate(next.datetime)}</span>
@@ -375,7 +384,7 @@ export function renderMatchDetail(id) {
   const intel = getMatchIntelligence(match);
 
   const statusClass = `status-${status}`;
-  const statusLabel = status === 'live' ? '🔴 LIVE' : status === 'completed' ? 'Full Time' : 'Upcoming';
+  const statusLabel = status === 'live' ? '🔴 LIVE' : status === 'completed' ? 'Full Time' : null;
 
   // ── National identity gradient ──
   const hc = getTeamColor(match.homeTeam.name);
@@ -414,7 +423,16 @@ export function renderMatchDetail(id) {
         </div>
       </div>` : '';
     heroCenter = `
-      <div class="detail-hero-countdown" data-countdown-target="${match.datetime}">00:00:00</div>
+      <div class="cd-kickoff-label">Kicks off in</div>
+      <div class="countdown-blocks" data-countdown-target="${match.datetime}">
+        <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
+      </div>
       <div class="detail-hero-kickoff">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
       ${probHTML}
       <div class="hero-score-entry" style="margin-top:14px;">
@@ -471,8 +489,7 @@ export function renderMatchDetail(id) {
     <div class="detail-hero" style="${natGrad}">
       <div class="detail-hero-status">
         ${match.stage}${match.group ? ` · Group ${match.group}` : ''}
-        &nbsp;·&nbsp;
-        <span class="status-badge ${statusClass}">${statusLabel}</span>
+        ${statusLabel ? `&nbsp;·&nbsp;<span class="status-badge ${statusClass}">${statusLabel}</span>` : ''}
       </div>
       <div class="detail-hero-teams">
         <div class="detail-hero-team">

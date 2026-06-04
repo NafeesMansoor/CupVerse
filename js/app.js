@@ -5,7 +5,7 @@ import {
   renderSettings, renderStandings, updateNavActive,
 } from './ui.js';
 import { parseRoute, navigateTo } from './router.js';
-import { createCountdown } from './countdown.js';
+import { createCountdown, createBlockCountdown } from './countdown.js';
 import { generateShareCard } from './shareCard.js';
 import {
   getTheme, setTheme, setTimezone, setAiEnabled,
@@ -33,8 +33,14 @@ function updateOfflineBanner() {
 // ── Countdown ─────────────────────────────────────────────
 function attachCountdown() {
   if (countdownClear) { countdownClear(); countdownClear = null; }
-  const el = document.querySelector('[data-countdown-target]');
-  if (el) countdownClear = createCountdown(el.dataset.countdownTarget, el);
+  const clearFns = [];
+  document.querySelectorAll('.countdown-blocks[data-countdown-target]').forEach(el => {
+    clearFns.push(createBlockCountdown(el.dataset.countdownTarget, el));
+  });
+  document.querySelectorAll('[data-countdown-target]:not(.countdown-blocks)').forEach(el => {
+    clearFns.push(createCountdown(el.dataset.countdownTarget, el));
+  });
+  if (clearFns.length) countdownClear = () => clearFns.forEach(f => f());
 }
 
 // ── Route rendering ────────────────────────────────────────
