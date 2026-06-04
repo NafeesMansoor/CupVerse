@@ -2,16 +2,18 @@ import { loadMatches, getMatchById, getMatches } from './data.js';
 import {
   renderApp, renderHomeDashboard, renderMatches, renderMatchesList,
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
-  renderSettings, renderStandings, updateNavActive,
+  renderSettings, renderStandings, renderTeamProfile,
+  renderVenues, renderVenueDetail, updateNavActive,
 } from './ui.js';
+import { getStadiumByName } from './venues.js';
 import { parseRoute, navigateTo } from './router.js';
 import { createCountdown, createBlockCountdown } from './countdown.js';
 import { generateShareCard } from './shareCard.js';
 import {
   getTheme, setTheme, setTimezone, setAiEnabled,
   clearStorage, toggleFavoriteMatch, toggleFavTeam,
-  setScore, clearScore, setNote, addTopScorer, removeTopScorer,
-  getNote, isMatchFavorite,
+  setNote, getNote, isMatchFavorite,
+  toggleCardCollapse,
 } from './storage.js';
 
 const splash = document.getElementById('splash');
@@ -57,6 +59,9 @@ function renderCurrentRoute() {
     case 'matches':   view = renderMatches(); break;
     case 'match':     view = renderMatchDetail(route.params.id); break;
     case 'teams':     view = renderTeams(); break;
+    case 'team':      view = renderTeamProfile(route.params.name); break;
+    case 'venues':    view = renderVenues(); break;
+    case 'venue':     view = renderVenueDetail(route.params.id); break;
     case 'calendar':  view = renderCalendar(); break;
     case 'scorers':   view = renderScorers(); break;
     case 'standings': view = renderStandings(); break;
@@ -64,11 +69,18 @@ function renderCurrentRoute() {
     default:          view = renderHomeDashboard(); break;
   }
   renderApp(view);
-  updateNavActive(route.page === 'match' ? 'matches' : route.page || 'home');
+  const navPage = route.page === 'match' ? 'matches'
+    : route.page === 'team'  ? 'teams'
+    : route.page === 'venue' ? 'venues'
+    : route.page || 'home';
+  updateNavActive(navPage);
   window.scrollTo(0, 0);
 
   if (route.page === 'matches') {
     initMatchFilters();
+  }
+  if (route.page === 'calendar') {
+    initCalendarFilters();
   }
   attachCountdown();
 }
@@ -103,6 +115,47 @@ function initMatchFilters() {
   if (stageFilter) stageFilter.addEventListener('change', runFilter);
   if (groupFilter) groupFilter.addEventListener('change', runFilter);
   runFilter();
+}
+
+// ── Calendar filters ──────────────────────────────────────
+function initCalendarFilters() {
+  const teamSel = document.getElementById('cal-team-filter');
+  if (teamSel) teamSel.addEventListener('change', () => renderApp(renderCalendar({ team: teamSel.value })));
+}
+
+// ── iCal Export ───────────────────────────────────────────
+function exportIcal() {
+  const matches = getMatches();
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//CupVerse//World Cup 2026//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:FIFA World Cup 2026',
+    'X-WR-TIMEZONE:UTC',
+  ];
+  matches.forEach(m => {
+    const start = new Date(m.datetime);
+    const end   = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const fmt   = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:cupverse-${m.id}@wc2026`,
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:${m.homeTeam.name} vs ${m.awayTeam.name}`,
+      `LOCATION:${m.stadium}`,
+      `DESCRIPTION:${m.stage}${m.group ? ` Group ${m.group}` : ''} - FIFA World Cup 2026`,
+      'END:VEVENT',
+    );
+  });
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'wc2026-schedule.ics'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ── Refresh ────────────────────────────────────────────────
@@ -233,6 +286,16 @@ function showToast(msg) {
   setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 250); }, 2000);
 }
 
+// ── Double-click collapse ─────────────────────────────────
+function handleDblClick(event) {
+  const card = event.target.closest('[data-card-id]');
+  if (!card) return;
+  event.preventDefault();
+  const cardId = card.dataset.cardId;
+  const isNowCollapsed = toggleCardCollapse(cardId);
+  card.dataset.collapsed = String(isNowCollapsed);
+}
+
 // ── Action handler ─────────────────────────────────────────
 function handleAction(event) {
   const btn = event.target.closest('[data-action]');
@@ -244,19 +307,30 @@ function handleAction(event) {
       navigateTo(`match/${id}`);
       break;
 
-    case 'save-score': {
-      const home = document.getElementById(`home-score-${id}`)?.value;
-      const away = document.getElementById(`away-score-${id}`)?.value;
-      if (home !== '' && away !== '') {
-        setScore(id, home, away);
-        renderCurrentRoute();
-      }
+    case 'open-team': {
+      const name = btn.dataset.name;
+      if (name) navigateTo(`team/${encodeURIComponent(name)}`);
       break;
     }
 
-    case 'clear-score':
-      clearScore(id);
-      renderCurrentRoute();
+    case 'open-venue':
+      navigateTo(`venue/${btn.dataset.id}`);
+      break;
+
+    case 'open-venue-by-name': {
+      const st = getStadiumByName(btn.dataset.name);
+      if (st) navigateTo(`venue/${st.id}`);
+      else    navigateTo('venues');
+      break;
+    }
+
+    case 'venue-country':
+      renderApp(renderVenues(btn.dataset.country));
+      break;
+
+    case 'nav-back':
+      if (history.length > 1) history.back();
+      else navigateTo('teams');
       break;
 
     case 'toggle-star':
@@ -286,29 +360,34 @@ function handleAction(event) {
       break;
 
     case 'calendar-date':
-      renderApp(renderCalendar(date));
+      renderApp(renderCalendar({ date }));
+      initCalendarFilters();
       attachCountdown();
       break;
 
-    case 'add-scorer': {
-      const name = document.getElementById('scorer-name')?.value?.trim();
-      const team = document.getElementById('scorer-team')?.value;
-      const goals = document.getElementById('scorer-goals')?.value || '0';
-      const assists = document.getElementById('scorer-assists')?.value || '0';
-      if (name && team) {
-        addTopScorer(name, team, goals, assists);
-        renderCurrentRoute();
+    case 'cal-filter': {
+      const filter = btn.dataset.filter;
+      if (filter === 'favs') {
+        const isActive = btn.classList.contains('active');
+        renderApp(renderCalendar({ favs: !isActive }));
       }
+      initCalendarFilters();
       break;
     }
 
-    case 'remove-scorer':
-      removeTopScorer(Number(btn.dataset.scorerId));
-      renderCurrentRoute();
+    case 'cal-clear-filters':
+      renderApp(renderCalendar({ clearFilters: true }));
+      initCalendarFilters();
       break;
 
-    case 'add-scorer-prefill': {
-      navigateTo('scorers');
+    case 'ical-export':
+      exportIcal();
+      break;
+
+    case 'pulse-chip': {
+      const pulse = btn.dataset.pulse;
+      renderApp(renderHomeDashboard(pulse));
+      attachCountdown();
       break;
     }
 
@@ -317,7 +396,7 @@ function handleAction(event) {
       break;
 
     case 'clear-storage':
-      if (confirm('Clear all scores, notes, and favorites?')) {
+      if (confirm('Clear all notes and favorites?')) {
         clearStorage();
         renderCurrentRoute();
       }
@@ -364,6 +443,8 @@ async function init() {
   window.addEventListener('hashchange', renderCurrentRoute);
   document.body.addEventListener('click', handleAction);
   document.body.addEventListener('change', handleChange);
+
+  document.body.addEventListener('dblclick', handleDblClick);
 
   await loadMatches();
   renderCurrentRoute();

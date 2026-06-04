@@ -1,9 +1,10 @@
 const KEYS = {
-  scores:   'wc2026_scores',
-  notes:    'wc2026_notes',
-  scorers:  'wc2026_scorers',
-  settings: 'wc2026_settings',
+  scores:    'wc2026_scores',
+  notes:     'wc2026_notes',
+  scorers:   'wc2026_scorers',
+  settings:  'wc2026_settings',
   favorites: 'wc2026_favorites',
+  collapsed: 'wc2026_collapsed',
 };
 
 function readJSON(key, fallback) {
@@ -150,6 +151,22 @@ export function isAiEnabled() {
 }
 export function setAiEnabled(v) {
   writeJSON('wc2026_ai', Boolean(v));
+}
+
+// ── Collapsed Cards ───────────────────────────────────────
+export function getCollapsedCards() {
+  return readJSON(KEYS.collapsed, {});
+}
+
+export function toggleCardCollapse(cardId) {
+  const state = getCollapsedCards();
+  state[cardId] = !state[cardId];
+  writeJSON(KEYS.collapsed, state);
+  return state[cardId];
+}
+
+export function isCardCollapsed(cardId) {
+  return Boolean(getCollapsedCards()[cardId]);
 }
 
 // ── Clear All ────────────────────────────────────────────

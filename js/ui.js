@@ -4,16 +4,17 @@ import {
   getMatchesByDate, getAllMatchDates, getGroupStandings,
 } from './data.js';
 import {
-  getScore, setScore, clearScore, getAllScores,
-  getNote, setNote,
-  getTopScorers, addTopScorer, removeTopScorer,
+  getScore, getAllScores,
+  getNote,
   getFavTeams, isFavTeam, toggleFavTeam,
   getFavoriteMatches, toggleFavoriteMatch, isMatchFavorite,
   getTimezone, getTheme, setTheme, setTimezone,
   isAiEnabled, setAiEnabled, clearStorage,
+  isCardCollapsed,
 } from './storage.js';
 import { navigateTo } from './router.js';
-import { getMatchIntelligence, getTeamColor, getTeamData } from './intelligence.js';
+import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
+import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
 
@@ -79,6 +80,10 @@ const GROUP_COLORS = {
 
 function groupColor(g) { return GROUP_COLORS[g] || '#666'; }
 
+// ── Display name normalization ────────────────────────────
+const SHORT_NAMES = { 'Bosnia and Herzegovina': 'Bosnia' };
+function displayName(name) { return SHORT_NAMES[name] || name; }
+
 // ── Status helpers ────────────────────────────────────────
 function effectiveStatus(match) {
   const score = getScore(match.id);
@@ -91,7 +96,7 @@ function effectiveScore(match) {
 }
 
 // ── Match Card HTML ───────────────────────────────────────
-function matchCardHTML(match, { compact = false, featured = false } = {}) {
+function matchCardHTML(match, { compact = false, featured = false, calendar = false } = {}) {
   const status = effectiveStatus(match);
   const score = effectiveScore(match);
   const starred = isMatchFavorite(match.id);
@@ -100,17 +105,25 @@ function matchCardHTML(match, { compact = false, featured = false } = {}) {
   const scoreDisplay = score ? `<span class="match-score-display">${score.home} – ${score.away}</span>` : '';
   const time = fmtTime(match.datetime);
   const featuredClass = featured ? ' match-card-featured' : '';
+  const vi = match.venueInfo || {};
+
+  const calVenueRow = calendar ? `
+    <div class="cal-match-venue">
+      <span class="cal-venue-item">🏟️ ${match.stadium}${vi.city ? ` · ${vi.city}` : ''}</span>
+      ${vi.capacity ? `<span class="cal-venue-item">👥 ${vi.capacity.toLocaleString()}</span>` : ''}
+    </div>` : '';
+
   return `
     <article class="match-card${featuredClass}" data-action="open-match" data-id="${match.id}">
       <div class="match-teams">
         <div class="match-team">
           <span class="match-team-flag">${match.homeTeam.flag}</span>
-          <span class="match-team-name">${match.homeTeam.name}</span>
+          <span class="match-team-name team-link" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</span>
         </div>
         ${scoreDisplay || '<span class="match-vs">VS</span>'}
         <div class="match-team away">
           <span class="match-team-flag">${match.awayTeam.flag}</span>
-          <span class="match-team-name">${match.awayTeam.name}</span>
+          <span class="match-team-name team-link" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</span>
         </div>
       </div>
       <div class="match-meta">
@@ -121,6 +134,7 @@ function matchCardHTML(match, { compact = false, featured = false } = {}) {
           ${starred ? '<span title="Starred">⭐</span>' : ''}
         </div>
       </div>
+      ${calVenueRow}
       <div class="match-card-footer">
         <span class="match-cta-link">View Match →</span>
         <div class="match-card-actions">
@@ -144,79 +158,227 @@ function makeSection(html) {
 }
 
 // ── HOME ─────────────────────────────────────────────────
-export function renderHomeDashboard() {
-  const next = getNextMatch();
-  const stats = getTournamentStats();
-  const upcoming = getMatches()
-    .filter(m => effectiveStatus(m) === 'upcoming')
-    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-    .slice(0, 5);
-  const favTeams = getFavTeams();
-  const allMatches = getMatches();
+let activePulse = 'upcoming';
 
-  let heroHTML = '<div class="empty-state"><div class="empty-state-icon">🏆</div><p class="empty-state-text">Tournament complete!</p></div>';
+function getPulseMatches(pulse, allMatches, favTeams) {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const tomorrowDate = new Date(now); tomorrowDate.setDate(now.getDate() + 1);
+  const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
+  const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
+  const weekEndStr = weekEnd.toISOString().slice(0, 10);
+  const knockoutStages = new Set(['Round of 32','Round of 16','Quarterfinals','Semifinals','Third Place','Final']);
+
+  switch (pulse) {
+    case 'today':
+      return allMatches.filter(m => m.date === todayStr);
+    case 'tomorrow':
+      return allMatches.filter(m => m.date === tomorrowStr);
+    case 'week':
+      return allMatches.filter(m => m.date >= todayStr && m.date <= weekEndStr);
+    case 'favorites':
+      return allMatches.filter(m => favTeams.includes(m.homeTeam.code) || favTeams.includes(m.awayTeam.code));
+    case 'knockouts':
+      return allMatches.filter(m => knockoutStages.has(m.stage));
+    case 'final':
+      return allMatches.filter(m => m.stage === 'Final');
+    default: // 'upcoming'
+      return allMatches
+        .filter(m => effectiveStatus(m) === 'upcoming')
+        .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+        .slice(0, 8);
+  }
+}
+
+export function renderHomeDashboard(pulse) {
+  if (pulse) activePulse = pulse;
+
+  const next        = getNextMatch();
+  const stats       = getTournamentStats();
+  const favTeams    = getFavTeams();
+  const allMatches  = getMatches();
+  const intel       = next ? getMatchIntelligence(next) : null;
+
+  // Momentum strip data
+  const todayStr      = new Date().toISOString().slice(0, 10);
+  const todayMatches  = allMatches.filter(m => m.date === todayStr);
+  const liveMatches   = allMatches.filter(m => effectiveStatus(m) === 'live');
+  const totalGoals    = allMatches.reduce((sum, m) => {
+    const s = effectiveScore(m);
+    return sum + (s ? (Number(s.home) + Number(s.away)) : 0);
+  }, 0);
+
+  // Pulse matches
+  const pulseMatches = getPulseMatches(activePulse, allMatches, favTeams);
+
+  // ── V3.0 Hero ───────────────────────────────────────────
+  let heroContent = '';
+  let countdownWidget = '';
+
   if (next) {
-    heroHTML = `
-      <div class="hero-label">Next Match · ${next.stage}</div>
-      <div class="hero-teams">
-        <div class="hero-team">
-          <span class="hero-team-flag">${next.homeTeam.flag}</span>
-          <div class="hero-team-name">${next.homeTeam.name}</div>
+    const hc = getTeamColor(next.homeTeam.name);
+    const ac = getTeamColor(next.awayTeam.name);
+    const vi = next.venueInfo || {};
+    // Pull first sentence of narrative as hero storyline
+    const rawNarrative = intel ? intel.narrative : '';
+    const storyline = rawNarrative
+      ? rawNarrative.split(/\.\s/)[0].replace(/\.$/, '') + '.'
+      : 'The tournament stage is set for a defining encounter.';
+
+    heroContent = `
+      <div class="v3-hero" style="background:linear-gradient(160deg,${hc}28 0%,rgba(11,18,32,0.88) 55%,${ac}18 100%);">
+        <div class="wc-branding">⚽ FIFA World Cup 2026 · USA · Canada · Mexico</div>
+
+        <div class="hero-v3-matchup">
+          <div class="hero-v3-nation">
+            <span class="hero-v3-flag">${next.homeTeam.flag}</span>
+            <div class="hero-v3-name">${next.homeTeam.name}</div>
+          </div>
+          <div class="hero-v3-center">
+            <div class="hero-v3-vs">VS</div>
+            <div class="hero-v3-stage">${next.stage}${next.group ? ` · Group ${next.group}` : ''}</div>
+          </div>
+          <div class="hero-v3-nation">
+            <span class="hero-v3-flag">${next.awayTeam.flag}</span>
+            <div class="hero-v3-name">${next.awayTeam.name}</div>
+          </div>
         </div>
-        <span class="hero-vs">VS</span>
-        <div class="hero-team">
-          <span class="hero-team-flag">${next.awayTeam.flag}</span>
-          <div class="hero-team-name">${next.awayTeam.name}</div>
+
+        ${intel ? `
+        <div class="hero-v3-prob">
+          <div class="hwp-prob-row">
+            <span class="prob-home">${intel.prediction.home}% ${next.homeTeam.name}</span>
+            <span>${intel.prediction.draw}% Draw</span>
+            <span class="prob-away">${next.awayTeam.name} ${intel.prediction.away}%</span>
+          </div>
+          <div class="hwp-bar" style="height:5px;">
+            <div class="hwp-home" style="width:${intel.prediction.home}%"></div>
+            <div class="hwp-draw" style="width:${intel.prediction.draw}%"></div>
+            <div class="hwp-away" style="width:${intel.prediction.away}%"></div>
+          </div>
+        </div>` : ''}
+
+        <div class="hero-v3-storyline">${storyline}</div>
+
+        <div class="hero-v3-venue">
+          <span class="hero-v3-venue-item">🏟️ ${next.stadium}${vi.city ? ` · ${vi.city}` : ''}</span>
+          ${vi.capacity ? `<span class="hero-v3-venue-item">👥 ${vi.capacity.toLocaleString()}</span>` : ''}
+          <span class="hero-v3-venue-item">📅 ${fmtDate(next.datetime)}</span>
+          <span class="hero-v3-venue-item">⏰ ${fmtTime(next.datetime)}</span>
+        </div>
+
+        <button class="hero-v3-view-btn" data-action="open-match" data-id="${next.id}">View Match →</button>
+      </div>
+    `;
+
+    countdownWidget = `
+      <div class="countdown-widget">
+        <div class="cw-label">Kickoff In</div>
+        <div class="countdown-blocks" data-countdown-target="${next.datetime}">
+          <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
+        </div>
+        <div class="cw-teams">${next.homeTeam.flag} ${next.homeTeam.name}<br>vs<br>${next.awayTeam.name} ${next.awayTeam.flag}</div>
+      </div>
+    `;
+  } else {
+    heroContent = `
+      <div class="v3-hero">
+        <div class="wc-branding">⚽ FIFA World Cup 2026</div>
+        <div class="empty-state" style="padding:24px 0;">
+          <div class="empty-state-icon">🏆</div>
+          <p class="empty-state-text">Tournament complete!</p>
         </div>
       </div>
-      <div class="cd-kickoff-label">Kicks off in</div>
-      <div class="countdown-blocks" data-countdown-target="${next.datetime}">
-        <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
-      </div>
-      <div class="hero-meta">
-        <span class="hero-meta-item">🏟️ ${next.stadium}</span>
-        <span class="hero-meta-item">📅 ${fmtDate(next.datetime)}</span>
-        <span class="hero-meta-item">⏰ ${fmtTime(next.datetime)}</span>
-      </div>
-      <button class="hero-cta" data-action="open-match" data-id="${next.id}">View Match →</button>
     `;
   }
 
-  // Favorite team widget
-  let favWidget = '<p class="text-muted">Go to Teams to add favorites.</p>';
+  // ── Tournament Pulse chips ──────────────────────────────
+  const pulseChips = [
+    { id: 'upcoming',  label: 'Upcoming'  },
+    { id: 'today',     label: 'Today'     },
+    { id: 'tomorrow',  label: 'Tomorrow'  },
+    { id: 'week',      label: 'This Week' },
+    { id: 'favorites', label: 'Favorites' },
+    { id: 'knockouts', label: 'Knockouts' },
+    { id: 'final',     label: 'Final'     },
+  ];
+  const pulseHTML = pulseChips.map(c => `
+    <button class="pulse-chip ${activePulse === c.id ? 'active' : ''}" data-action="pulse-chip" data-pulse="${c.id}">${c.label}</button>
+  `).join('');
+
+  // ── Pulse match grid ────────────────────────────────────
+  const pulseGrid = pulseMatches.length
+    ? `<div class="match-grid">${pulseMatches.map(m => matchCardHTML(m)).join('')}</div>`
+    : `<div class="empty-state" style="padding:28px 0;">
+         <div class="empty-state-icon">📅</div>
+         <p class="empty-state-text">No matches for this filter.</p>
+       </div>`;
+
+  // ── Favorite team widget ────────────────────────────────
+  let favWidget = '<p class="text-muted" style="font-size:0.85rem;">Go to Teams to add your favorites.</p>';
   if (favTeams.length) {
-    const favMatches = allMatches.filter(m =>
-      favTeams.includes(m.homeTeam.code) || favTeams.includes(m.awayTeam.code)
-    ).filter(m => effectiveStatus(m) === 'upcoming')
-     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-    if (favMatches.length) {
-      const fm = favMatches[0];
+    const favUpcoming = allMatches
+      .filter(m => (favTeams.includes(m.homeTeam.code) || favTeams.includes(m.awayTeam.code)) && effectiveStatus(m) === 'upcoming')
+      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+    if (favUpcoming.length) {
+      const fm = favUpcoming[0];
       favWidget = `
-        <div style="cursor:pointer" data-action="open-match" data-id="${fm.id}">
+        <div style="cursor:pointer;" data-action="open-match" data-id="${fm.id}">
           <div style="font-weight:700;margin-bottom:4px;">${fm.homeTeam.flag} ${fm.homeTeam.name} vs ${fm.awayTeam.name} ${fm.awayTeam.flag}</div>
           <div class="text-muted text-small">${fmtDate(fm.datetime)} · ${fmtTime(fm.datetime)}</div>
           <div class="text-small" style="color:var(--accent-blue-bright);margin-top:4px;">${fm.stage}</div>
-        </div>
-      `;
+        </div>`;
     } else {
-      favWidget = '<p class="text-muted">No upcoming matches for your favorite teams.</p>';
+      favWidget = '<p class="text-muted" style="font-size:0.85rem;">No upcoming matches for your favorite teams.</p>';
     }
   }
 
   const progress = stats.totalMatches ? Math.round((stats.played / stats.totalMatches) * 100) : 0;
 
-  const section = makeSection(`
-    <div class="hero-card">${heroHTML}</div>
+  return makeSection(`
+    <div class="hero-row">
+      ${heroContent}
+      ${countdownWidget}
+    </div>
 
-    <div class="glass-card">
+    <div class="tournament-pulse">${pulseHTML}</div>
+
+    <div class="momentum-strip">
+      <div class="momentum-item">
+        <div class="momentum-val">${todayMatches.length}</div>
+        <div class="momentum-label">Today's Matches</div>
+      </div>
+      <div class="momentum-item">
+        <div class="momentum-val">${liveMatches.length}</div>
+        <div class="momentum-label">Live Now</div>
+      </div>
+      <div class="momentum-item">
+        <div class="momentum-val">${totalGoals}</div>
+        <div class="momentum-label">Total Goals</div>
+      </div>
+      <div class="momentum-item">
+        <div class="momentum-val">48</div>
+        <div class="momentum-label">Nations</div>
+      </div>
+    </div>
+
+    <div class="glass-card" data-card-id="home-matches" data-collapsed="${isCardCollapsed('home-matches')}">
       <div class="section-header">
-        <h2>Tournament Stats</h2>
+        <h2>${activePulse === 'upcoming' ? 'Next Matches' : pulseChips.find(c => c.id === activePulse)?.label || 'Matches'}</h2>
+        <span class="section-badge">${pulseMatches.length}</span>
+      </div>
+      ${pulseGrid}
+    </div>
+
+    <div class="glass-card" data-card-id="home-progress" data-collapsed="${isCardCollapsed('home-progress')}">
+      <div class="section-header">
+        <h2>Tournament Progress</h2>
         <span class="section-badge">${stats.remainingDays}d left</span>
       </div>
       <div class="stats-row">
@@ -225,8 +387,8 @@ export function renderHomeDashboard() {
           <div class="stat-label">Played</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">${stats.totalMatches}</div>
-          <div class="stat-label">Total</div>
+          <div class="stat-value">${totalGoals}</div>
+          <div class="stat-label">Goals</div>
         </div>
         <div class="stat-item">
           <div class="stat-value">${stats.upcoming}</div>
@@ -244,25 +406,19 @@ export function renderHomeDashboard() {
       </div>
     </div>
 
-    <div class="glass-card">
-      <div class="section-header"><h2>Next 5 Matches</h2></div>
-      <div class="h-scroll">
-        ${upcoming.length ? upcoming.map(m => `
-          <div class="upcoming-card" data-action="open-match" data-id="${m.id}">
-            <div class="upcoming-card-teams">${m.homeTeam.flag} ${m.homeTeam.name} vs ${m.awayTeam.name} ${m.awayTeam.flag}</div>
-            <div class="upcoming-card-meta">${m.stage}</div>
-            <div class="upcoming-card-time">${fmtDate(m.datetime)} · ${fmtTime(m.datetime)}</div>
-          </div>
-        `).join('') : '<p class="text-muted">No upcoming matches.</p>'}
-      </div>
-    </div>
-
-    <div class="glass-card">
-      <div class="section-header"><h2>Favorite Team</h2></div>
+    <div class="glass-card" data-card-id="home-favs" data-collapsed="${isCardCollapsed('home-favs')}">
+      <div class="section-header"><h2>Favorite Teams</h2></div>
       ${favWidget}
     </div>
+
+    <!-- Tournament Journal (locked until Final ends 2026-07-19) -->
+    <div class="journal-locked-card">
+      <div class="jlc-icon">📔</div>
+      <div class="jlc-title">Tournament Journal</div>
+      <div class="jlc-desc">Generate your comprehensive FIFA World Cup 2026 report — match-by-match, group analysis, knockout drama, and your personal notes.</div>
+      <div class="jlc-lock">🔒 Available after the FIFA World Cup 2026 Final</div>
+    </div>
   `);
-  return section;
 }
 
 // ── MATCHES ───────────────────────────────────────────────
@@ -388,18 +544,20 @@ export function renderMatchDetail(id) {
   const aData = getTeamData(match.awayTeam.name);
 
   // ── Scoreboard ribbon center ──
-  let sbCenter = '', sbStatus = '';
+  let sbCenter = '';
   if (score) {
     sbCenter = `<div class="sb-score">${score.home}&nbsp;–&nbsp;${score.away}</div><div class="sb-status-text">Full Time</div>`;
   } else if (status === 'live') {
     sbCenter = `<div class="sb-score"><span class="sb-live-dot"></span>LIVE</div>`;
+  } else if (status === 'completed') {
+    sbCenter = `<div class="sb-score" style="font-size:1rem;letter-spacing:0.12em;opacity:0.7;">FT</div><div class="sb-status-text">Full Time</div>`;
   } else {
     sbCenter = `<div class="sb-score" style="font-size:1rem;letter-spacing:0.12em;opacity:0.7;">VS</div><div class="sb-status-text">${fmtTime(match.datetime)}</div>`;
   }
 
-  // ── Below-ribbon content ──
+  // ── Below-ribbon content (read-only — no manual score entry) ──
   let broadcastBottom = '';
-  if (status === 'upcoming' && !score) {
+  if (status === 'upcoming') {
     const prob = intel ? `
       <div class="hero-win-prob" style="width:100%;max-width:320px;">
         <div class="hwp-bar">
@@ -424,23 +582,12 @@ export function renderMatchDetail(id) {
         <span class="cd-sep">:</span>
         <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
       </div>
-      ${prob}
-      <div class="broadcast-score-entry">
-        <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
-        <span class="score-entry-dash">–</span>
-        <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
-        <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
-      </div>`;
-  } else if (status === 'live' && !score) {
+      ${prob}`;
+  } else if (status === 'live') {
     broadcastBottom = `
-      <div class="broadcast-score-entry">
-        <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
-        <span class="score-entry-dash">–</span>
-        <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
-        <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:700;color:var(--accent-live);">
+        <span class="sb-live-dot"></span> Match in progress
       </div>`;
-  } else if (score) {
-    broadcastBottom = `<button class="btn btn-sm" data-action="clear-score" data-id="${match.id}">Edit Score</button>`;
   }
 
   // ── Form badges ──
@@ -456,7 +603,7 @@ export function renderMatchDetail(id) {
         <span>${teamName} Squad</span><span class="section-badge">${squad.length}</span>
       </summary>
       <div class="squad-list" style="margin-top:10px;">
-        ${squad.map(p => `<span class="player-pill" data-action="add-scorer-prefill" data-player="${p}" data-team="${teamName}">${p}</span>`).join('')}
+        ${squad.map(p => `<span class="player-pill">${p}</span>`).join('')}
       </div>
     </details>`;
 
@@ -483,7 +630,7 @@ export function renderMatchDetail(id) {
               ${match.homeTeam.flag}
             </div>
           </div>
-          <div class="shield-team-name">${match.homeTeam.name}</div>
+          <div class="shield-team-name team-link" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</div>
         </div>
 
         <div class="broadcast-vs">
@@ -496,14 +643,14 @@ export function renderMatchDetail(id) {
               ${match.awayTeam.flag}
             </div>
           </div>
-          <div class="shield-team-name">${match.awayTeam.name}</div>
+          <div class="shield-team-name team-link" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</div>
         </div>
       </div>
 
       <div class="scoreboard-ribbon">
-        <div class="sb-home">${match.homeTeam.name}</div>
+        <div class="sb-home team-link" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</div>
         <div class="sb-center">${sbCenter}</div>
-        <div class="sb-away">${match.awayTeam.name}</div>
+        <div class="sb-away team-link" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</div>
       </div>
 
       <div class="broadcast-date">${fmtDate(match.datetime)} &nbsp;·&nbsp; ${vi.flag} ${vi.city || vi.name}</div>
@@ -516,6 +663,7 @@ export function renderMatchDetail(id) {
       <div class="tab-bar">
         <button class="tab-btn active" data-action="match-tab" data-tab="overview">Overview</button>
         <button class="tab-btn"        data-action="match-tab" data-tab="intelligence">Intelligence</button>
+        <button class="tab-btn"        data-action="match-tab" data-tab="journal">Journal</button>
         <button class="tab-btn"        data-action="match-tab" data-tab="info">Info</button>
       </div>
 
@@ -562,21 +710,78 @@ export function renderMatchDetail(id) {
         ${intelTabHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">🔍</div><p class="empty-state-text">Intelligence available for group stage matches once teams are confirmed.</p></div></div>'}
       </div>
 
+      <!-- ── Tab: Journal ── -->
+      <div class="tab-panel" data-tab="journal">
+        <div class="glass-card">
+          <div class="intel-section-label">Match Notes</div>
+          <div class="journal-prompt">Your personal notes for this match. Only visible to you.</div>
+          <textarea class="notes-area" id="match-note-${match.id}" placeholder="Add your observations, predictions or memories…">${note.text}</textarea>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label class="btn btn-sm" style="cursor:pointer;">📷 Add Photo
+              <input type="file" id="note-photos-${match.id}" accept="image/*" multiple style="display:none;" />
+            </label>
+            <button class="btn btn-primary btn-sm" data-action="save-note" data-id="${match.id}">Save Notes</button>
+          </div>
+          ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
+        </div>
+
+        <div class="glass-card">
+          <div class="intel-section-label">Tactical Notes</div>
+          <div class="journal-prompt">Observations on formations, key battles and tactical decisions.</div>
+          <textarea class="tactical-input" placeholder="e.g. High press vs low block, wing overloads, set-piece routines…"></textarea>
+        </div>
+
+        ${intel ? `
+        <div class="glass-card">
+          <div class="intel-section-label">Match Story</div>
+          <div class="intel-headline">${intel.headline}</div>
+          <div class="intel-narrative" style="margin-top:8px;">${intel.narrative}</div>
+        </div>` : ''}
+
+        <div class="glass-card">
+          <div class="intel-section-label">AI Generated Summary</div>
+          <div class="gb-watch-note" style="margin-bottom:0;">
+            ${status === 'completed'
+              ? `${intel ? intel.narrative : 'Match completed. Full AI analysis available when connected to live data.'}`
+              : 'AI summary will be generated after the match is complete.'}
+          </div>
+        </div>
+      </div>
+
       <!-- ── Tab: Info ── -->
       <div class="tab-panel" data-tab="info">
+
+        <!-- Venue Intelligence Card -->
         <div class="glass-card">
-          <div class="intel-section-label">Venue</div>
-          <div style="font-size:1rem;font-weight:700;margin-bottom:12px;">${vi.flag} ${vi.fullName||vi.name}</div>
-          <div class="venue-grid">
-            <div class="venue-stat"><div class="venue-stat-label">City</div><div class="venue-stat-value">${vi.city||'—'}</div></div>
-            <div class="venue-stat"><div class="venue-stat-label">Country</div><div class="venue-stat-value">${vi.country||'—'}</div></div>
-            <div class="venue-stat"><div class="venue-stat-label">Capacity</div><div class="venue-stat-value">${vi.capacity?vi.capacity.toLocaleString():'—'}</div></div>
-            <div class="venue-stat"><div class="venue-stat-label">Surface</div><div class="venue-stat-value">${vi.surface||'—'}</div></div>
-            <div class="venue-stat"><div class="venue-stat-label">Opened</div><div class="venue-stat-value">${vi.opened||'—'}</div></div>
-            <div class="venue-stat"><div class="venue-stat-label">Kickoff</div><div class="venue-stat-value">${fmtTime(match.datetime)}</div></div>
-          </div>
-          <div style="margin-top:12px;">
-            <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName||vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View Map</a>
+          <div class="intel-section-label">Venue Intelligence</div>
+          <div class="venue-intel-card">
+            <div class="vic-header">
+              <span class="vic-flag">${vi.flag || '🏟️'}</span>
+              <div style="flex:1;min-width:0;">
+                <div class="vic-name team-link" data-action="open-venue-by-name" data-name="${vi.fullName || vi.name}">${vi.fullName || vi.name}</div>
+                <div class="vic-city">${[vi.city, vi.country].filter(Boolean).join(', ') || '—'}</div>
+              </div>
+            </div>
+            <div class="vic-stats">
+              <div class="vic-stat">
+                <div class="vic-stat-val">${vi.capacity ? vi.capacity.toLocaleString() : '—'}</div>
+                <div class="vic-stat-label">Capacity</div>
+              </div>
+              <div class="vic-stat">
+                <div class="vic-stat-val">${vi.opened || '—'}</div>
+                <div class="vic-stat-label">Opened</div>
+              </div>
+              <div class="vic-stat">
+                <div class="vic-stat-val">${vi.surface || 'Grass'}</div>
+                <div class="vic-stat-label">Surface</div>
+              </div>
+            </div>
+            <div class="vic-fact">
+              🏆 Hosting FIFA World Cup 2026 · ${match.stage}${match.group ? ` Group ${match.group}` : ''}
+            </div>
+            <div style="margin-top:4px;">
+              <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName||vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View on Map</a>
+            </div>
           </div>
         </div>
 
@@ -586,18 +791,6 @@ export function renderMatchDetail(id) {
           ${squadPills(homeSquad, match.homeTeam.name)}
           ${squadPills(awaySquad, match.awayTeam.name)}
         </div>` : ''}
-
-        <div class="glass-card">
-          <div class="intel-section-label">Match Notes</div>
-          <textarea class="notes-area" id="match-note-${match.id}" placeholder="Add your notes…">${note.text}</textarea>
-          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <label class="btn btn-sm" style="cursor:pointer;">📷 Add Photo
-              <input type="file" id="note-photos-${match.id}" accept="image/*" multiple style="display:none;" />
-            </label>
-            <button class="btn btn-primary btn-sm" data-action="save-note" data-id="${match.id}">Save Note</button>
-          </div>
-          ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
-        </div>
 
         <div class="glass-card">
           <div class="action-row">
@@ -784,15 +977,25 @@ export function renderTeams(sortMode) {
 }
 
 function teamItemHTML(t, favTeams) {
-  const fav = favTeams.includes(t.code);
+  const fav   = favTeams.includes(t.code);
   const nextM = getTeamNextMatch(t.name);
+  const td    = getTeamData(t.name);
+  const tc    = getTeamColor(t.name);
+
+  const formBadge = c => {
+    const cls = c === 'W' ? 'form-w' : c === 'D' ? 'form-d' : 'form-l';
+    return `<span class="form-badge ${cls}" style="width:22px;height:22px;font-size:0.58rem;">${c}</span>`;
+  };
+  const formHTML = (td.form || '').split('').map(formBadge).join('');
+
   return `
-    <div class="team-item ${fav ? 'fav' : ''}">
-      <div class="team-item-left">
+    <div class="team-item ${fav ? 'fav' : ''}" style="border-left-color:${tc}55;">
+      <div class="team-item-left" data-action="open-team" data-name="${t.name}" style="cursor:pointer;flex:1;min-width:0;">
         <span class="team-item-flag">${t.flag}</span>
-        <div>
-          <div class="team-item-name">${t.name}</div>
-          <div class="team-item-rank">#${t.fifaRank} FIFA${nextM ? ` · ${fmtDateShort(nextM.datetime)}` : ''}</div>
+        <div style="min-width:0;">
+          <div class="team-item-name">${displayName(t.name)}</div>
+          <div class="team-item-rank">#${t.fifaRank} FIFA · ${td.wcApps || '—'} WC apps${nextM ? ` · ${fmtDateShort(nextM.datetime)}` : ''}</div>
+          ${formHTML ? `<div class="form-strip" style="margin-top:4px;gap:3px;">${formHTML}</div>` : ''}
         </div>
       </div>
       <div class="team-item-right">
@@ -802,97 +1005,465 @@ function teamItemHTML(t, favTeams) {
   `;
 }
 
-// ── CALENDAR ──────────────────────────────────────────────
-let calendarDate = null;
+// ── TEAM PROFILE ─────────────────────────────────────────
+export function renderTeamProfile(teamName) {
+  const allTeams   = getTeams();
+  const teamMeta   = allTeams.find(t => t.name === teamName);
+  const td         = getTeamData(teamName);
+  const tc         = getTeamColor(teamName);
+  const squad      = getTeamSquad(teamName);
+  const favTeams   = getFavTeams();
+  const isFav      = teamMeta ? favTeams.includes(teamMeta.code) : false;
+  const allMatches = getMatches()
+    .filter(m => m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
-export function renderCalendar(date) {
-  const allDates = getAllMatchDates();
-  if (!calendarDate) calendarDate = allDates[0] || new Date().toISOString().slice(0, 10);
-  if (date) calendarDate = date;
-
-  const matchesForDate = getMatchesByDate(calendarDate);
-
-  const dateStripHTML = allDates.map(d => {
-    const dt = new Date(d + 'T12:00:00');
-    const dayStr = dt.toLocaleDateString('en-US', { weekday: 'short' });
-    const numStr = dt.getDate();
-    const count = getMatchesByDate(d).length;
-    const active = d === calendarDate ? 'active' : '';
-    return `
-      <div class="date-pill ${active}" data-action="calendar-date" data-date="${d}">
-        <div class="date-pill-day">${dayStr}</div>
-        <div class="date-pill-num">${numStr}</div>
-        <div class="date-pill-count">${count}</div>
+  if (!teamMeta) {
+    return makeSection(`
+      <div class="glass-card">
+        <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:14px;">← Back</button>
+        <div class="empty-state"><div class="empty-state-icon">❌</div><p class="empty-state-text">Team not found.</p></div>
       </div>
-    `;
-  }).join('');
+    `);
+  }
 
-  const dt = new Date(calendarDate + 'T12:00:00');
-  const selectedLabel = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const formBadge = c => {
+    const cls = c === 'W' ? 'form-w' : c === 'D' ? 'form-d' : 'form-l';
+    return `<span class="form-badge ${cls}">${c}</span>`;
+  };
+  const formHTML = (td.form || '').split('').map(formBadge).join('');
+
+  const upcomingMatches  = allMatches.filter(m => effectiveStatus(m) === 'upcoming');
+  const completedMatches = allMatches.filter(m => effectiveStatus(m) === 'completed');
+
+  // Compute tournament W/D/L from completed matches
+  let tw = 0, td2 = 0, tl = 0, tgf = 0, tga = 0;
+  completedMatches.forEach(m => {
+    const s = effectiveScore(m);
+    if (!s) return;
+    const isHome = m.homeTeam.name === teamName;
+    const gf = Number(isHome ? s.home : s.away);
+    const ga = Number(isHome ? s.away : s.home);
+    tgf += gf; tga += ga;
+    if (gf > ga) tw++; else if (gf < ga) tl++; else td2++;
+  });
+
+  const squadHTML = squad.length ? `
+    <div class="glass-card">
+      <div class="intel-section-label">Squad (${squad.length} players)</div>
+      <div class="squad-list" style="max-height:none;">${squad.map(p => `<span class="player-pill">${p}</span>`).join('')}</div>
+    </div>` : '';
+
+  const fixturesHTML = allMatches.length ? `
+    <div class="glass-card">
+      <div class="intel-section-label">Tournament Fixtures</div>
+      <div class="match-grid">${allMatches.map(m => matchCardHTML(m)).join('')}</div>
+    </div>` : '';
 
   return makeSection(`
-    <div class="glass-card">
-      <div class="section-header"><h2>Calendar</h2></div>
-      <div class="calendar-date-strip">${dateStripHTML}</div>
+    <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:4px;">← Back</button>
+
+    <!-- Hero -->
+    <div class="tp-hero glass-card" style="border-color:${tc}44;background:linear-gradient(135deg,${tc}1A 0%,var(--bg-card) 100%);">
+      <div class="tp-flag-row">
+        <span class="tp-flag">${teamMeta.flag}</span>
+        <div class="tp-info">
+          <h1 class="tp-name">${displayName(teamMeta.name)}</h1>
+          <div class="tp-meta">Group ${teamMeta.group} · #${teamMeta.fifaRank} FIFA · ${td.conf || '—'}</div>
+          ${td.star && td.star !== '—' ? `<div class="tp-star">⭐ Key Player: ${td.star}</div>` : ''}
+        </div>
+        <button class="fav-btn" data-action="toggle-fav-team" data-code="${teamMeta.code}" title="${isFav ? 'Unfavorite' : 'Favorite'}" style="font-size:1.3rem;">${isFav ? '⭐' : '☆'}</button>
+      </div>
+      <div class="tp-best">🏆 Best World Cup Result: <strong>${td.wcBest || '—'}</strong> &nbsp;·&nbsp; ${td.wcApps || '?'} WC appearances</div>
     </div>
+
+    <!-- Stats -->
+    <div class="stats-row" style="grid-template-columns:repeat(${completedMatches.length ? 4 : 3},1fr);">
+      <div class="stat-item">
+        <div class="stat-value">#${teamMeta.fifaRank}</div>
+        <div class="stat-label">FIFA Rank</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${td.wcApps || '—'}</div>
+        <div class="stat-label">WC Apps</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${upcomingMatches.length}</div>
+        <div class="stat-label">Upcoming</div>
+      </div>
+      ${completedMatches.length ? `
+      <div class="stat-item">
+        <div class="stat-value">${tgf}-${tga}</div>
+        <div class="stat-label">GF-GA</div>
+      </div>` : ''}
+    </div>
+
+    ${completedMatches.length ? `
     <div class="glass-card">
-      <div class="section-header">
-        <h2>${selectedLabel}</h2>
-        <span class="section-badge">${matchesForDate.length} matches</span>
+      <div class="intel-section-label">Tournament Record</div>
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-item"><div class="stat-value" style="color:var(--accent-success)">${tw}</div><div class="stat-label">Won</div></div>
+        <div class="stat-item"><div class="stat-value" style="color:var(--text-muted)">${td2}</div><div class="stat-label">Drawn</div></div>
+        <div class="stat-item"><div class="stat-value" style="color:var(--accent-live)">${tl}</div><div class="stat-label">Lost</div></div>
+        <div class="stat-item"><div class="stat-value">${tw * 3 + td2}</div><div class="stat-label">Points</div></div>
+      </div>
+    </div>` : ''}
+
+    <!-- Recent Form -->
+    <div class="glass-card">
+      <div class="intel-section-label">Recent Form (Last 5)</div>
+      <div class="form-strip">${formHTML || '<span class="text-muted">No data</span>'}</div>
+      <div style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);">Play style: ${td.style || '—'} · Confederation: ${td.conf || '—'}</div>
+    </div>
+
+    ${fixturesHTML}
+    ${squadHTML}
+  `);
+}
+
+// ── CALENDAR — iOS-style 2D month grid ────────────────────
+let calendarDate  = null;
+let calFilterTeam = '';
+let calFilterFavs = false;
+
+function applyCalFilters(matches) {
+  const favTeams = getFavTeams();
+  return matches.filter(m => {
+    if (calFilterTeam && m.homeTeam.name !== calFilterTeam && m.awayTeam.name !== calFilterTeam) return false;
+    if (calFilterFavs && !favTeams.includes(m.homeTeam.code) && !favTeams.includes(m.awayTeam.code)) return false;
+    return true;
+  });
+}
+
+function buildMonthGrid(year, month, matchDateMap, selectedDate) {
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = new Date(year, month, 1).toLocaleString('en-US', { month: 'long' });
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const cells = [];
+  // Padding before 1st
+  for (let i = 0; i < firstDow; i++) cells.push('<div class="cal-day-cell"></div>');
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const count   = matchDateMap.get(dateStr) || 0;
+    const sel     = dateStr === selectedDate;
+    const today   = dateStr === todayStr;
+
+    let cls = 'cal-day-cell in-month';
+    if (count)  cls += ' has-matches';
+    if (sel)    cls += ' is-selected';
+    if (today)  cls += ' is-today';
+
+    const action = count ? `data-action="calendar-date" data-date="${dateStr}"` : '';
+    const dot    = count && !sel ? '<div class="cal-day-dot"></div>' : '';
+
+    cells.push(`<div class="${cls}" ${action}>${d}${dot}</div>`);
+  }
+
+  return `
+    <div class="cal-month-card">
+      <div class="cal-month-title">${monthName} <span class="cal-month-year">${year}</span></div>
+      <div class="cal-dow-row">
+        <span class="cal-dow">Sun</span><span class="cal-dow">Mon</span><span class="cal-dow">Tue</span>
+        <span class="cal-dow">Wed</span><span class="cal-dow">Thu</span><span class="cal-dow">Fri</span>
+        <span class="cal-dow">Sat</span>
+      </div>
+      <div class="cal-days-grid">${cells.join('')}</div>
+    </div>
+  `;
+}
+
+export function renderCalendar(opts = {}) {
+  if (opts.date)    calendarDate  = opts.date;
+  if ('team' in opts) calFilterTeam = opts.team;
+  if ('favs' in opts) calFilterFavs  = opts.favs;
+  if (opts.clearFilters) { calFilterTeam = ''; calFilterFavs = false; }
+
+  const allMatches = getMatches();
+  const filtered   = applyCalFilters(allMatches);
+
+  // Build date→count map from filtered matches
+  const matchDateMap = new Map();
+  filtered.forEach(m => {
+    matchDateMap.set(m.date, (matchDateMap.get(m.date) || 0) + 1);
+  });
+
+  // Default selected date: first match date or today
+  if (!calendarDate) {
+    const firstDate = [...matchDateMap.keys()].sort()[0];
+    calendarDate = firstDate || new Date().toISOString().slice(0, 10);
+  }
+
+  const matchesForDate = applyCalFilters(getMatchesByDate(calendarDate));
+  const selDt = new Date(calendarDate + 'T12:00:00');
+  const selectedLabel = selDt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // June 2026 (month index 5) + July 2026 (month index 6)
+  const juneGrid = buildMonthGrid(2026, 5, matchDateMap, calendarDate);
+  const julyGrid = buildMonthGrid(2026, 6, matchDateMap, calendarDate);
+
+  const allTeams = getTeams();
+  const teamOptions = allTeams
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(t => `<option value="${t.name}" ${calFilterTeam === t.name ? 'selected' : ''}>${t.flag} ${displayName(t.name)}</option>`)
+    .join('');
+
+  const hasFilter = calFilterTeam || calFilterFavs;
+
+  return makeSection(`
+    <div class="glass-card" style="position:sticky;top:53px;z-index:30;">
+      <div class="section-header" style="margin-bottom:10px;">
+        <h2>Calendar</h2>
+        ${hasFilter ? `<button class="cal-clear-btn" data-action="cal-clear-filters">✕ Clear</button>` : ''}
+      </div>
+      <div class="cal-filter-panel">
+        <select id="cal-team-filter" data-action="cal-filter" data-filter="team">
+          <option value="">All Teams</option>${teamOptions}
+        </select>
+        <button class="cal-favs-toggle ${calFilterFavs ? 'active' : ''}" data-action="cal-filter" data-filter="favs">⭐ Favorites</button>
+        <button class="cal-ical-btn" data-action="ical-export">📅 iCal</button>
+      </div>
+    </div>
+
+    <div class="cal-months-grid">
+      ${juneGrid}
+      ${julyGrid}
+    </div>
+
+    <div class="glass-card">
+      <div class="cal-selected-header">
+        <span>${selectedLabel}</span>
+        <span class="cal-selected-badge">${matchesForDate.length} match${matchesForDate.length !== 1 ? 'es' : ''}</span>
       </div>
       <div class="match-grid">
         ${matchesForDate.length
-          ? matchesForDate.map(m => matchCardHTML(m)).join('')
-          : '<div class="no-matches">No matches on this day.</div>'
+          ? matchesForDate.map(m => matchCardHTML(m, { calendar: true })).join('')
+          : `<div class="no-matches">${hasFilter ? 'No matches for this filter on this day.' : 'No matches on this day.'}</div>`
         }
       </div>
     </div>
   `);
 }
 
-// ── TOP SCORERS ───────────────────────────────────────────
+// ── GOLDEN BOOT RACE ──────────────────────────────────────
 export function renderScorers() {
-  const scorers = getTopScorers();
-  const teams = getTeams();
-  const teamOptions = teams.map(t => `<option value="${t.name}">${t.flag} ${t.name}</option>`).join('');
-  const medals = ['🥇','🥈','🥉'];
+  const medals = ['🥇', '🥈', '🥉'];
+  const contenders = GOLDEN_BOOT_CONTENDERS;
 
-  const tableRows = scorers.length ? scorers.map((s, i) => `
-    <tr>
-      <td class="scorer-rank ${i < 3 ? `scorer-rank-${i+1}` : ''}">${medals[i] || `#${i+1}`}</td>
-      <td style="font-weight:600;">${s.playerName}</td>
-      <td class="text-muted">${s.team}</td>
-      <td class="scorer-goals">${s.goals}</td>
-      <td class="scorer-assists">${s.assists}</td>
-      <td><button class="btn btn-sm" data-action="remove-scorer" data-scorer-id="${s.id}" style="min-width:auto;padding:5px 10px;font-size:0.75rem;">✕</button></td>
-    </tr>
-  `).join('') : '<tr><td colspan="6" class="no-matches">No scorers added yet.</td></tr>';
+  const cardsHTML = contenders.map((p, i) => {
+    const rankClass = i < 3 ? ` rank-${i + 1}` : '';
+    return `
+      <div class="golden-boot-card${rankClass}">
+        <div class="gb-rank">${medals[i] || `#${i + 1}`}</div>
+        <div class="gb-flag">${p.flag}</div>
+        <div class="gb-info">
+          <div class="gb-name">${p.name}</div>
+          <div class="gb-team">${p.team}</div>
+        </div>
+        <div class="gb-stats">
+          <div class="gb-goals">${p.goals}</div>
+          <div class="gb-goals-label">Goals</div>
+          ${p.assists > 0 ? `<div class="gb-assists">${p.assists} Ast</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 
   return makeSection(`
     <div class="glass-card">
-      <div class="section-header"><h2>Top Scorers</h2></div>
-      <div class="scorer-form" id="scorer-form">
-        <input id="scorer-name" placeholder="Player Name" />
-        <select id="scorer-team">
-          <option value="">Select Team</option>
-          ${teamOptions}
-        </select>
-        <input id="scorer-goals" type="number" min="0" max="99" placeholder="Goals" />
-        <input id="scorer-assists" type="number" min="0" max="99" placeholder="Assists" />
-        <button class="btn btn-primary scorer-form-full" data-action="add-scorer">Add Player</button>
+      <div class="section-header">
+        <h2>Golden Boot Race</h2>
+        <span class="gb-contender-badge">⚽ Contenders</span>
+      </div>
+      <div class="gb-watch-note">
+        Watch these stars battle for the Golden Boot at FIFA World Cup 2026. Scorers updated as the tournament progresses.
+      </div>
+      <div class="golden-boot-list">${cardsHTML}</div>
+    </div>
+  `);
+}
+
+// ── VENUES LIST ───────────────────────────────────────────
+let venueCountryFilter = 'All';
+
+export function renderVenues(country) {
+  if (country !== undefined) venueCountryFilter = country;
+
+  const countries = ['All', 'USA 🇺🇸', 'Mexico 🇲🇽', 'Canada 🇨🇦'];
+  const countryMap = { 'USA 🇺🇸': 'USA', 'Mexico 🇲🇽': 'Mexico', 'Canada 🇨🇦': 'Canada' };
+  const filtered = venueCountryFilter === 'All'
+    ? STADIUMS
+    : STADIUMS.filter(s => s.country === countryMap[venueCountryFilter]);
+
+  const filterBtns = countries.map(c => `
+    <button class="venue-filter-btn ${venueCountryFilter === c ? 'active' : ''}" data-action="venue-country" data-country="${c}">${c}</button>
+  `).join('');
+
+  const cards = filtered.map(s => `
+    <div class="venue-card" data-action="open-venue" data-id="${s.id}">
+      <div class="venue-card-img-wrap">
+        <div class="venue-card-visual" style="background:linear-gradient(160deg,${s.color}88 0%,${s.color}44 45%,rgba(8,14,32,0.98) 100%);">
+          <span class="venue-visual-icon">🏟️</span>
+          <div class="venue-visual-meta">${s.flag} ${s.city}</div>
+        </div>
+        <div class="venue-card-badge">${s.highlight}</div>
+      </div>
+      <div class="venue-card-body">
+        <div class="venue-card-name">${s.name}</div>
+        <div class="venue-card-city">${s.flag} ${s.city}, ${s.country}</div>
+        <div class="venue-card-stats">
+          <span class="venue-card-stat">🏟️ ${s.capacity.toLocaleString()}</span>
+          <span class="venue-card-stat">⚽ ${s.worldCupMatches} matches</span>
+          <span class="venue-card-stat">📅 ${s.opened}</span>
+        </div>
       </div>
     </div>
+  `).join('');
+
+  return makeSection(`
     <div class="glass-card">
-      <div class="section-header"><h2>Leaderboard</h2><span class="section-badge">${scorers.length} players</span></div>
-      <table class="scorers-table">
-        <thead>
-          <tr>
-            <th>#</th><th>Player</th><th>Team</th><th>⚽ Goals</th><th>🅰️ Assists</th><th></th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
+      <div class="section-header">
+        <h2>Venues</h2>
+        <span class="section-badge">${filtered.length} stadiums</span>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+        <div class="stat-item">
+          <div class="stat-value">16</div>
+          <div class="stat-label">Stadiums</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Nations</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">94K</div>
+          <div class="stat-label">Max Capacity</div>
+        </div>
+      </div>
+      <div class="venue-filter-bar">${filterBtns}</div>
     </div>
+    <div class="venue-grid">${cards}</div>
+  `);
+}
+
+// ── VENUE DETAIL / VIRTUAL TOUR ────────────────────────────
+export function renderVenueDetail(id) {
+  const s = STADIUMS.find(st => st.id === Number(id));
+  if (!s) {
+    return makeSection(`
+      <div class="glass-card">
+        <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:14px;">← Back</button>
+        <div class="empty-state"><div class="empty-state-icon">❌</div><p class="empty-state-text">Venue not found.</p></div>
+      </div>
+    `);
+  }
+
+  // Find matches at this venue
+  const venueMatches = getMatches().filter(m => {
+    const n = (m.stadium || '').toLowerCase();
+    return n.includes(s.name.toLowerCase().slice(0, 8))
+        || s.name.toLowerCase().includes(n.slice(0, 8));
+  });
+
+  const factsHTML = s.facts.map(f => `
+    <div class="venue-fact-item">
+      <span class="venue-fact-icon">⚡</span>
+      <span>${f}</span>
+    </div>
+  `).join('');
+
+  const matchesHTML = venueMatches.length ? `
+    <div class="glass-card">
+      <div class="intel-section-label">Matches at this Venue</div>
+      <div class="match-grid">${venueMatches.map(m => matchCardHTML(m, { compact: true })).join('')}</div>
+    </div>` : '';
+
+  const mapsBase  = `https://maps.google.com/?q=${s.lat},${s.lng}`;
+  const streetView = `https://www.google.com/maps/@${s.lat},${s.lng},3a,90y,0h,85t/data=!3m6!1e1`;
+  const embedSrc  = `https://maps.google.com/maps?q=${s.lat},${s.lng}&z=15&output=embed`;
+
+  // Prev / Next navigation
+  const idx  = STADIUMS.findIndex(st => st.id === s.id);
+  const prev = STADIUMS[idx - 1];
+  const next = STADIUMS[idx + 1];
+  const prevNext = `
+    <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;">
+      ${prev ? `<button class="btn btn-sm" data-action="open-venue" data-id="${prev.id}">← ${prev.name}</button>` : '<span></span>'}
+      ${next ? `<button class="btn btn-sm" data-action="open-venue" data-id="${next.id}">${next.name} →</button>` : '<span></span>'}
+    </div>
+  `;
+
+  return makeSection(`
+    <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:4px;">← Venues</button>
+
+    <!-- Hero (CSS gradient — no external images) -->
+    <div class="venue-detail-hero">
+      <div class="venue-detail-visual" style="background:linear-gradient(160deg,${s.color}99 0%,${s.color}55 40%,rgba(5,10,25,0.98) 100%);">
+        <div class="venue-detail-visual-icon">🏟️</div>
+      </div>
+      <div class="venue-detail-overlay">
+        <div class="venue-detail-flag">${s.flag}</div>
+        <div class="venue-detail-name">${s.name}</div>
+        <div class="venue-detail-city">${s.city}, ${s.country}</div>
+        <div class="venue-highlight-badge">⭐ ${s.highlight}</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="venue-stats-row">
+      <div class="venue-stat-card">
+        <div class="venue-stat-val">${s.capacity.toLocaleString()}</div>
+        <div class="venue-stat-lbl">Capacity</div>
+      </div>
+      <div class="venue-stat-card">
+        <div class="venue-stat-val">${s.opened}</div>
+        <div class="venue-stat-lbl">Opened</div>
+      </div>
+      <div class="venue-stat-card">
+        <div class="venue-stat-val">${s.worldCupMatches}</div>
+        <div class="venue-stat-lbl">WC Matches</div>
+      </div>
+      <div class="venue-stat-card">
+        <div class="venue-stat-val" style="font-size:0.85rem;">${s.surface.split(' ').map(w => w[0]).join('')}</div>
+        <div class="venue-stat-lbl">Surface</div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="glass-card">
+      <div class="intel-section-label">About the Venue</div>
+      <p class="venue-description">${s.description}</p>
+      ${s.teams ? `<div style="margin-top:12px;font-size:0.8rem;color:var(--text-muted);">🏟️ Home teams: ${s.teams}</div>` : ''}
+    </div>
+
+    <!-- Key facts -->
+    <div class="glass-card">
+      <div class="intel-section-label">Key Facts</div>
+      <div class="venue-facts-list">${factsHTML}</div>
+    </div>
+
+    <!-- Virtual Tour -->
+    <div class="glass-card">
+      <div class="intel-section-label">Virtual Tour &amp; Map</div>
+      <div class="venue-tour-section">
+        <iframe class="venue-map-frame" loading="lazy"
+          src="${embedSrc}"
+          title="${s.name} map" allowfullscreen referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+        <div class="venue-tour-links">
+          <a class="venue-tour-btn primary" href="${streetView}" target="_blank" rel="noreferrer">🏟️ Street View Tour</a>
+          <a class="venue-tour-btn" href="${mapsBase}" target="_blank" rel="noreferrer">🗺️ Open in Maps</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matches at this venue -->
+    ${matchesHTML}
+
+    <!-- Prev / Next -->
+    ${prevNext}
   `);
 }
 
@@ -979,7 +1550,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.0.0</span>
+          <span class="text-muted">CupVerse v3.0.0</span>
         </div>
       </div>
     </div>
@@ -996,14 +1567,27 @@ export function renderSettings() {
         <span class="section-badge">📱 Installable PWA</span>
       </div>
     </div>
+
+    <div class="glass-card">
+      <div class="section-header"><h2>Credits</h2></div>
+      <p class="text-muted" style="font-size:0.88rem;line-height:1.7;margin-bottom:14px;">
+        For feedback, bug reports, or feature suggestions, please visit
+        <a href="https://github.com/nafeesmansoor" target="_blank" rel="noreferrer" style="color:var(--accent-blue);font-weight:600;">🐙 GitHub</a>
+        or
+        <a href="https://nafees.info" target="_blank" rel="noreferrer" style="color:var(--accent-blue);font-weight:600;">nafees.info</a>
+      </p>
+      <p class="text-muted" style="font-size:0.84rem;line-height:1.65;">
+        Built with ❤️ as an offline-first Progressive Web App (PWA). No backend. No tracking. Privacy-first by design.
+      </p>
+    </div>
   `);
 }
 
-// ── STANDINGS ─────────────────────────────────────────────
+// ── STANDINGS — Visual Group Cards ────────────────────────
 export function renderStandings() {
   const storedScores = getAllScores();
   const standings = getGroupStandings(storedScores);
-  const groups = Object.keys(standings);
+  const groups = Object.keys(standings).sort();
 
   if (!groups.length) {
     return makeSection(`
@@ -1016,36 +1600,42 @@ export function renderStandings() {
     `);
   }
 
-  const groupsHTML = groups.map(g => {
+  const MEDALS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
+  // Base qualification chances; shift up if a team has points on the board
+  const baseChances = [95, 82, 30, 4];
+
+  const groupCards = groups.map(g => {
     const teams = standings[g];
     const color = groupColor(g);
+    const maxPts = teams[0]?.pts ?? 0;
 
-    const rows = teams.map((team, i) => {
+    const teamRows = teams.map((team, i) => {
       const gd = team.gf - team.ga;
       const gdStr = gd > 0 ? `+${gd}` : String(gd);
-      const gdClass = gd > 0 ? 'gd-pos' : gd < 0 ? 'gd-neg' : '';
-      // Top 2 advance, 3rd may qualify as best third-place
-      const rowClass = i < 2 ? `standing-q${i + 1}` : i === 2 ? 'standing-q3' : '';
+      const record = `${team.w}W ${team.d}D ${team.l}L`;
+      const qualifyClass = i < 2 ? `qualify-${i + 1}` : i === 2 ? 'qualify-3' : '';
+      const chance = baseChances[i] ?? 2;
       return `
-        <tr class="${rowClass}">
-          <td class="standings-pos">${i + 1}</td>
-          <td>
-            <div class="standings-team-cell">
-              <span class="standings-team-flag">${team.flag}</span>
-              <span class="standings-team-name">${team.name}</span>
-            </div>
-          </td>
-          <td class="standings-num">${team.mp}</td>
-          <td class="standings-num">${team.w}</td>
-          <td class="standings-num">${team.d}</td>
-          <td class="standings-num">${team.l}</td>
-          <td class="standings-num">${team.gf}</td>
-          <td class="standings-num">${team.ga}</td>
-          <td class="standings-num ${gdClass}">${gdStr}</td>
-          <td class="standings-pts">${team.pts}</td>
-        </tr>
+        <div class="gvc-team-row ${qualifyClass}">
+          <span class="gvc-medal">${MEDALS[i] || `${i + 1}`}</span>
+          <span class="gvc-flag">${team.flag}</span>
+          <span class="gvc-name">${team.name}</span>
+          <span class="gvc-record">${record} · GD ${gdStr}</span>
+          <span class="gvc-pts">${team.pts}pts</span>
+        </div>
       `;
     }).join('');
+
+    // Simulate top team's advance chance based on points earned
+    const leader = teams[0];
+    let advanceChance = 95;
+    if (leader) {
+      if (leader.pts >= 7)      advanceChance = 99;
+      else if (leader.pts >= 6) advanceChance = 97;
+      else if (leader.pts >= 4) advanceChance = 88;
+      else if (leader.pts >= 3) advanceChance = 72;
+      else if (leader.pts >= 1) advanceChance = 55;
+    }
 
     return `
       <div class="glass-card">
@@ -1054,24 +1644,10 @@ export function renderStandings() {
           <h3>Group ${g}</h3>
           <span class="section-badge">${teams.length} teams</span>
         </div>
-        <div class="standings-table-wrap">
-          <table class="standings-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th class="standings-th-team">Team</th>
-                <th title="Matches Played">MP</th>
-                <th title="Wins">W</th>
-                <th title="Draws">D</th>
-                <th title="Losses">L</th>
-                <th title="Goals For">GF</th>
-                <th title="Goals Against">GA</th>
-                <th title="Goal Difference">GD</th>
-                <th title="Points">Pts</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
+        <div class="gvc-body">${teamRows}</div>
+        <div class="qual-simulator">
+          <span class="qs-label">🟢 Top 2 advance to Round of 32</span>
+          <span class="qs-val">Leader: ${advanceChance}%</span>
         </div>
       </div>
     `;
@@ -1081,17 +1657,14 @@ export function renderStandings() {
     <div class="standings-legend">
       <div class="legend-item">
         <span class="legend-dot" style="background:var(--accent-success)"></span>
-        Advances to Round of 32
+        Qualifies to Round of 32
       </div>
       <div class="legend-item">
         <span class="legend-dot" style="background:var(--accent-gold)"></span>
-        Potential 3rd-place qualification
-      </div>
-      <div class="legend-item" style="margin-left:auto;">
-        <span style="font-size:0.7rem;color:var(--text-muted);">Enter scores in match detail to update standings</span>
+        Potential best 3rd-place
       </div>
     </div>
-    ${groupsHTML}
+    <div class="standings-groups-grid">${groupCards}</div>
   `);
 }
 

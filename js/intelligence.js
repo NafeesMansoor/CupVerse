@@ -30,6 +30,25 @@ const TEAM_COLORS = {
 export function getTeamColor(name) { return TEAM_COLORS[name] || '#4DA3FF'; }
 export function getTeamData(name)  { return { ...team(name), color: getTeamColor(name) }; }
 
+// Top contenders for the Golden Boot — derived from team star players + ranking
+export const GOLDEN_BOOT_CONTENDERS = [
+  { name: 'Kylian Mbappé',       team: 'France',      flag: '🇫🇷', goals: 0, assists: 0 },
+  { name: 'Vinícius Jr.',        team: 'Brazil',      flag: '🇧🇷', goals: 0, assists: 0 },
+  { name: 'Lautaro Martínez',    team: 'Argentina',   flag: '🇦🇷', goals: 0, assists: 0 },
+  { name: 'Jude Bellingham',     team: 'England',     flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', goals: 0, assists: 0 },
+  { name: 'Erling Haaland',      team: 'Norway',      flag: '🇳🇴', goals: 0, assists: 0 },
+  { name: 'Pedri',               team: 'Spain',       flag: '🇪🇸', goals: 0, assists: 0 },
+  { name: 'Mohamed Salah',       team: 'Egypt',       flag: '🇪🇬', goals: 0, assists: 0 },
+  { name: 'Jamal Musiala',       team: 'Germany',     flag: '🇩🇪', goals: 0, assists: 0 },
+  { name: 'Achraf Hakimi',       team: 'Morocco',     flag: '🇲🇦', goals: 0, assists: 0 },
+  { name: 'Cristiano Ronaldo',   team: 'Portugal',    flag: '🇵🇹', goals: 0, assists: 0 },
+  { name: 'Luis Díaz',           team: 'Colombia',    flag: '🇨🇴', goals: 0, assists: 0 },
+  { name: 'Christian Pulisic',   team: 'USA',         flag: '🇺🇸', goals: 0, assists: 0 },
+  { name: 'Hirving Lozano',      team: 'Mexico',      flag: '🇲🇽', goals: 0, assists: 0 },
+  { name: 'Son Heung-min',       team: 'Korea Republic', flag: '🇰🇷', goals: 0, assists: 0 },
+  { name: 'Luka Modrić',         team: 'Croatia',     flag: '🇭🇷', goals: 0, assists: 0 },
+];
+
 // ─── Team Knowledge Base ───────────────────────────────────
 // rank: FIFA ranking · conf: confederation · wcApps: WC appearances
 // wcBest: best WC finish · style: tactical identity · form: last 5
