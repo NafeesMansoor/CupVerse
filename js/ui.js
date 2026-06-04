@@ -1304,19 +1304,32 @@ export function renderVenues(country) {
   const cards = filtered.map(s => `
     <div class="venue-card" data-action="open-venue" data-id="${s.id}">
       <div class="venue-card-img-wrap">
-        <div class="venue-card-visual" style="background:linear-gradient(160deg,${s.color}88 0%,${s.color}44 45%,rgba(8,14,32,0.98) 100%);">
-          <span class="venue-visual-icon">🏟️</span>
-          <div class="venue-visual-meta">${s.flag} ${s.city}</div>
+        <img
+          class="venue-card-img"
+          src="${s.thumb}"
+          alt="${s.name}"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          onerror="
+            this.style.display='none';
+            this.nextElementSibling.style.display='flex';
+          "
+        />
+        <div class="venue-card-fallback" style="display:none;background:linear-gradient(160deg,${s.color}88 0%,rgba(8,14,32,0.98) 100%);">
+          <span class="venue-fallback-icon">🏟️</span>
+          <span class="venue-fallback-meta">${s.flag} ${s.city}</span>
         </div>
         <div class="venue-card-badge">${s.highlight}</div>
+        <div class="venue-card-img-overlay">
+          <div class="venue-card-name-over">${s.name}</div>
+          <div class="venue-card-city-over">${s.flag} ${s.city}, ${s.country}</div>
+        </div>
       </div>
       <div class="venue-card-body">
-        <div class="venue-card-name">${s.name}</div>
-        <div class="venue-card-city">${s.flag} ${s.city}, ${s.country}</div>
         <div class="venue-card-stats">
           <span class="venue-card-stat">🏟️ ${s.capacity.toLocaleString()}</span>
-          <span class="venue-card-stat">⚽ ${s.worldCupMatches} matches</span>
-          <span class="venue-card-stat">📅 ${s.opened}</span>
+          <span class="venue-card-stat">⚽ ${s.worldCupMatches} WC matches</span>
+          <span class="venue-card-stat">📅 Est. ${s.opened}</span>
         </div>
       </div>
     </div>
@@ -1398,9 +1411,19 @@ export function renderVenueDetail(id) {
   return makeSection(`
     <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:4px;">← Venues</button>
 
-    <!-- Hero (CSS gradient — no external images) -->
+    <!-- Cinematic hero with real photo -->
     <div class="venue-detail-hero">
-      <div class="venue-detail-visual" style="background:linear-gradient(160deg,${s.color}99 0%,${s.color}55 40%,rgba(5,10,25,0.98) 100%);">
+      <img
+        class="venue-detail-img"
+        src="${s.image}"
+        alt="${s.name}"
+        referrerpolicy="no-referrer"
+        onerror="
+          this.style.display='none';
+          this.nextElementSibling.style.display='flex';
+        "
+      />
+      <div class="venue-detail-visual" style="display:none;background:linear-gradient(160deg,${s.color}99 0%,${s.color}55 40%,rgba(5,10,25,0.98) 100%);">
         <div class="venue-detail-visual-icon">🏟️</div>
       </div>
       <div class="venue-detail-overlay">
