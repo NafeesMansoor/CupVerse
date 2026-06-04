@@ -374,46 +374,37 @@ export function renderMatchDetail(id) {
   const match = getMatchById(id);
   if (!match) return makeSection('<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">❌</div><p>Match not found.</p></div></div>');
 
-  const score    = getScore(match.id);
-  const status   = effectiveStatus(match);
-  const note     = getNote(match.id) || { text: '', photos: [] };
-  const starred  = isMatchFavorite(match.id);
+  const score     = getScore(match.id);
+  const status    = effectiveStatus(match);
+  const note      = getNote(match.id) || { text: '', photos: [] };
+  const starred   = isMatchFavorite(match.id);
   const homeSquad = getTeamSquad(match.homeTeam.name);
   const awaySquad = getTeamSquad(match.awayTeam.name);
-  const vi = match.venueInfo;
-  const intel = getMatchIntelligence(match);
-
-  const statusClass = `status-${status}`;
-  const statusLabel = status === 'live' ? '🔴 LIVE' : status === 'completed' ? 'Full Time' : null;
-
-  // ── National identity gradient ──
+  const vi        = match.venueInfo;
+  const intel     = getMatchIntelligence(match);
   const hc = getTeamColor(match.homeTeam.name);
   const ac = getTeamColor(match.awayTeam.name);
-  const natGrad = `background:linear-gradient(135deg,${hc}30 0%,transparent 42%,transparent 58%,${ac}30 100%),linear-gradient(180deg,rgba(11,18,32,0.3) 0%,rgba(11,18,32,0.7) 100%)`;
+  const hData = getTeamData(match.homeTeam.name);
+  const aData = getTeamData(match.awayTeam.name);
 
-  // ── Center column of hero ──
-  let heroCenter = '';
+  // ── Scoreboard ribbon center ──
+  let sbCenter = '', sbStatus = '';
   if (score) {
-    heroCenter = `
-      <div class="detail-hero-score">${score.home}&nbsp;–&nbsp;${score.away}</div>
-      <button class="btn btn-sm" data-action="clear-score" data-id="${match.id}" style="margin-top:10px;">Edit Score</button>
-    `;
+    sbCenter = `<div class="sb-score">${score.home}&nbsp;–&nbsp;${score.away}</div><div class="sb-status-text">Full Time</div>`;
   } else if (status === 'live') {
-    heroCenter = `
-      <div class="detail-hero-score" style="color:var(--accent-live)">LIVE</div>
-      <div class="hero-score-entry">
-        <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
-        <span class="score-entry-dash">–</span>
-        <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
-        <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save</button>
-      </div>
-    `;
+    sbCenter = `<div class="sb-score"><span class="sb-live-dot"></span>LIVE</div>`;
   } else {
-    const probHTML = intel ? `
-      <div class="hero-win-prob">
+    sbCenter = `<div class="sb-score" style="font-size:1rem;letter-spacing:0.12em;opacity:0.7;">VS</div><div class="sb-status-text">${fmtTime(match.datetime)}</div>`;
+  }
+
+  // ── Below-ribbon content ──
+  let broadcastBottom = '';
+  if (status === 'upcoming' && !score) {
+    const prob = intel ? `
+      <div class="hero-win-prob" style="width:100%;max-width:320px;">
         <div class="hwp-bar">
           <div class="hwp-home" style="width:${intel.prediction.home}%"></div>
-          <div class="hwp-draw" style="width:${intel.prediction.draw}%"></div>
+          <div class="hwp-draw"  style="width:${intel.prediction.draw}%"></div>
           <div class="hwp-away" style="width:${intel.prediction.away}%"></div>
         </div>
         <div class="hwp-labels">
@@ -422,7 +413,7 @@ export function renderMatchDetail(id) {
           <span>${intel.prediction.away}%</span>
         </div>
       </div>` : '';
-    heroCenter = `
+    broadcastBottom = `
       <div class="cd-kickoff-label">Kicks off in</div>
       <div class="countdown-blocks" data-countdown-target="${match.datetime}">
         <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
@@ -433,124 +424,190 @@ export function renderMatchDetail(id) {
         <span class="cd-sep">:</span>
         <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
       </div>
-      <div class="detail-hero-kickoff">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
-      ${probHTML}
-      <div class="hero-score-entry" style="margin-top:14px;">
+      ${prob}
+      <div class="broadcast-score-entry">
         <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
         <span class="score-entry-dash">–</span>
         <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
         <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
-      </div>
-    `;
+      </div>`;
+  } else if (status === 'live' && !score) {
+    broadcastBottom = `
+      <div class="broadcast-score-entry">
+        <input type="number" id="home-score-${match.id}" min="0" max="99" placeholder="0" />
+        <span class="score-entry-dash">–</span>
+        <input type="number" id="away-score-${match.id}" min="0" max="99" placeholder="0" />
+        <button class="btn btn-primary btn-sm" data-action="save-score" data-id="${match.id}">Save Score</button>
+      </div>`;
+  } else if (score) {
+    broadcastBottom = `<button class="btn btn-sm" data-action="clear-score" data-id="${match.id}">Edit Score</button>`;
   }
 
-  // ── Form comparison ──
-  const hData = getTeamData(match.homeTeam.name);
-  const aData = getTeamData(match.awayTeam.name);
+  // ── Form badges ──
   const formBadge = c => {
     const cls = c === 'W' ? 'form-w' : c === 'D' ? 'form-d' : 'form-l';
     return `<span class="form-badge ${cls}">${c}</span>`;
   };
-  const formCard = `
-    <div class="glass-card">
-      <div class="intel-section-label">Recent Form</div>
-      <div class="form-compare">
-        <div class="form-team-side">
-          <span class="form-team-label">${match.homeTeam.flag} ${match.homeTeam.name}</span>
-          <div class="form-strip">${(hData.form || 'WDWLW').split('').map(formBadge).join('')}</div>
-        </div>
-        <div class="form-divider-label">Last 5</div>
-        <div class="form-team-side right">
-          <span class="form-team-label">${match.awayTeam.name} ${match.awayTeam.flag}</span>
-          <div class="form-strip">${(aData.form || 'WDWLW').split('').map(formBadge).join('')}</div>
-        </div>
-      </div>
-    </div>`;
 
-  // ── Squad block (collapsed) ──
-  const squadPills = (squad, teamName) => squad.length ? `
+  // ── Squad (collapsed) ──
+  const squadPills = (squad, teamName) => !squad.length ? '' : `
     <details style="margin-bottom:10px;">
       <summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:6px 0;list-style:none;display:flex;align-items:center;gap:8px;">
-        <span>${teamName} Squad</span>
-        <span class="section-badge">${squad.length}</span>
+        <span>${teamName} Squad</span><span class="section-badge">${squad.length}</span>
       </summary>
       <div class="squad-list" style="margin-top:10px;">
         ${squad.map(p => `<span class="player-pill" data-action="add-scorer-prefill" data-player="${p}" data-team="${teamName}">${p}</span>`).join('')}
       </div>
-    </details>` : '';
+    </details>`;
 
-  const photoThumbsHTML = note.photos && note.photos.length
-    ? note.photos.map(src => `<img class="photo-thumb" src="${src}" alt="photo" />`).join('')
-    : '';
+  const photoThumbsHTML = (note.photos || []).map(src => `<img class="photo-thumb" src="${src}" alt="photo" />`).join('');
+
+  // ── Intelligence tab content ──
+  const intelTabHTML = renderMatchIntelligence(match);
 
   return makeSection(`
 
-    <!-- ── TIER 1: Hero — fills first viewport ── -->
-    <div class="detail-hero" style="${natGrad}">
-      <div class="detail-hero-status">
-        ${match.stage}${match.group ? ` · Group ${match.group}` : ''}
-        ${statusLabel ? `&nbsp;·&nbsp;<span class="status-badge ${statusClass}">${statusLabel}</span>` : ''}
+    <!-- ══ BROADCAST HERO ══ -->
+    <div class="broadcast-hero" style="background:linear-gradient(135deg,${hc}28 0%,transparent 40%,transparent 60%,${ac}28 100%),var(--bg-secondary);">
+
+      <div class="broadcast-stage">
+        ${match.stage}${match.group ? `&nbsp;·&nbsp;Group ${match.group}` : ''}
+        ${status === 'live' ? `&nbsp;·&nbsp;<span class="status-badge status-live">🔴 LIVE</span>` : ''}
+        ${status === 'completed' && score ? `&nbsp;·&nbsp;<span class="status-badge status-completed">Full Time</span>` : ''}
       </div>
-      <div class="detail-hero-teams">
-        <div class="detail-hero-team">
-          <span class="detail-hero-flag">${match.homeTeam.flag}</span>
-          <div class="detail-hero-name">${match.homeTeam.name}</div>
+
+      <div class="broadcast-shields">
+        <div class="shield-wrap">
+          <div class="shield-outer" style="background:linear-gradient(145deg,rgba(255,255,255,0.65),${hc}55,rgba(11,18,32,0.8));">
+            <div class="shield-inner" style="background:radial-gradient(circle at 35% 35%,${hc}30,rgba(11,18,32,0.92));">
+              ${match.homeTeam.flag}
+            </div>
+          </div>
+          <div class="shield-team-name">${match.homeTeam.name}</div>
         </div>
-        <div class="detail-hero-center">${heroCenter}</div>
-        <div class="detail-hero-team">
-          <span class="detail-hero-flag">${match.awayTeam.flag}</span>
-          <div class="detail-hero-name">${match.awayTeam.name}</div>
+
+        <div class="broadcast-vs">
+          <div class="broadcast-vs-text">VS</div>
+        </div>
+
+        <div class="shield-wrap">
+          <div class="shield-outer" style="background:linear-gradient(145deg,rgba(255,255,255,0.65),${ac}55,rgba(11,18,32,0.8));">
+            <div class="shield-inner" style="background:radial-gradient(circle at 35% 35%,${ac}30,rgba(11,18,32,0.92));">
+              ${match.awayTeam.flag}
+            </div>
+          </div>
+          <div class="shield-team-name">${match.awayTeam.name}</div>
         </div>
       </div>
+
+      <div class="scoreboard-ribbon">
+        <div class="sb-home">${match.homeTeam.name}</div>
+        <div class="sb-center">${sbCenter}</div>
+        <div class="sb-away">${match.awayTeam.name}</div>
+      </div>
+
+      <div class="broadcast-date">${fmtDate(match.datetime)} &nbsp;·&nbsp; ${vi.flag} ${vi.city || vi.name}</div>
+
+      ${broadcastBottom ? `<div class="broadcast-bottom">${broadcastBottom}</div>` : ''}
     </div>
 
-    <!-- ── TIER 2: Insights ── -->
-    ${formCard}
-    ${renderMatchIntelligence(match)}
-
-    <!-- ── TIER 3: Reference ── -->
-    ${homeSquad.length || awaySquad.length ? `
-    <div class="glass-card">
-      <div class="intel-section-label">Squads</div>
-      ${squadPills(homeSquad, match.homeTeam.name)}
-      ${squadPills(awaySquad, match.awayTeam.name)}
-    </div>` : ''}
-
-    <div class="glass-card">
-      <div class="intel-section-label">Venue</div>
-      <div style="font-size:1rem;font-weight:700;margin-bottom:12px;">${vi.flag} ${vi.fullName || vi.name}</div>
-      <div class="venue-grid">
-        <div class="venue-stat"><div class="venue-stat-label">City</div><div class="venue-stat-value">${vi.city || '—'}</div></div>
-        <div class="venue-stat"><div class="venue-stat-label">Country</div><div class="venue-stat-value">${vi.country || '—'}</div></div>
-        <div class="venue-stat"><div class="venue-stat-label">Capacity</div><div class="venue-stat-value">${vi.capacity ? vi.capacity.toLocaleString() : '—'}</div></div>
-        <div class="venue-stat"><div class="venue-stat-label">Surface</div><div class="venue-stat-value">${vi.surface || '—'}</div></div>
-        <div class="venue-stat"><div class="venue-stat-label">Opened</div><div class="venue-stat-value">${vi.opened || '—'}</div></div>
-        <div class="venue-stat"><div class="venue-stat-label">Kickoff</div><div class="venue-stat-value">${fmtTime(match.datetime)}</div></div>
+    <!-- ══ TAB BAR ══ -->
+    <div class="match-tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-action="match-tab" data-tab="overview">Overview</button>
+        <button class="tab-btn"        data-action="match-tab" data-tab="intelligence">Intelligence</button>
+        <button class="tab-btn"        data-action="match-tab" data-tab="info">Info</button>
       </div>
-      <div style="margin-top:12px;">
-        <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName || vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View Map</a>
-      </div>
-    </div>
 
-    <div class="glass-card">
-      <div class="intel-section-label">Match Notes</div>
-      <textarea class="notes-area" id="match-note-${match.id}" placeholder="Add your match notes here…">${note.text}</textarea>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <label class="btn btn-sm" style="cursor:pointer;">📷 Add Photo
-          <input type="file" id="note-photos-${match.id}" accept="image/*" multiple style="display:none;" />
-        </label>
-        <button class="btn btn-primary btn-sm" data-action="save-note" data-id="${match.id}">Save Note</button>
+      <!-- ── Tab: Overview ── -->
+      <div class="tab-panel active" data-tab="overview">
+        <div class="glass-card">
+          <div class="intel-section-label">Recent Form</div>
+          <div class="form-compare">
+            <div class="form-team-side">
+              <span class="form-team-label">${match.homeTeam.flag} ${match.homeTeam.name}</span>
+              <div class="form-strip">${(hData.form||'WDWLW').split('').map(formBadge).join('')}</div>
+            </div>
+            <div class="form-divider-label">Last 5</div>
+            <div class="form-team-side right">
+              <span class="form-team-label">${match.awayTeam.name} ${match.awayTeam.flag}</span>
+              <div class="form-strip">${(aData.form||'WDWLW').split('').map(formBadge).join('')}</div>
+            </div>
+          </div>
+        </div>
+        ${intel ? `
+        <div class="intel-storyline">
+          <div class="intel-section-label">Match Story</div>
+          <div class="intel-headline">${intel.headline}</div>
+          <div class="intel-narrative">${intel.narrative}</div>
+        </div>
+        <div class="glass-card">
+          <div class="intel-section-label">Prediction</div>
+          <div class="prediction-row">
+            <div class="pred-team"><div class="pred-pct">${intel.prediction.home}%</div><div class="pred-label">${match.homeTeam.flag} Win</div></div>
+            <div class="pred-draw"><div class="pred-draw-pct">${intel.prediction.draw}%</div><div class="pred-draw-label">Draw</div></div>
+            <div class="pred-team"><div class="pred-pct" style="color:var(--accent-gold)">${intel.prediction.away}%</div><div class="pred-label">${match.awayTeam.flag} Win</div></div>
+          </div>
+          <div class="pred-bar-wrap">
+            <div class="pred-bar-home" style="width:${intel.prediction.home}%"></div>
+            <div class="pred-bar-draw" style="width:${intel.prediction.draw}%"></div>
+            <div class="pred-bar-away" style="width:${intel.prediction.away}%"></div>
+          </div>
+          <p class="pred-disclaimer">Based on FIFA rankings, H2H &amp; form. For entertainment only.</p>
+        </div>` : ''}
       </div>
-      ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
-    </div>
 
-    <div class="glass-card">
-      <div class="action-row">
-        <button class="btn ${starred ? 'btn-primary' : ''}" data-action="toggle-star" data-id="${match.id}">
-          ${starred ? '⭐ Starred' : '☆ Star Match'}
-        </button>
-        <button class="btn" data-action="share-card" data-id="${match.id}">🖼️ Share Card</button>
-        <button class="btn" data-action="export-pdf" data-id="${match.id}">📄 Export PDF</button>
+      <!-- ── Tab: Intelligence ── -->
+      <div class="tab-panel" data-tab="intelligence">
+        ${intelTabHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">🔍</div><p class="empty-state-text">Intelligence available for group stage matches once teams are confirmed.</p></div></div>'}
+      </div>
+
+      <!-- ── Tab: Info ── -->
+      <div class="tab-panel" data-tab="info">
+        <div class="glass-card">
+          <div class="intel-section-label">Venue</div>
+          <div style="font-size:1rem;font-weight:700;margin-bottom:12px;">${vi.flag} ${vi.fullName||vi.name}</div>
+          <div class="venue-grid">
+            <div class="venue-stat"><div class="venue-stat-label">City</div><div class="venue-stat-value">${vi.city||'—'}</div></div>
+            <div class="venue-stat"><div class="venue-stat-label">Country</div><div class="venue-stat-value">${vi.country||'—'}</div></div>
+            <div class="venue-stat"><div class="venue-stat-label">Capacity</div><div class="venue-stat-value">${vi.capacity?vi.capacity.toLocaleString():'—'}</div></div>
+            <div class="venue-stat"><div class="venue-stat-label">Surface</div><div class="venue-stat-value">${vi.surface||'—'}</div></div>
+            <div class="venue-stat"><div class="venue-stat-label">Opened</div><div class="venue-stat-value">${vi.opened||'—'}</div></div>
+            <div class="venue-stat"><div class="venue-stat-label">Kickoff</div><div class="venue-stat-value">${fmtTime(match.datetime)}</div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName||vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View Map</a>
+          </div>
+        </div>
+
+        ${homeSquad.length||awaySquad.length ? `
+        <div class="glass-card">
+          <div class="intel-section-label">Squads</div>
+          ${squadPills(homeSquad, match.homeTeam.name)}
+          ${squadPills(awaySquad, match.awayTeam.name)}
+        </div>` : ''}
+
+        <div class="glass-card">
+          <div class="intel-section-label">Match Notes</div>
+          <textarea class="notes-area" id="match-note-${match.id}" placeholder="Add your notes…">${note.text}</textarea>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label class="btn btn-sm" style="cursor:pointer;">📷 Add Photo
+              <input type="file" id="note-photos-${match.id}" accept="image/*" multiple style="display:none;" />
+            </label>
+            <button class="btn btn-primary btn-sm" data-action="save-note" data-id="${match.id}">Save Note</button>
+          </div>
+          ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
+        </div>
+
+        <div class="glass-card">
+          <div class="action-row">
+            <button class="btn ${starred?'btn-primary':''}" data-action="toggle-star" data-id="${match.id}">
+              ${starred?'⭐ Starred':'☆ Star Match'}
+            </button>
+            <button class="btn" data-action="share-card" data-id="${match.id}">🖼️ Share Card</button>
+            <button class="btn" data-action="export-pdf" data-id="${match.id}">📄 Export PDF</button>
+          </div>
+        </div>
       </div>
     </div>
   `);
@@ -845,14 +902,40 @@ export function renderSettings() {
   const tz = getTimezone();
   const ai = isAiEnabled();
 
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
   const tzOptions = TIMEZONES.map(t =>
     `<option value="${t.value}" ${tz === t.value ? 'selected' : ''}>${t.label}</option>`
   ).join('');
+
+  const installSection = isStandalone ? `
+    <div class="setting-row">
+      <div><div class="setting-label">App Status</div><div class="setting-sub">Running as installed app</div></div>
+      <span class="section-badge" style="color:var(--accent-success);">✓ Installed</span>
+    </div>` : isIOS ? `
+    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+      <div>
+        <div class="setting-label">Install on iPhone / iPad</div>
+        <div class="setting-sub">Add CupVerse to your Home Screen for the full app experience</div>
+      </div>
+      <div class="ios-steps">
+        <div class="ios-step"><span class="ios-step-num">1</span> Tap the <strong>Share</strong> button in Safari (the square with an arrow)</div>
+        <div class="ios-step"><span class="ios-step-num">2</span> Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+        <div class="ios-step"><span class="ios-step-num">3</span> Tap <strong>"Add"</strong> — CupVerse will appear on your home screen</div>
+      </div>
+    </div>` : `
+    <div class="setting-row">
+      <div><div class="setting-label">Install App</div><div class="setting-sub">Add CupVerse to your home screen</div></div>
+      <button class="btn btn-primary btn-sm" data-action="install-pwa">Install</button>
+    </div>`;
 
   return makeSection(`
     <div class="glass-card">
       <div class="section-header"><h2>Settings</h2></div>
       <div class="settings-group">
+        ${installSection}
         <div class="setting-row">
           <div>
             <div class="setting-label">Theme</div>

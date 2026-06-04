@@ -18,6 +18,12 @@ const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
 let countdownClear = null;
 let fixtureFilterTimer = null;
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
 
 // ── Theme ─────────────────────────────────────────────────
 function applyTheme(theme) {
@@ -314,6 +320,20 @@ function handleAction(event) {
       if (confirm('Clear all scores, notes, and favorites?')) {
         clearStorage();
         renderCurrentRoute();
+      }
+      break;
+
+    case 'match-tab': {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+      break;
+    }
+
+    case 'install-pwa':
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
       }
       break;
 
