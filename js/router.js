@@ -5,6 +5,7 @@ export function parseRoute() {
   if (page === 'team'            && rest[0]) return { page: 'team',   params: { name: decodeURIComponent(rest[0]) } };
   if (page === 'venue'           && rest[0]) return { page: 'venue',  params: { id: rest[0] } };
   if (page === 'prediction-tree')            return { page: 'prediction-tree', params: {} };
+  if (page === 'chaos')                      return { page: 'chaos', params: {} };
   return { page: page || 'home', params: {} };
 }
 

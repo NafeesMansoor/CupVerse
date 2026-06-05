@@ -1,4 +1,4 @@
-const APP_VERSION = '1.0.9';
+const APP_VERSION = '1.1.0';
 const CACHE_NAME = `cupverse-v${APP_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   './js/router.js',
   './js/intelligence.js',
   './js/prediction.js',
+  './js/chaos.js',
   './world_cup_data.json',
   './manifest.json',
 ];

@@ -3254,3 +3254,230 @@ a { text-decoration: none; color: inherit; }
   .gvc-team-row { font-size: 0.78rem; }
   .bm-team { font-size: 0.7rem; padding: 6px 8px; }
 }
+
+/* ══════════════════════════════════════════════════
+   CHAOS ENGINE STYLES
+   ══════════════════════════════════════════════════ */
+
+/* Chaos level color tokens */
+.chaos-lvl-low  { color: var(--accent-success) !important; }
+.chaos-lvl-med  { color: var(--accent-gold)    !important; }
+.chaos-lvl-high { color: var(--accent-live)    !important; }
+
+/* ── Prediction tree: chaos tab button ───────────────────── */
+.pmt-chaos.active {
+  background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+}
+.pmt-chaos:not(.active):hover {
+  background: rgba(168,85,247,0.12);
+  color: #c084fc;
+}
+
+/* Chaos champion card accent */
+.champ-chaos {
+  border-color: rgba(168,85,247,0.5) !important;
+  background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, var(--bg-card) 100%) !important;
+}
+.champ-chaos-idx {
+  font-size: 0.68rem;
+  color: #c084fc;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ── Champion probability bars ───────────────────────────── */
+.chaos-probs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cp-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.cp-sim {
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cp-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.cp-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.cp-pct {
+  font-size: 0.8rem;
+  font-weight: 800;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.cp-chaos-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 22px;
+  text-align: right;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* ── Chaos Forecast home widget ──────────────────────────── */
+.chaos-forecast-card {
+  cursor: pointer;
+  border-color: rgba(168,85,247,0.3);
+  transition: var(--transition);
+}
+.chaos-forecast-card:hover { border-color: rgba(168,85,247,0.6); transform: translateY(-2px); }
+.cfc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cfc-icon { font-size: 1.5rem; }
+.cfc-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #c084fc;
+}
+.cfc-sub { font-size: 0.68rem; color: var(--text-muted); }
+.cfc-badge {
+  margin-left: auto;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--accent-live);
+  border: 1px solid var(--accent-live);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.cfc-team {
+  font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+.cfc-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.cfc-pct { font-weight: 800; color: var(--text-primary); }
+.cfc-chaos-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cfc-ci-label { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
+.cfc-ci-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cfc-ci-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.cfc-ci-bar.chaos-lvl-low  { background: var(--accent-success); }
+.cfc-ci-bar.chaos-lvl-med  { background: var(--accent-gold); }
+.cfc-ci-bar.chaos-lvl-high { background: var(--accent-live); }
+.cfc-ci-val { font-size: 0.72rem; font-weight: 800; min-width: 22px; flex-shrink: 0; }
+.cfc-footer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* ── Chaos Timeline page ─────────────────────────────────── */
+.ct-page { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+.ct-header { }
+.ct-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ct-title { font-size: clamp(1.1rem,3vw,1.4rem); font-weight: 900; margin: 0; color: #c084fc; }
+.ct-sub   { font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 0; }
+.ct-pred-btn {
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.ct-pred-btn:hover { background: rgba(245,197,66,0.1); }
+
+.ct-events-section { display: flex; flex-direction: column; gap: 10px; }
+.ct-events-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ct-event {
+  border-left: 3px solid rgba(168,85,247,0.5) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ct-event-num { font-size: 0.72rem; font-weight: 800; color: #c084fc; }
+.ct-event-match {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-wrap: wrap;
+}
+.ct-winner { color: var(--accent-success); }
+.ct-score  { color: var(--text-muted); font-size: 0.8rem; }
+.ct-loser  { color: var(--text-secondary); text-decoration: line-through; opacity: 0.6; }
+.ct-stage  { font-size: 0.7rem; color: var(--text-muted); }
+.ct-impact {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ct-impact-icon { font-size: 0.9rem; }

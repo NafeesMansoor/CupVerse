@@ -15,6 +15,7 @@ import {
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
+import { getMostFragileFavorite, getChaosIndex, getButterflyEvents, simulateChampionProbabilities } from './chaos.js';
 
 const app = document.getElementById('app');
 
@@ -413,6 +414,39 @@ export function renderHomeDashboard(pulse) {
       <div class="section-header"><h2>Favorite Teams</h2></div>
       ${favWidget}
     </div>
+
+    <!-- Chaos Forecast Widget -->
+    ${(() => {
+      const fragile = getMostFragileFavorite();
+      if (!fragile) return '';
+      const ci = getChaosIndex(fragile.name);
+      const barW = Math.min(ci, 100);
+      const lvl = ci >= 70 ? 'high' : ci >= 45 ? 'med' : 'low';
+      return `
+      <div class="glass-card chaos-forecast-card" data-action="go-chaos">
+        <div class="cfc-header">
+          <span class="cfc-icon">🦋</span>
+          <div>
+            <div class="cfc-title">Chaos Forecast</div>
+            <div class="cfc-sub">Most Fragile Favourite</div>
+          </div>
+          <span class="cfc-badge">LIVE</span>
+        </div>
+        <div class="cfc-team">${fragile.name}</div>
+        <div class="cfc-stat">
+          <span>Champion Probability</span>
+          <span class="cfc-pct">${fragile.pct}%</span>
+        </div>
+        <div class="cfc-chaos-row">
+          <span class="cfc-ci-label">Chaos Index</span>
+          <div class="cfc-ci-bar-wrap">
+            <div class="cfc-ci-bar chaos-lvl-${lvl}" style="width:${barW}%"></div>
+          </div>
+          <span class="cfc-ci-val chaos-lvl-${lvl}">${ci}</span>
+        </div>
+        <div class="cfc-footer">One upset could shift the path by ~${fragile.upsetRisk}% · Tap for full Chaos Timeline →</div>
+      </div>`;
+    })()}
 
     <!-- Tournament Journal (locked until Final ends 2026-07-19) -->
     <div class="journal-locked-card">
@@ -1649,6 +1683,67 @@ export function renderStandings() {
       <button class="standings-pred-btn" data-action="go-prediction-tree">🏆 View Prediction Tree</button>
     </div>
     <div class="standings-groups-grid">${groupCards}</div>
+  `);
+}
+
+// ── CHAOS TIMELINE ────────────────────────────────────────
+export function renderChaosTimeline() {
+  const events = getButterflyEvents();
+  const probs  = simulateChampionProbabilities(1000);
+
+  const eventCards = events.length
+    ? events.map((e, i) => `
+        <div class="ct-event glass-card">
+          <div class="ct-event-num">🦋 Event #${i + 1}</div>
+          <div class="ct-event-match">
+            <span class="ct-winner">${e.winner}</span>
+            <span class="ct-score">${e.score}</span>
+            <span class="ct-loser">${e.loser}</span>
+          </div>
+          <div class="ct-stage">${e.stage}</div>
+          <div class="ct-impact">
+            <span class="ct-impact-icon">⚡</span>
+            Upset impact: <strong>+${e.impact}%</strong> shift in bracket probability
+          </div>
+        </div>`).join('')
+    : `<div class="empty-state"><div class="empty-state-icon">🦋</div>
+        <p class="empty-state-text">No butterfly events yet.<br>Upsets appear here as the tournament progresses.</p>
+       </div>`;
+
+  const probBars = probs.slice(0, 8).map(p => {
+    const ci  = getChaosIndex(p.name);
+    const lvl = ci >= 70 ? 'high' : ci >= 45 ? 'med' : 'low';
+    return `
+      <div class="cp-row">
+        <span class="cp-name">${p.name}</span>
+        <div class="cp-bar-wrap"><div class="cp-bar" style="width:${Math.min(p.pct * 4, 100)}%"></div></div>
+        <span class="cp-pct">${p.pct}%</span>
+        <span class="cp-chaos-badge chaos-lvl-${lvl}" title="Chaos Index">${ci}</span>
+      </div>`;
+  }).join('');
+
+  return makeSection(`
+    <div class="ct-page">
+      <div class="glass-card ct-header">
+        <div class="ct-title-row">
+          <div>
+            <h1 class="ct-title">🦋 Chaos Timeline</h1>
+            <p class="ct-sub">Butterfly events reshaping the tournament path</p>
+          </div>
+          <button class="ct-pred-btn" data-action="go-prediction-tree">🏆 Prediction Tree</button>
+        </div>
+      </div>
+
+      <div class="glass-card chaos-probs">
+        <div class="cp-title">Champion Probabilities <span class="cp-sim">1000 simulations</span></div>
+        ${probBars || '<p class="text-muted" style="font-size:0.82rem;">No data yet.</p>'}
+      </div>
+
+      <div class="ct-events-section">
+        <div class="ct-events-title">Butterfly Events</div>
+        ${eventCards}
+      </div>
+    </div>
   `);
 }
 
