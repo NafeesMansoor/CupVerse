@@ -177,6 +177,13 @@ function mobileRoundHTML(label, matchIds, matchMeta, results, mode, userPred, de
     </div>`;
 }
 
+// ── Wrap HTML into a DOM node (same pattern as makeSection in ui.js) ─────
+function makeNode(html) {
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  return el;
+}
+
 // ── Main render ───────────────────────────────────────────
 export function renderPredictionTree(mode = 'official') {
   const userPred  = getUserPredictions();
@@ -206,7 +213,7 @@ export function renderPredictionTree(mode = 'official') {
 
   const modeOfficial = mode === 'official';
 
-  return `
+  const html = `
     <div class="pred-page">
 
       <!-- Header -->
@@ -259,4 +266,6 @@ export function renderPredictionTree(mode = 'official') {
       </div>
 
     </div>`;
+
+  return makeNode(html);
 }
