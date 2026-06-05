@@ -15,7 +15,6 @@ import {
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
-export { renderPredictionTree } from './prediction.js';
 
 const app = document.getElementById('app');
 

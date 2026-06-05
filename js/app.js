@@ -4,9 +4,9 @@ import {
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
   renderSettings, renderStandings, renderTeamProfile,
   renderVenues, renderVenueDetail, updateNavActive,
-  renderPredictionTree,
 } from './ui.js';
 import {
+  renderPredictionTree,
   getUserPredictions, saveUserPredictions, clearUserPredictions,
   getPredMode, setPredMode,
 } from './prediction.js';
@@ -21,7 +21,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.0.8';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');

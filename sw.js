@@ -1,4 +1,4 @@
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.0.8';
 const CACHE_NAME = `cupverse-v${APP_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -13,9 +13,9 @@ const STATIC_ASSETS = [
   './js/shareCard.js',
   './js/router.js',
   './js/intelligence.js',
+  './js/prediction.js',
   './world_cup_data.json',
   './manifest.json',
-  './assets/placeholder-stadium.jpg',
 ];
 
 self.addEventListener('install', event => {
