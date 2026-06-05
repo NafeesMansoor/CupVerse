@@ -68,15 +68,20 @@ function resolveSlot(raw, standings, results) {
   return { name: s, flag: '🏳️', code: s.slice(0, 4), tbd: true };
 }
 
+// ── Auto-predict winner when user hasn't picked ───────────
+function autoPick(home, away) {
+  if (!home || !away || home.tbd || away.tbd) return null;
+  const score = t => (t.pts || 0) * 1000 + ((t.gf || 0) - (t.ga || 0)) * 10 + (t.gf || 0);
+  return score(home) >= score(away) ? home : away;
+}
+
 // ── Bracket builder ───────────────────────────────────────
 export function buildBracket(mode = 'official', userPred = {}) {
   const matches = getMatches();
   const scores  = getAllScores();
   const standings = getGroupStandings(scores);
 
-  // results[matchId] = winning team, results[loser_matchId] = losing team
-  const results = {};
-  // matchMeta[matchId] = { home, away, score, stage }
+  const results  = {};
   const matchMeta = {};
 
   const knockouts = matches
@@ -96,10 +101,19 @@ export function buildBracket(mode = 'official', userPred = {}) {
       const ag = Number(scoreData.away ?? scoreData.awayScore ?? 0);
       if (hg > ag)      { winner = home; loser = away; }
       else if (ag > hg) { winner = away; loser = home; }
-    } else if (mode === 'predict' && userPred[id]) {
-      const code = userPred[id];
-      if (home?.code === code)      { winner = home; loser = away; }
-      else if (away?.code === code) { winner = away; loser = home; }
+    } else if (mode === 'predict') {
+      if (userPred[id]) {
+        const code = userPred[id];
+        if (home?.code === code)      { winner = home; loser = away; }
+        else if (away?.code === code) { winner = away; loser = home; }
+      } else {
+        // Cascade: auto-fill this round from the previous round's winners
+        const picked = autoPick(home, away);
+        if (picked) {
+          winner = picked;
+          loser  = picked === home ? away : home;
+        }
+      }
     }
 
     if (winner) {
@@ -231,8 +245,10 @@ export function renderPredictionTree(mode = 'official') {
         ${!modeOfficial ? `<button class="pred-clear-btn" data-action="clear-predictions">Reset predictions</button>` : ''}
       </div>
 
-      <!-- Champion (always at top) -->
-      ${champHTML}
+      <!-- Champion (desktop: shown at top; mobile: shown at bottom via .champion-card-mobile) -->
+      <div class="champion-card-desktop">
+        ${champHTML}
+      </div>
 
       <!-- Desktop bracket -->
       <div class="bracket-desktop">
@@ -248,21 +264,26 @@ export function renderPredictionTree(mode = 'official') {
         </div>
       </div>
 
-      <!-- Mobile bracket (collapsible rounds) -->
+      <!-- Mobile bracket (collapsible rounds, R32→Final order) -->
       <div class="bracket-mobile">
-        ${mobileRoundHTML('Final', ['104'], matchMeta, results, mode, userPred, true)}
-        ${mobileRoundHTML('Semi Finals', SF, matchMeta, results, mode, userPred, true)}
-        ${mobileRoundHTML('Quarter Finals', QF, matchMeta, results, mode, userPred, false)}
-        ${mobileRoundHTML('Round of 16', R16, matchMeta, results, mode, userPred, false)}
         ${mobileRoundHTML('Round of 32', R32, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Round of 16', R16, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Quarter Finals', QF, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Semi Finals', SF, matchMeta, results, mode, userPred, true)}
+        ${mobileRoundHTML('Final', ['104'], matchMeta, results, mode, userPred, true)}
       </div>
 
       <!-- 3rd Place -->
-      <div class="glass-card" style="margin-top:16px;">
+      <div class="glass-card" style="margin-top:8px;">
         <div class="section-header" style="margin-bottom:12px;">
           <h3 style="font-size:0.9rem;">Third Place Match</h3>
         </div>
         ${thirdHTML}
+      </div>
+
+      <!-- Champion (mobile: shown at bottom) -->
+      <div class="champion-card-mobile">
+        ${champHTML}
       </div>
 
     </div>`;

@@ -3193,10 +3193,16 @@ a { text-decoration: none; color: inherit; }
 
 /* ── Responsive breakpoints ──────────────────────────────── */
 
+/* Champion placement: desktop=top, mobile=bottom */
+.champion-card-mobile  { display: none; }
+.champion-card-desktop { display: block; }
+
 /* Mobile: hide desktop bracket, show mobile */
 @media (max-width: 767px) {
-  .bracket-desktop { display: none; }
-  .bracket-mobile  { display: flex; }
+  .bracket-desktop        { display: none; }
+  .bracket-mobile         { display: flex; }
+  .champion-card-desktop  { display: none; }
+  .champion-card-mobile   { display: block; }
 
   /* Hero card: fluid flags + name */
   .hero-v3-flag { font-size: clamp(2rem, 8vw, 3.2rem); }

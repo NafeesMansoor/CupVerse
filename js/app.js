@@ -21,7 +21,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '1.0.8';
+const APP_VERSION = '1.0.9';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
