@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#0F1A2E"/>
+      <stop offset="100%" stop-color="#0B1220"/>
+    </linearGradient>
+    <linearGradient id="cGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#F5C542"/>
+      <stop offset="100%" stop-color="#E8A800"/>
+    </linearGradient>
+    <linearGradient id="vGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#70BAFF"/>
+      <stop offset="100%" stop-color="#4DA3FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- Subtle inner ring -->
+  <rect x="6" y="6" width="500" height="500" rx="91" ry="91"
+        fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+
+  <!-- C -->
+  <text x="108" y="330"
+        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
+        font-size="264" font-weight="900" letter-spacing="-8"
+        fill="url(#cGrad)">C</text>
+
+  <!-- V -->
+  <text x="248" y="330"
+        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
+        font-size="264" font-weight="900" letter-spacing="-8"
+        fill="url(#vGrad)">V</text>
+
+  <!-- Accent line -->
+  <rect x="108" y="354" width="296" height="5" rx="3"
+        fill="url(#cGrad)" opacity="0.6"/>
+</svg>
