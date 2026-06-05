@@ -16,6 +16,8 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
+const APP_VERSION = '1.0.7';
+
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
 let countdownClear = null;
@@ -270,6 +272,12 @@ function handleSaveNote(id) {
   }
 }
 
+// ── Update Banner ──────────────────────────────────────────
+function showUpdateBanner() {
+  const banner = document.getElementById('update-banner');
+  if (banner) banner.classList.remove('hidden');
+}
+
 // ── Toast ──────────────────────────────────────────────────
 function showToast(msg) {
   const toast = document.createElement('div');
@@ -416,6 +424,16 @@ function handleAction(event) {
       }
       break;
 
+    case 'update-now':
+      window.location.reload();
+      break;
+
+    case 'dismiss-update': {
+      const banner = document.getElementById('update-banner');
+      if (banner) banner.classList.add('hidden');
+      break;
+    }
+
     default:
       break;
   }
@@ -460,11 +478,17 @@ function hideSplash() {
 }
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.warn('SW registration failed', err);
-    });
-  }
+  if (!('serviceWorker' in navigator)) return;
+
+  const hadController = !!navigator.serviceWorker.controller;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) showUpdateBanner();
+  });
+
+  navigator.serviceWorker.register('./sw.js').catch(err => {
+    console.warn('SW registration failed', err);
+  });
 }
 
 init();

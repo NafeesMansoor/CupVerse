@@ -1,6 +1,6 @@
 # CupVerse ⚽
 
-**Your World Cup 2026 Tournament Command Center**
+**Your World Cup 2026 Command Center**
 
 CupVerse is an offline-first Progressive Web App (PWA) built for the FIFA World Cup 2026. It covers all 105 matches across 48 teams and 16 venues in the USA, Canada, and Mexico — June 11 to July 19, 2026. No backend, no login, no data plan required after first load.
 

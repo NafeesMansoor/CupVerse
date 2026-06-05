@@ -508,3 +508,7 @@ Please redesign CupVerse to feel closer to:
 - Sofascore
 - FotMob
 - EA Sports FC Ultimate Team
+
+Fix the following
+- The placement and presentation of the timer is unpleasent. Use Days Hours Minutes and place it somewhere more appropiate. 
+- On mobile view, I have noticed that the Match List is showing inconsistency on cell width when the country's name is a big large.   
