@@ -1303,33 +1303,17 @@ export function renderVenues(country) {
 
   const cards = filtered.map(s => `
     <div class="venue-card" data-action="open-venue" data-id="${s.id}">
-      <div class="venue-card-img-wrap">
-        <img
-          class="venue-card-img"
-          src="${s.thumb}"
-          alt="${s.name}"
-          loading="lazy"
-          referrerpolicy="no-referrer"
-          onerror="
-            this.style.display='none';
-            this.nextElementSibling.style.display='flex';
-          "
-        />
-        <div class="venue-card-fallback" style="display:none;background:linear-gradient(160deg,${s.color}88 0%,rgba(8,14,32,0.98) 100%);">
-          <span class="venue-fallback-icon">🏟️</span>
-          <span class="venue-fallback-meta">${s.flag} ${s.city}</span>
+      <div class="venue-card-banner" style="background:linear-gradient(135deg,${s.color}cc 0%,${s.color}55 55%,rgba(8,14,32,0.97) 100%);">
+        <div class="vcb-top">
+          <span class="vcb-flag">${s.flag}</span>
+          <span class="vcb-highlight">${s.highlight}</span>
         </div>
-        <div class="venue-card-badge">${s.highlight}</div>
-        <div class="venue-card-img-overlay">
-          <div class="venue-card-name-over">${s.name}</div>
-          <div class="venue-card-city-over">${s.flag} ${s.city}, ${s.country}</div>
-        </div>
-      </div>
-      <div class="venue-card-body">
-        <div class="venue-card-stats">
-          <span class="venue-card-stat">🏟️ ${s.capacity.toLocaleString()}</span>
-          <span class="venue-card-stat">⚽ ${s.worldCupMatches} WC matches</span>
-          <span class="venue-card-stat">📅 Est. ${s.opened}</span>
+        <div class="vcb-name">${s.name}</div>
+        <div class="vcb-city">${s.city} · ${s.country}</div>
+        <div class="vcb-stats">
+          <span>🏟 ${s.capacity.toLocaleString()}</span>
+          <span>⚽ ${s.worldCupMatches} matches</span>
+          <span>📅 ${s.opened}</span>
         </div>
       </div>
     </div>
@@ -1411,46 +1395,17 @@ export function renderVenueDetail(id) {
   return makeSection(`
     <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:4px;">← Venues</button>
 
-    <!-- Cinematic hero with real photo -->
-    <div class="venue-detail-hero">
-      <img
-        class="venue-detail-img"
-        src="${s.image}"
-        alt="${s.name}"
-        referrerpolicy="no-referrer"
-        onerror="
-          this.style.display='none';
-          this.nextElementSibling.style.display='flex';
-        "
-      />
-      <div class="venue-detail-visual" style="display:none;background:linear-gradient(160deg,${s.color}99 0%,${s.color}55 40%,rgba(5,10,25,0.98) 100%);">
-        <div class="venue-detail-visual-icon">🏟️</div>
-      </div>
-      <div class="venue-detail-overlay">
-        <div class="venue-detail-flag">${s.flag}</div>
-        <div class="venue-detail-name">${s.name}</div>
-        <div class="venue-detail-city">${s.city}, ${s.country}</div>
-        <div class="venue-highlight-badge">⭐ ${s.highlight}</div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="venue-stats-row">
-      <div class="venue-stat-card">
-        <div class="venue-stat-val">${s.capacity.toLocaleString()}</div>
-        <div class="venue-stat-lbl">Capacity</div>
-      </div>
-      <div class="venue-stat-card">
-        <div class="venue-stat-val">${s.opened}</div>
-        <div class="venue-stat-lbl">Opened</div>
-      </div>
-      <div class="venue-stat-card">
-        <div class="venue-stat-val">${s.worldCupMatches}</div>
-        <div class="venue-stat-lbl">WC Matches</div>
-      </div>
-      <div class="venue-stat-card">
-        <div class="venue-stat-val" style="font-size:0.85rem;">${s.surface.split(' ').map(w => w[0]).join('')}</div>
-        <div class="venue-stat-lbl">Surface</div>
+    <!-- Text-based venue hero banner -->
+    <div class="venue-detail-banner" style="background:linear-gradient(145deg,${s.color}cc 0%,${s.color}66 40%,rgba(5,10,22,0.98) 100%);">
+      <div class="vdb-eyebrow">${s.flag} ${s.country} · FIFA World Cup 2026</div>
+      <div class="vdb-name">${s.name}</div>
+      <div class="vdb-city">${s.city}</div>
+      <div class="vdb-badge">⭐ ${s.highlight}</div>
+      <div class="vdb-stats-row">
+        <div class="vdb-stat"><span class="vdb-stat-val">${s.capacity.toLocaleString()}</span><span class="vdb-stat-lbl">Capacity</span></div>
+        <div class="vdb-stat"><span class="vdb-stat-val">${s.worldCupMatches}</span><span class="vdb-stat-lbl">WC Matches</span></div>
+        <div class="vdb-stat"><span class="vdb-stat-val">${s.opened}</span><span class="vdb-stat-lbl">Opened</span></div>
+        <div class="vdb-stat"><span class="vdb-stat-val" style="font-size:0.8rem;">${s.surface.split(' ').map(w=>w[0]).join('')}</span><span class="vdb-stat-lbl">Surface</span></div>
       </div>
     </div>
 
