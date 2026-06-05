@@ -3,6 +3,7 @@ import {
   getTournamentStats, getTeams, getTeamSquad, getTeamNextMatch,
   getMatchesByDate, getAllMatchDates, getGroupStandings,
 } from './data.js';
+import { getSquad } from './squad.js';
 import {
   getScore, getAllScores,
   getNote,
@@ -15,7 +16,6 @@ import {
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
-import { getMostFragileFavorite, getChaosIndex, getButterflyEvents, simulateChampionProbabilities } from './chaos.js';
 
 const app = document.getElementById('app');
 
@@ -414,39 +414,6 @@ export function renderHomeDashboard(pulse) {
       <div class="section-header"><h2>Favorite Teams</h2></div>
       ${favWidget}
     </div>
-
-    <!-- Chaos Forecast Widget -->
-    ${(() => {
-      const fragile = getMostFragileFavorite();
-      if (!fragile) return '';
-      const ci = getChaosIndex(fragile.name);
-      const barW = Math.min(ci, 100);
-      const lvl = ci >= 70 ? 'high' : ci >= 45 ? 'med' : 'low';
-      return `
-      <div class="glass-card chaos-forecast-card" data-action="go-chaos">
-        <div class="cfc-header">
-          <span class="cfc-icon">🦋</span>
-          <div>
-            <div class="cfc-title">Chaos Forecast</div>
-            <div class="cfc-sub">Most Fragile Favourite</div>
-          </div>
-          <span class="cfc-badge">LIVE</span>
-        </div>
-        <div class="cfc-team">${fragile.name}</div>
-        <div class="cfc-stat">
-          <span>Champion Probability</span>
-          <span class="cfc-pct">${fragile.pct}%</span>
-        </div>
-        <div class="cfc-chaos-row">
-          <span class="cfc-ci-label">Chaos Index</span>
-          <div class="cfc-ci-bar-wrap">
-            <div class="cfc-ci-bar chaos-lvl-${lvl}" style="width:${barW}%"></div>
-          </div>
-          <span class="cfc-ci-val chaos-lvl-${lvl}">${ci}</span>
-        </div>
-        <div class="cfc-footer">One upset could shift the path by ~${fragile.upsetRisk}% · Tap for full Chaos Timeline →</div>
-      </div>`;
-    })()}
 
     <!-- Tournament Journal (locked until Final ends 2026-07-19) -->
     <div class="journal-locked-card">
@@ -1042,13 +1009,126 @@ function teamItemHTML(t, favTeams) {
   `;
 }
 
+// ── Squad helpers ─────────────────────────────────────────
+function pAge(dob) {
+  return Math.floor((new Date('2026-06-12') - new Date(dob)) / (1000 * 60 * 60 * 24 * 365.25));
+}
+
+function pInitials(name) {
+  const p = name.split(' ').filter(Boolean);
+  return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+}
+
+function pAvatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return `hsl(${Math.abs(h) % 360},45%,28%)`;
+}
+
+function pShortName(name) {
+  const p = name.split(' ').filter(Boolean);
+  return p.length <= 1 ? name : p[p.length - 1];
+}
+
+function playerCardHTML(p, teamName) {
+  return `
+    <div class="player-card" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
+      <div class="pc-avatar" style="background:${pAvatarColor(p.name)}">
+        <span class="pc-initials">${pInitials(p.name)}</span>
+        <span class="pc-num">#${p.number}</span>
+      </div>
+      <div class="pc-body">
+        <div class="pc-name">${p.name}</div>
+        <span class="pc-pos-badge pos-${p.pos}">${p.pos}</span>
+        <div class="pc-club">${p.club}</div>
+        ${p.captain ? '<div class="pc-captain">© Captain</div>' : ''}
+      </div>
+    </div>`;
+}
+
+function playerRowHTML(p, teamName) {
+  return `
+    <div class="player-row" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
+      <span class="pr-num">#${p.number}</span>
+      <span class="pr-pos pos-${p.pos}">${p.pos}</span>
+      <span class="pr-name">${p.name}${p.captain ? ' ©' : ''}</span>
+      <span class="pr-club">${p.club}</span>
+    </div>`;
+}
+
+export function updateSquadGrid(teamName, players, view) {
+  const grid = document.getElementById(`squad-grid-${teamName}`);
+  if (!grid) return;
+  if (!players.length) {
+    grid.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="empty-state-icon">👤</div><p class="empty-state-text">No players match.</p></div>`;
+    return;
+  }
+  if (view === 'list') {
+    grid.innerHTML = `
+      <div class="player-list-view">
+        <div class="plv-header">
+          <span class="pr-num">#</span><span class="pr-pos">POS</span>
+          <span class="pr-name">NAME</span><span class="pr-club">CLUB</span>
+        </div>
+        ${players.map(p => playerRowHTML(p, teamName)).join('')}
+      </div>`;
+  } else {
+    grid.innerHTML = `<div class="squad-grid">${players.map(p => playerCardHTML(p, teamName)).join('')}</div>`;
+  }
+}
+
+export function showPlayerModal(player, teamName, teamFlag) {
+  const existing = document.getElementById('cv-player-modal');
+  if (existing) existing.remove();
+
+  const age    = pAge(player.dob);
+  const dobStr = new Date(player.dob).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const bg     = pAvatarColor(player.name);
+  const POS_FULL = { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };
+
+  const el = document.createElement('div');
+  el.id = 'cv-player-modal';
+  el.className = 'cv-player-modal-wrap';
+  el.innerHTML = `
+    <div class="cv-modal-backdrop" data-action="close-player-modal"></div>
+    <div class="cv-modal-card glass-card">
+      <button class="cv-modal-close" data-action="close-player-modal">×</button>
+      <div class="cv-modal-header">
+        <div class="cv-modal-avatar" style="background:${bg}">
+          <div class="cv-modal-initials">${pInitials(player.name)}</div>
+          <div class="cv-modal-jersey">#${player.number}</div>
+        </div>
+        <div class="cv-modal-info">
+          <div class="cv-modal-name">${player.name}</div>
+          <div class="cv-modal-tags">
+            <span class="pc-pos-badge pos-${player.pos}">${player.pos}</span>
+            ${player.captain ? '<span class="cv-captain-tag">© Captain</span>' : ''}
+          </div>
+          <div class="cv-modal-nation">${teamFlag} ${teamName}</div>
+        </div>
+      </div>
+      <div class="cv-modal-stats-row">
+        <div class="cv-ms"><div class="cv-ms-val">${player.caps}</div><div class="cv-ms-lbl">Caps</div></div>
+        <div class="cv-ms"><div class="cv-ms-val">${player.goals}</div><div class="cv-ms-lbl">Int'l Goals</div></div>
+        <div class="cv-ms"><div class="cv-ms-val">${age}</div><div class="cv-ms-lbl">Age</div></div>
+      </div>
+      <div class="cv-modal-details">
+        <div class="cv-detail-row"><span class="cv-detail-lbl">Date of Birth</span><span class="cv-detail-val">${dobStr}</span></div>
+        <div class="cv-detail-row"><span class="cv-detail-lbl">Club</span><span class="cv-detail-val">${player.club}</span></div>
+        <div class="cv-detail-row"><span class="cv-detail-lbl">Position</span><span class="cv-detail-val">${POS_FULL[player.pos] || player.pos}</span></div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+}
+
 // ── TEAM PROFILE ─────────────────────────────────────────
 export function renderTeamProfile(teamName) {
   const allTeams   = getTeams();
   const teamMeta   = allTeams.find(t => t.name === teamName);
   const td         = getTeamData(teamName);
   const tc         = getTeamColor(teamName);
-  const squad      = getTeamSquad(teamName);
+  const players    = getSquad(teamName);
   const favTeams   = getFavTeams();
   const isFav      = teamMeta ? favTeams.includes(teamMeta.code) : false;
   const allMatches = getMatches()
@@ -1072,8 +1152,6 @@ export function renderTeamProfile(teamName) {
 
   const upcomingMatches  = allMatches.filter(m => effectiveStatus(m) === 'upcoming');
   const completedMatches = allMatches.filter(m => effectiveStatus(m) === 'completed');
-
-  // Compute tournament W/D/L from completed matches
   let tw = 0, td2 = 0, tl = 0, tgf = 0, tga = 0;
   completedMatches.forEach(m => {
     const s = effectiveScore(m);
@@ -1085,22 +1163,121 @@ export function renderTeamProfile(teamName) {
     if (gf > ga) tw++; else if (gf < ga) tl++; else td2++;
   });
 
-  const squadHTML = squad.length ? `
-    <div class="glass-card">
-      <div class="intel-section-label">Squad (${squad.length} players)</div>
-      <div class="squad-list" style="max-height:none;">${squad.map(p => `<span class="player-pill">${p}</span>`).join('')}</div>
+  // ── Squad tab data ───────────────────────────────────────
+  const squadSize  = players.length;
+  const captain    = players.find(p => p.captain);
+  const avgAge     = squadSize
+    ? (players.reduce((sum, p) => sum + pAge(p.dob), 0) / squadSize).toFixed(1)
+    : '—';
+  const topScorer  = [...players].sort((a, b) => b.goals - a.goals)[0];
+  const risingCandidates = [...players].filter(p => p.pos !== 'GK').sort((a, b) => new Date(b.dob) - new Date(a.dob));
+  const risingStar = risingCandidates.find(p => pAge(p.dob) <= 23) || risingCandidates[0];
+  const mostCapped = [...players].sort((a, b) => b.caps - a.caps)[0];
+
+  const kpCard = (label, stat, p) => !p ? '' : `
+    <div class="kp-card" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
+      <div class="kp-label">${label}</div>
+      <div class="kp-avatar" style="background:${pAvatarColor(p.name)}">${pInitials(p.name)}</div>
+      <div class="kp-num">#${p.number}</div>
+      <div class="kp-name">${p.name}</div>
+      <div class="kp-stat">${stat}</div>
+    </div>`;
+
+  const keyPlayers = squadSize ? `
+    <div class="squad-section">
+      <div class="intel-section-label">⭐ Key Players</div>
+      <div class="key-players-scroll">
+        ${kpCard('© Captain', `${captain?.caps ?? 0} caps`, captain)}
+        ${topScorer && topScorer !== captain ? kpCard('⚽ Top Scorer', `${topScorer.goals} goals`, topScorer) : ''}
+        ${risingStar && risingStar !== captain && risingStar !== topScorer
+          ? kpCard('⭐ Rising Star', `Age ${pAge(risingStar.dob)}`, risingStar) : ''}
+        ${mostCapped && mostCapped !== captain ? kpCard('🏆 Most Capped', `${mostCapped.caps} caps`, mostCapped) : ''}
+      </div>
     </div>` : '';
 
-  const fixturesHTML = allMatches.length ? `
+  // Formation (4-3-3 by most-capped)
+  const fGK  = [...players].filter(p => p.pos === 'GK').sort((a, b) => b.caps - a.caps);
+  const fDEF = [...players].filter(p => p.pos === 'DEF').sort((a, b) => b.caps - a.caps);
+  const fMID = [...players].filter(p => p.pos === 'MID').sort((a, b) => b.caps - a.caps);
+  const fFWD = [...players].filter(p => p.pos === 'FWD').sort((a, b) => b.caps - a.caps);
+  const fpCard = p => !p ? '' : `
+    <div class="fp-player">
+      <div class="fp-circle" style="background:${pAvatarColor(p.name)}">${pInitials(p.name)}</div>
+      <div class="fp-label">${pShortName(p.name)}</div>
+    </div>`;
+
+  const formationBlock = squadSize ? `
+    <div id="formation-panel-${teamName}" class="formation-pitch hidden">
+      <div class="formation-tag">4-3-3 · Probable Lineup</div>
+      <div class="formation-row">${fpCard(fFWD[0])}${fpCard(fFWD[1])}${fpCard(fFWD[2])}</div>
+      <div class="formation-row">${fpCard(fMID[0])}${fpCard(fMID[1])}${fpCard(fMID[2])}</div>
+      <div class="formation-row">${fpCard(fDEF[0])}${fpCard(fDEF[1])}${fpCard(fDEF[2])}${fpCard(fDEF[3])}</div>
+      <div class="formation-row formation-gk-row">${fpCard(fGK[0])}</div>
+    </div>` : '';
+
+  // ── Tab panels ───────────────────────────────────────────
+  const overviewPanel = `
+    <div class="stats-row" style="grid-template-columns:repeat(${completedMatches.length ? 4 : 3},1fr);">
+      <div class="stat-item"><div class="stat-value">#${teamMeta.fifaRank}</div><div class="stat-label">FIFA Rank</div></div>
+      <div class="stat-item"><div class="stat-value">${td.wcApps || '—'}</div><div class="stat-label">WC Apps</div></div>
+      <div class="stat-item"><div class="stat-value">${upcomingMatches.length}</div><div class="stat-label">Upcoming</div></div>
+      ${completedMatches.length ? `<div class="stat-item"><div class="stat-value">${tgf}-${tga}</div><div class="stat-label">GF-GA</div></div>` : ''}
+    </div>
+    ${completedMatches.length ? `
+    <div class="glass-card">
+      <div class="intel-section-label">Tournament Record</div>
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-item"><div class="stat-value" style="color:var(--accent-success)">${tw}</div><div class="stat-label">Won</div></div>
+        <div class="stat-item"><div class="stat-value" style="color:var(--text-muted)">${td2}</div><div class="stat-label">Drawn</div></div>
+        <div class="stat-item"><div class="stat-value" style="color:var(--accent-live)">${tl}</div><div class="stat-label">Lost</div></div>
+        <div class="stat-item"><div class="stat-value">${tw * 3 + td2}</div><div class="stat-label">Points</div></div>
+      </div>
+    </div>` : ''}
+    <div class="glass-card">
+      <div class="intel-section-label">Recent Form (Last 5)</div>
+      <div class="form-strip">${formHTML || '<span class="text-muted">No data</span>'}</div>
+      <div style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);">Play style: ${td.style || '—'} · Confederation: ${td.conf || '—'}</div>
+    </div>`;
+
+  const fixturesPanel = allMatches.length ? `
     <div class="glass-card">
       <div class="intel-section-label">Tournament Fixtures</div>
       <div class="match-grid">${allMatches.map(m => matchCardHTML(m)).join('')}</div>
-    </div>` : '';
+    </div>` : `<div class="empty-state" style="padding:32px 0;"><div class="empty-state-icon">📅</div><p class="empty-state-text">No fixtures found.</p></div>`;
+
+  const squadPanel = squadSize ? `
+    ${keyPlayers}
+    <div class="squad-section">
+      <div class="squad-header-stats glass-card">
+        <div class="shs-item"><div class="shs-val">${squadSize}</div><div class="shs-lbl">Players</div></div>
+        <div class="shs-item"><div class="shs-val">${avgAge}</div><div class="shs-lbl">Avg Age</div></div>
+        <div class="shs-item"><div class="shs-val">${captain ? pShortName(captain.name) : '—'}</div><div class="shs-lbl">Captain</div></div>
+        <div class="shs-item"><div class="shs-val">${fGK.length}/${fDEF.length}/${fMID.length}/${fFWD.length}</div><div class="shs-lbl">GK/D/M/F</div></div>
+      </div>
+      ${formationBlock}
+      <div class="squad-controls-bar glass-card">
+        <input class="squad-search-input" data-squad-search="${teamName}" placeholder="🔍 Search player, number, club…" />
+        <div class="squad-controls-row">
+          <div class="squad-pos-bar">
+            ${['ALL','GK','DEF','MID','FWD'].map(pos => `
+              <button class="spf-btn ${pos === 'ALL' ? 'active' : ''}" data-action="squad-filter" data-team="${teamName}" data-pos="${pos}">${pos === 'ALL' ? 'All' : pos}</button>
+            `).join('')}
+          </div>
+          <div class="squad-view-btns">
+            <button class="svt-btn active" data-action="squad-view" data-team="${teamName}" data-view="cards" title="Cards">⊞</button>
+            <button class="svt-btn" data-action="squad-view" data-team="${teamName}" data-view="list" title="List">☰</button>
+            <button class="svt-btn" data-action="squad-formation" data-team="${teamName}" title="Formation">⬡</button>
+          </div>
+        </div>
+      </div>
+      <div id="squad-grid-${teamName}">
+        <div class="squad-grid">${players.map(p => playerCardHTML(p, teamName)).join('')}</div>
+      </div>
+    </div>` : `<div class="empty-state" style="padding:32px 0;"><div class="empty-state-icon">👥</div><p class="empty-state-text">Squad data not available offline.</p></div>`;
 
   return makeSection(`
     <button class="btn btn-sm" data-action="nav-back" style="margin-bottom:4px;">← Back</button>
 
-    <!-- Hero -->
     <div class="tp-hero glass-card" style="border-color:${tc}44;background:linear-gradient(135deg,${tc}1A 0%,var(--bg-card) 100%);">
       <div class="tp-flag-row">
         <span class="tp-flag">${teamMeta.flag}</span>
@@ -1114,47 +1291,15 @@ export function renderTeamProfile(teamName) {
       <div class="tp-best">🏆 Best World Cup Result: <strong>${td.wcBest || '—'}</strong> &nbsp;·&nbsp; ${td.wcApps || '?'} WC appearances</div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-row" style="grid-template-columns:repeat(${completedMatches.length ? 4 : 3},1fr);">
-      <div class="stat-item">
-        <div class="stat-value">#${teamMeta.fifaRank}</div>
-        <div class="stat-label">FIFA Rank</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${td.wcApps || '—'}</div>
-        <div class="stat-label">WC Apps</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${upcomingMatches.length}</div>
-        <div class="stat-label">Upcoming</div>
-      </div>
-      ${completedMatches.length ? `
-      <div class="stat-item">
-        <div class="stat-value">${tgf}-${tga}</div>
-        <div class="stat-label">GF-GA</div>
-      </div>` : ''}
+    <div class="tp-tab-bar">
+      <button class="tp-tab-btn active" data-action="team-tab" data-tab="overview">Overview</button>
+      <button class="tp-tab-btn" data-action="team-tab" data-tab="fixtures">Fixtures <span class="tp-tab-badge">${allMatches.length}</span></button>
+      <button class="tp-tab-btn" data-action="team-tab" data-tab="squad">Squad ${squadSize ? `<span class="tp-tab-badge">${squadSize}</span>` : ''}</button>
     </div>
 
-    ${completedMatches.length ? `
-    <div class="glass-card">
-      <div class="intel-section-label">Tournament Record</div>
-      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
-        <div class="stat-item"><div class="stat-value" style="color:var(--accent-success)">${tw}</div><div class="stat-label">Won</div></div>
-        <div class="stat-item"><div class="stat-value" style="color:var(--text-muted)">${td2}</div><div class="stat-label">Drawn</div></div>
-        <div class="stat-item"><div class="stat-value" style="color:var(--accent-live)">${tl}</div><div class="stat-label">Lost</div></div>
-        <div class="stat-item"><div class="stat-value">${tw * 3 + td2}</div><div class="stat-label">Points</div></div>
-      </div>
-    </div>` : ''}
-
-    <!-- Recent Form -->
-    <div class="glass-card">
-      <div class="intel-section-label">Recent Form (Last 5)</div>
-      <div class="form-strip">${formHTML || '<span class="text-muted">No data</span>'}</div>
-      <div style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);">Play style: ${td.style || '—'} · Confederation: ${td.conf || '—'}</div>
-    </div>
-
-    ${fixturesHTML}
-    ${squadHTML}
+    <div class="tp-tab-panel active" data-tab="overview">${overviewPanel}</div>
+    <div class="tp-tab-panel" data-tab="fixtures">${fixturesPanel}</div>
+    <div class="tp-tab-panel" data-tab="squad">${squadPanel}</div>
   `);
 }
 
@@ -1683,67 +1828,6 @@ export function renderStandings() {
       <button class="standings-pred-btn" data-action="go-prediction-tree">🏆 View Prediction Tree</button>
     </div>
     <div class="standings-groups-grid">${groupCards}</div>
-  `);
-}
-
-// ── CHAOS TIMELINE ────────────────────────────────────────
-export function renderChaosTimeline() {
-  const events = getButterflyEvents();
-  const probs  = simulateChampionProbabilities(1000);
-
-  const eventCards = events.length
-    ? events.map((e, i) => `
-        <div class="ct-event glass-card">
-          <div class="ct-event-num">🦋 Event #${i + 1}</div>
-          <div class="ct-event-match">
-            <span class="ct-winner">${e.winner}</span>
-            <span class="ct-score">${e.score}</span>
-            <span class="ct-loser">${e.loser}</span>
-          </div>
-          <div class="ct-stage">${e.stage}</div>
-          <div class="ct-impact">
-            <span class="ct-impact-icon">⚡</span>
-            Upset impact: <strong>+${e.impact}%</strong> shift in bracket probability
-          </div>
-        </div>`).join('')
-    : `<div class="empty-state"><div class="empty-state-icon">🦋</div>
-        <p class="empty-state-text">No butterfly events yet.<br>Upsets appear here as the tournament progresses.</p>
-       </div>`;
-
-  const probBars = probs.slice(0, 8).map(p => {
-    const ci  = getChaosIndex(p.name);
-    const lvl = ci >= 70 ? 'high' : ci >= 45 ? 'med' : 'low';
-    return `
-      <div class="cp-row">
-        <span class="cp-name">${p.name}</span>
-        <div class="cp-bar-wrap"><div class="cp-bar" style="width:${Math.min(p.pct * 4, 100)}%"></div></div>
-        <span class="cp-pct">${p.pct}%</span>
-        <span class="cp-chaos-badge chaos-lvl-${lvl}" title="Chaos Index">${ci}</span>
-      </div>`;
-  }).join('');
-
-  return makeSection(`
-    <div class="ct-page">
-      <div class="glass-card ct-header">
-        <div class="ct-title-row">
-          <div>
-            <h1 class="ct-title">🦋 Chaos Timeline</h1>
-            <p class="ct-sub">Butterfly events reshaping the tournament path</p>
-          </div>
-          <button class="ct-pred-btn" data-action="go-prediction-tree">🏆 Prediction Tree</button>
-        </div>
-      </div>
-
-      <div class="glass-card chaos-probs">
-        <div class="cp-title">Champion Probabilities <span class="cp-sim">1000 simulations</span></div>
-        ${probBars || '<p class="text-muted" style="font-size:0.82rem;">No data yet.</p>'}
-      </div>
-
-      <div class="ct-events-section">
-        <div class="ct-events-title">Butterfly Events</div>
-        ${eventCards}
-      </div>
-    </div>
   `);
 }
 

@@ -1,9 +1,11 @@
-import { loadMatches, getMatchById, getMatches } from './data.js';
+import { loadMatches, getMatchById, getMatches, getTeams } from './data.js';
+import { loadSquads, getSquad } from './squad.js';
 import {
   renderApp, renderHomeDashboard, renderMatches, renderMatchesList,
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
   renderSettings, renderStandings, renderTeamProfile,
   renderVenues, renderVenueDetail, updateNavActive,
+  showPlayerModal, updateSquadGrid,
 } from './ui.js';
 import {
   renderPredictionTree,
@@ -27,7 +29,20 @@ const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
 let countdownClear = null;
 let fixtureFilterTimer = null;
+let squadFilterTimer = null;
 let deferredInstallPrompt = null;
+let squadState = { pos: 'ALL', view: 'cards', query: '' };
+
+function applySquadFilter(players, state) {
+  return players.filter(p => {
+    const posOk = state.pos === 'ALL' || p.pos === state.pos;
+    const q = state.query;
+    const qOk = !q || p.name.toLowerCase().includes(q)
+      || String(p.number).includes(q)
+      || p.club.toLowerCase().includes(q);
+    return posOk && qOk;
+  });
+}
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -66,7 +81,10 @@ function renderCurrentRoute() {
     case 'matches':   view = renderMatches(); break;
     case 'match':     view = renderMatchDetail(route.params.id); break;
     case 'teams':     view = renderTeams(); break;
-    case 'team':      view = renderTeamProfile(route.params.name); break;
+    case 'team':
+      squadState = { pos: 'ALL', view: 'cards', query: '' };
+      view = renderTeamProfile(route.params.name);
+      break;
     case 'venues':    view = renderVenues(); break;
     case 'venue':     view = renderVenueDetail(route.params.id); break;
     case 'calendar':  view = renderCalendar(); break;
@@ -423,6 +441,57 @@ function handleAction(event) {
       break;
     }
 
+    case 'team-tab': {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tp-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.tp-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+      break;
+    }
+
+    case 'open-player': {
+      const teamName = btn.dataset.team;
+      const num = parseInt(btn.dataset.playerNum);
+      const player = getSquad(teamName).find(p => p.number === num);
+      const team = getTeams().find(t => t.name === teamName);
+      if (player && team) showPlayerModal(player, teamName, team.flag);
+      break;
+    }
+
+    case 'close-player-modal': {
+      const modal = document.getElementById('cv-player-modal');
+      if (modal) {
+        modal.classList.remove('visible');
+        setTimeout(() => modal.remove(), 220);
+      }
+      break;
+    }
+
+    case 'squad-filter': {
+      const teamName = btn.dataset.team;
+      squadState.pos = btn.dataset.pos;
+      document.querySelectorAll('.spf-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === squadState.pos));
+      updateSquadGrid(teamName, applySquadFilter(getSquad(teamName), squadState), squadState.view);
+      break;
+    }
+
+    case 'squad-view': {
+      const teamName = btn.dataset.team;
+      squadState.view = btn.dataset.view;
+      document.querySelectorAll('.svt-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === squadState.view));
+      updateSquadGrid(teamName, applySquadFilter(getSquad(teamName), squadState), squadState.view);
+      break;
+    }
+
+    case 'squad-formation': {
+      const teamName = btn.dataset.team;
+      const panel = document.getElementById(`formation-panel-${teamName}`);
+      if (panel) {
+        panel.classList.toggle('hidden');
+        btn.classList.toggle('active');
+      }
+      break;
+    }
+
     case 'install-pwa':
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
@@ -499,6 +568,18 @@ function handleChange(event) {
   }
 }
 
+// ── Squad search (input event delegation) ─────────────────
+function handleInput(event) {
+  const el = event.target;
+  const teamName = el.dataset.squadSearch;
+  if (!teamName) return;
+  clearTimeout(squadFilterTimer);
+  squadFilterTimer = setTimeout(() => {
+    squadState.query = el.value.trim().toLowerCase();
+    updateSquadGrid(teamName, applySquadFilter(getSquad(teamName), squadState), squadState.view);
+  }, 200);
+}
+
 // ── Init ───────────────────────────────────────────────────
 async function init() {
   applyTheme(getTheme());
@@ -508,10 +589,16 @@ async function init() {
   window.addEventListener('hashchange', renderCurrentRoute);
   document.body.addEventListener('click', handleAction);
   document.body.addEventListener('change', handleChange);
-
   document.body.addEventListener('dblclick', handleDblClick);
+  document.body.addEventListener('input', handleInput);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('cv-player-modal');
+      if (modal) { modal.classList.remove('visible'); setTimeout(() => modal.remove(), 220); }
+    }
+  });
 
-  await loadMatches();
+  await Promise.all([loadMatches(), loadSquads()]);
   renderCurrentRoute();
   hideSplash();
   registerServiceWorker();

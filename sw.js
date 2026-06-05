@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   './css/styles.css',
   './js/app.js',
   './js/data.js',
+  './js/squad.js',
   './js/storage.js',
   './js/ui.js',
   './js/countdown.js',
@@ -15,6 +16,7 @@ const STATIC_ASSETS = [
   './js/intelligence.js',
   './js/prediction.js',
   './world_cup_data.json',
+  './data/squads.json',
   './manifest.json',
 ];
 
@@ -47,7 +49,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
-  if (url.includes('world_cup_data.json')) {
+  if (url.includes('world_cup_data.json') || url.includes('squads.json')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
