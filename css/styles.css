@@ -2924,3 +2924,327 @@ a { text-decoration: none; color: inherit; }
   background: var(--accent-blue); border-color: var(--accent-blue); color: #fff;
 }
 .venue-tour-btn.primary:hover { background: var(--accent-blue-bright); }
+
+/* ══════════════════════════════════════════════════
+   PREDICTION TREE PAGE
+   ══════════════════════════════════════════════════ */
+
+/* Page wrapper */
+.pred-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+/* Page header card */
+.pred-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pred-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pred-title {
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 900;
+  margin: 0;
+}
+.pred-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.pred-clear-btn {
+  background: transparent;
+  border: 1px solid var(--accent-live);
+  color: var(--accent-live);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: var(--transition);
+}
+.pred-clear-btn:hover { background: rgba(255,77,77,0.1); }
+
+/* Mode toggle */
+.pred-mode-toggle {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 3px;
+}
+.pmt-btn {
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.pmt-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+/* Champion card */
+.champion-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, rgba(245,197,66,0.12) 0%, var(--bg-card) 100%);
+  border: 1px solid rgba(245,197,66,0.35);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+.champ-trophy { font-size: 2.8rem; line-height: 1; }
+.champ-flag   { font-size: 3rem; line-height: 1; }
+.champ-name   { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 900; color: var(--accent-gold); }
+.champ-label  { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); }
+.champ-empty .champ-trophy { opacity: 0.3; }
+.champ-empty .champ-label  { opacity: 0.5; }
+
+/* Entry-point buttons */
+.hero-v3-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.hero-v3-pred-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 9px 18px;
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-weight: 700; font-size: 0.82rem;
+  border-radius: 999px; cursor: pointer;
+  transition: var(--transition);
+}
+.hero-v3-pred-btn:hover { background: rgba(245,197,66,0.12); }
+
+.standings-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.standings-pred-btn {
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+.standings-pred-btn:hover { background: rgba(245,197,66,0.1); }
+
+/* ── Bracket match card ───────────────────────────────────── */
+.bracket-match {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+.bm-divider {
+  height: 1px;
+  background: var(--border);
+}
+.bm-team {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: default;
+  transition: background 0.15s ease;
+  min-height: 36px;
+}
+.bm-flag { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+.bm-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bm-score {
+  font-size: 0.9rem; font-weight: 800;
+  color: var(--text-primary); margin-left: auto; flex-shrink: 0;
+}
+.bm-win-mark {
+  font-size: 0.65rem; font-weight: 800;
+  color: var(--accent-success); margin-left: 4px; flex-shrink: 0;
+}
+
+.bm-team.bm-winner { background: rgba(61,220,151,0.1); color: var(--accent-success); }
+.bm-team.bm-loser  { opacity: 0.45; }
+.bm-team.bm-tbd    { opacity: 0.45; font-style: italic; }
+
+.bm-team.bm-pickable {
+  cursor: pointer;
+}
+.bm-team.bm-pickable:hover { background: rgba(77,163,255,0.12); }
+.bm-team.bm-picked {
+  background: rgba(77,163,255,0.18);
+  color: var(--accent-blue);
+  border-left: 3px solid var(--accent-blue);
+}
+
+/* ── Desktop bracket (horizontal, hidden on mobile) ──────── */
+.bracket-desktop {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.bracket-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  max-width: 180px;
+  scroll-snap-align: start;
+}
+.bc-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-blue);
+  text-align: center;
+  padding: 6px 4px;
+  margin-bottom: 4px;
+}
+.bc-matches {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 4px;
+}
+.bc-final {
+  justify-content: center;
+}
+.bm-compact .bm-team { padding: 5px 8px; font-size: 0.72rem; min-height: 30px; }
+.bm-compact .bm-flag { font-size: 0.85rem; }
+
+/* ── Mobile bracket (collapsible, shown only on mobile) ──── */
+.bracket-mobile { display: none; flex-direction: column; gap: 8px; }
+
+.mob-round {
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+.mob-round-hd {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.mob-round-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: auto;
+}
+.mob-round-chevron {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+.mob-open .mob-round-chevron { transform: rotate(90deg); }
+.mob-round-body {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--bg-card);
+}
+.mob-open .mob-round-body { display: flex; }
+
+/* ── Responsive breakpoints ──────────────────────────────── */
+
+/* Mobile: hide desktop bracket, show mobile */
+@media (max-width: 767px) {
+  .bracket-desktop { display: none; }
+  .bracket-mobile  { display: flex; }
+
+  /* Hero card: fluid flags + name */
+  .hero-v3-flag { font-size: clamp(2rem, 8vw, 3.2rem); }
+  .hero-v3-name { font-size: clamp(0.72rem, 2.8vw, 0.95rem); }
+  .hero-v3-matchup { gap: 10px; }
+  .hero-v3-nation { min-width: 70px; }
+
+  /* Standings: single column, long names wrap */
+  .standings-groups-grid { grid-template-columns: 1fr; }
+  .gvc-name { white-space: normal; overflow: visible; text-overflow: unset; }
+  .gvc-record { white-space: normal; }
+  .gvc-team-row { flex-wrap: wrap; gap: 4px 6px; }
+
+  /* Standings top bar stacks */
+  .standings-top-bar { flex-direction: column; align-items: flex-start; }
+
+  /* Hero actions stack */
+  .hero-v3-actions { flex-direction: column; align-items: flex-start; }
+  .hero-v3-view-btn, .hero-v3-pred-btn { width: 100%; justify-content: center; }
+
+  /* Countdown: fluid sizing */
+  .countdown-widget .cd-val { font-size: clamp(1.1rem, 5vw, 1.55rem) !important; }
+  .countdown-widget .cd-label { font-size: clamp(0.5rem, 2vw, 0.65rem) !important; }
+  .countdown-widget { padding: 14px 10px; }
+}
+
+/* Tablet: 2-col standings, desktop bracket visible */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .standings-groups-grid { grid-template-columns: repeat(2, 1fr); }
+  .bracket-col { min-width: 130px; }
+  .bm-team { font-size: 0.72rem; }
+}
+
+/* Desktop: 3-col standings */
+@media (min-width: 1024px) {
+  .standings-groups-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Large desktop: prevent hero from stretching too wide */
+@media (min-width: 1440px) {
+  .v3-hero { max-width: 800px; }
+  .hero-row { justify-content: flex-start; gap: 24px; }
+}
+
+/* Very small phones (320px) */
+@media (max-width: 360px) {
+  .hero-v3-flag { font-size: 1.8rem; }
+  .pred-title-row { flex-direction: column; align-items: flex-start; }
+  .gvc-team-row { font-size: 0.78rem; }
+  .bm-team { font-size: 0.7rem; padding: 6px 8px; }
+}

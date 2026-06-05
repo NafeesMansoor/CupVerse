@@ -4,7 +4,12 @@ import {
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
   renderSettings, renderStandings, renderTeamProfile,
   renderVenues, renderVenueDetail, updateNavActive,
+  renderPredictionTree,
 } from './ui.js';
+import {
+  getUserPredictions, saveUserPredictions, clearUserPredictions,
+  getPredMode, setPredMode,
+} from './prediction.js';
 import { getStadiumByName } from './venues.js';
 import { parseRoute, navigateTo } from './router.js';
 import { createCountdown, createBlockCountdown } from './countdown.js';
@@ -67,8 +72,9 @@ function renderCurrentRoute() {
     case 'calendar':  view = renderCalendar(); break;
     case 'scorers':   view = renderScorers(); break;
     case 'standings': view = renderStandings(); break;
-    case 'settings':  view = renderSettings(); break;
-    default:          view = renderHomeDashboard(); break;
+    case 'settings':         view = renderSettings(); break;
+    case 'prediction-tree':  view = renderPredictionTree(getPredMode()); break;
+    default:                 view = renderHomeDashboard(); break;
   }
   renderApp(view);
   const navPage = route.page === 'match' ? 'matches'
@@ -422,6 +428,47 @@ function handleAction(event) {
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
       }
+      break;
+
+    case 'go-prediction-tree':
+      navigateTo('prediction-tree');
+      break;
+
+    case 'pred-mode': {
+      const m = btn.dataset.mode;
+      setPredMode(m);
+      renderApp(renderPredictionTree(m));
+      updateNavActive('prediction-tree');
+      attachCountdown();
+      break;
+    }
+
+    case 'predict-pick': {
+      const matchId = btn.dataset.match;
+      const code    = btn.dataset.code;
+      const preds   = getUserPredictions();
+      if (preds[matchId] === code) {
+        delete preds[matchId];
+      } else {
+        preds[matchId] = code;
+      }
+      saveUserPredictions(preds);
+      renderApp(renderPredictionTree('predict'));
+      updateNavActive('prediction-tree');
+      break;
+    }
+
+    case 'toggle-round': {
+      const roundSlug = btn.dataset.round;
+      const section = btn.closest('.mob-round');
+      if (section) section.classList.toggle('mob-open');
+      break;
+    }
+
+    case 'clear-predictions':
+      clearUserPredictions();
+      renderApp(renderPredictionTree('predict'));
+      updateNavActive('prediction-tree');
       break;
 
     case 'update-now':

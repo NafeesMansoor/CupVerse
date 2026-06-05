@@ -15,6 +15,7 @@ import {
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
+export { renderPredictionTree } from './prediction.js';
 
 const app = document.getElementById('app');
 
@@ -267,7 +268,10 @@ export function renderHomeDashboard(pulse) {
           <span class="hero-v3-venue-item">⏰ ${fmtTime(next.datetime)}</span>
         </div>
 
-        <button class="hero-v3-view-btn" data-action="open-match" data-id="${next.id}">View Match →</button>
+        <div class="hero-v3-actions">
+          <button class="hero-v3-view-btn" data-action="open-match" data-id="${next.id}">View Match →</button>
+          <button class="hero-v3-pred-btn" data-action="go-prediction-tree">🏆 Prediction Tree</button>
+        </div>
       </div>
     `;
 
@@ -1632,15 +1636,18 @@ export function renderStandings() {
   }).join('');
 
   return makeSection(`
-    <div class="standings-legend">
-      <div class="legend-item">
-        <span class="legend-dot" style="background:var(--accent-success)"></span>
-        Qualifies to Round of 32
+    <div class="standings-top-bar">
+      <div class="standings-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--accent-success)"></span>
+          Qualifies to Round of 32
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--accent-gold)"></span>
+          Potential best 3rd-place
+        </div>
       </div>
-      <div class="legend-item">
-        <span class="legend-dot" style="background:var(--accent-gold)"></span>
-        Potential best 3rd-place
-      </div>
+      <button class="standings-pred-btn" data-action="go-prediction-tree">🏆 View Prediction Tree</button>
     </div>
     <div class="standings-groups-grid">${groupCards}</div>
   `);
