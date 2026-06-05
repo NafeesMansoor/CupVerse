@@ -1,6 +1,5 @@
 import { getMatches, getGroupStandings } from './data.js';
 import { getAllScores } from './storage.js';
-import { buildChaosBracket, simulateChampionProbabilities, getChaosIndex, getMatchChaosScore } from './chaos.js';
 
 const PRED_KEY = 'cupverse_predictions';
 const MODE_KEY = 'cupverse_pred_mode';
@@ -185,113 +184,80 @@ function makeNode(html) {
 
 // ── Main render ───────────────────────────────────────────
 export function renderPredictionTree(mode = 'official') {
-  const userPred = getUserPredictions();
+  const userPred  = getUserPredictions();
+  const { matchMeta, results, champion } = buildBracket(mode, userPred);
 
-  // Resolve bracket data depending on mode
-  let activeMeta, activeResults, activeChamp;
-  if (mode === 'chaos') {
-    const cb = buildChaosBracket();
-    activeMeta    = cb.matchMeta;
-    activeResults = cb.results;
-    activeChamp   = cb.results['104'] || null;
-  } else {
-    const b = buildBracket(mode === 'predict' ? 'predict' : 'official', userPred);
-    activeMeta    = b.matchMeta;
-    activeResults = b.results;
-    activeChamp   = b.champion;
-  }
-
-  // Match order (top→bottom)
-  const R32 = ['74','77','73','75','83','84','81','82','76','78','79','80','86','88','85','87'];
-  const R16 = ['89','90','93','94','91','92','95','96'];
-  const QF  = ['97','98','99','100'];
+  // Bracket match order (top→bottom within each round)
+  const R32 = ['74','77','73','75', '83','84','81','82', '76','78','79','80', '86','88','85','87'];
+  const R16 = ['89','90', '93','94', '91','92', '95','96'];
+  const QF  = ['97','98', '99','100'];
   const SF  = ['101','102'];
 
-  // Champion card
-  const champLabel = mode === 'predict' ? 'Predicted Champion'
-                   : mode === 'chaos'   ? '🦋 Chaos Champion'
-                   : 'World Champion';
-  const champEmptyLabel = mode === 'predict' ? 'Pick your champion'
-                        : mode === 'chaos'   ? 'Simulating…'
-                        : 'Champion TBD';
-  const champHTML = activeChamp
-    ? `<div class="champion-card${mode === 'chaos' ? ' champ-chaos' : ''}">
+  const champHTML = champion
+    ? `<div class="champion-card">
          <div class="champ-trophy">🏆</div>
-         <div class="champ-flag">${activeChamp.flag}</div>
-         <div class="champ-name">${activeChamp.name}</div>
-         <div class="champ-label">${champLabel}</div>
-         ${mode === 'chaos' ? `<div class="champ-chaos-idx">Chaos Index: ${getChaosIndex(activeChamp.name)}</div>` : ''}
+         <div class="champ-flag">${champion.flag}</div>
+         <div class="champ-name">${champion.name}</div>
+         <div class="champ-label">${mode === 'predict' ? 'Predicted Champion' : 'World Champion'}</div>
        </div>`
-    : `<div class="champion-card champ-empty"><div class="champ-trophy">🏆</div><div class="champ-label">${champEmptyLabel}</div></div>`;
+    : `<div class="champion-card champ-empty">
+         <div class="champ-trophy">🏆</div>
+         <div class="champ-label">${mode === 'predict' ? 'Pick your champion' : 'Champion TBD'}</div>
+       </div>`;
 
-  // Third place
-  const thirdMeta = activeMeta['103'] || { home: null, away: null, score: null };
-  const thirdHTML = bMatchHTML('103', thirdMeta, activeResults, mode, userPred);
+  const thirdHTML = bMatchHTML('103',
+    matchMeta['103'] || { home: null, away: null, score: null },
+    results, mode, userPred);
 
-  // Chaos probability table
-  let champProbHTML = '';
-  if (mode === 'chaos') {
-    const probs = simulateChampionProbabilities(800);
-    champProbHTML = probs.length ? `
-      <div class="chaos-probs glass-card">
-        <div class="cp-title">Champion Probabilities <span class="cp-sim">800 simulations</span></div>
-        ${probs.slice(0, 8).map(p => `
-          <div class="cp-row">
-            <span class="cp-name">${p.name}</span>
-            <div class="cp-bar-wrap"><div class="cp-bar" style="width:${Math.min(p.pct * 4, 100)}%"></div></div>
-            <span class="cp-pct">${p.pct}%</span>
-            <span class="cp-chaos-badge chaos-lvl-${p.pct > 20 ? 'low' : p.pct > 8 ? 'med' : 'high'}" title="Chaos Index">${getChaosIndex(p.name)}</span>
-          </div>`).join('')}
-      </div>` : '';
-  }
-
-  const subTexts = {
-    official: 'Live tournament progression. Results update automatically.',
-    chaos:    '🦋 Chaos Theory — small upsets reshape the entire bracket daily.',
-    predict:  'Tap a team in each match to advance them. Predict the champion!',
-  };
+  const modeOfficial = mode === 'official';
 
   const html = `
     <div class="pred-page">
 
+      <!-- Header -->
       <div class="pred-header glass-card">
         <div class="pred-title-row">
           <h1 class="pred-title">🏆 Prediction Tree</h1>
           <div class="pred-mode-toggle">
-            <button class="pmt-btn${mode === 'official' ? ' active' : ''}" data-action="pred-mode" data-mode="official">Official</button>
-            <button class="pmt-btn pmt-chaos${mode === 'chaos' ? ' active' : ''}" data-action="pred-mode" data-mode="chaos">🦋 Chaos</button>
-            <button class="pmt-btn${mode === 'predict' ? ' active' : ''}" data-action="pred-mode" data-mode="predict">My Picks</button>
+            <button class="pmt-btn${modeOfficial ? ' active' : ''}" data-action="pred-mode" data-mode="official">Official</button>
+            <button class="pmt-btn${!modeOfficial ? ' active' : ''}" data-action="pred-mode" data-mode="predict">My Picks</button>
           </div>
         </div>
-        <p class="pred-sub">${subTexts[mode] || subTexts.official}</p>
-        ${mode === 'predict' ? `<button class="pred-clear-btn" data-action="clear-predictions">Reset picks</button>` : ''}
+        <p class="pred-sub">${modeOfficial
+          ? 'Live tournament progression. Results update automatically.'
+          : 'Tap a team in each match to advance them. Predict the champion!'}</p>
+        ${!modeOfficial ? `<button class="pred-clear-btn" data-action="clear-predictions">Reset predictions</button>` : ''}
       </div>
 
-      ${champProbHTML}
+      <!-- Champion (desktop: shown at top; mobile: shown at bottom via .champion-card-mobile) -->
+      <div class="champion-card-desktop">
+        ${champHTML}
+      </div>
 
-      <div class="champion-card-desktop">${champHTML}</div>
-
+      <!-- Desktop bracket -->
       <div class="bracket-desktop">
-        ${roundColHTML('Round of 32', R32, activeMeta, activeResults, mode, userPred)}
-        ${roundColHTML('Round of 16', R16, activeMeta, activeResults, mode, userPred)}
-        ${roundColHTML('Quarter Finals', QF, activeMeta, activeResults, mode, userPred)}
-        ${roundColHTML('Semi Finals', SF, activeMeta, activeResults, mode, userPred)}
+        ${roundColHTML('Round of 32', R32, matchMeta, results, mode, userPred)}
+        ${roundColHTML('Round of 16', R16, matchMeta, results, mode, userPred)}
+        ${roundColHTML('Quarter Finals', QF, matchMeta, results, mode, userPred)}
+        ${roundColHTML('Semi Finals', SF, matchMeta, results, mode, userPred)}
         <div class="bracket-col" data-round="final">
           <div class="bc-label">Final</div>
           <div class="bc-matches bc-final">
-            ${bMatchHTML('104', activeMeta['104'] || { home: null, away: null, score: null }, activeResults, mode, userPred)}
+            ${bMatchHTML('104', matchMeta['104'] || { home: null, away: null, score: null }, results, mode, userPred)}
           </div>
         </div>
       </div>
 
+      <!-- Mobile bracket (collapsible rounds, R32→Final order) -->
       <div class="bracket-mobile">
-        ${mobileRoundHTML('Round of 32', R32, activeMeta, activeResults, mode, userPred, false)}
-        ${mobileRoundHTML('Round of 16', R16, activeMeta, activeResults, mode, userPred, false)}
-        ${mobileRoundHTML('Quarter Finals', QF, activeMeta, activeResults, mode, userPred, false)}
-        ${mobileRoundHTML('Semi Finals', SF, activeMeta, activeResults, mode, userPred, true)}
-        ${mobileRoundHTML('Final', ['104'], activeMeta, activeResults, mode, userPred, true)}
+        ${mobileRoundHTML('Round of 32', R32, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Round of 16', R16, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Quarter Finals', QF, matchMeta, results, mode, userPred, false)}
+        ${mobileRoundHTML('Semi Finals', SF, matchMeta, results, mode, userPred, true)}
+        ${mobileRoundHTML('Final', ['104'], matchMeta, results, mode, userPred, true)}
       </div>
 
+      <!-- 3rd Place -->
       <div class="glass-card" style="margin-top:8px;">
         <div class="section-header" style="margin-bottom:12px;">
           <h3 style="font-size:0.9rem;">Third Place Match</h3>
@@ -299,7 +265,10 @@ export function renderPredictionTree(mode = 'official') {
         ${thirdHTML}
       </div>
 
-      <div class="champion-card-mobile">${champHTML}</div>
+      <!-- Champion (mobile: shown at bottom) -->
+      <div class="champion-card-mobile">
+        ${champHTML}
+      </div>
 
     </div>`;
 

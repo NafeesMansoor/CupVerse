@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
   './js/router.js',
   './js/intelligence.js',
   './js/prediction.js',
-  './js/chaos.js',
   './world_cup_data.json',
   './manifest.json',
 ];

@@ -4,7 +4,6 @@ import {
   renderMatchDetail, renderTeams, renderCalendar, renderScorers,
   renderSettings, renderStandings, renderTeamProfile,
   renderVenues, renderVenueDetail, updateNavActive,
-  renderChaosTimeline,
 } from './ui.js';
 import {
   renderPredictionTree,
@@ -75,7 +74,6 @@ function renderCurrentRoute() {
     case 'standings': view = renderStandings(); break;
     case 'settings':         view = renderSettings(); break;
     case 'prediction-tree':  view = renderPredictionTree(getPredMode()); break;
-    case 'chaos':            view = renderChaosTimeline(); break;
     default:                 view = renderHomeDashboard(); break;
   }
   renderApp(view);
@@ -434,10 +432,6 @@ function handleAction(event) {
 
     case 'go-prediction-tree':
       navigateTo('prediction-tree');
-      break;
-
-    case 'go-chaos':
-      navigateTo('chaos');
       break;
 
     case 'pred-mode': {
