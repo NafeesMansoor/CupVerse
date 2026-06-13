@@ -1,4 +1,5 @@
 import { loadMatches, getMatchById, getMatches, getTeams } from './data.js';
+import { performSync, getSyncStatus } from './sync.js';
 import { loadSquads, getSquad } from './squad.js';
 import {
   renderApp, renderHomeDashboard, renderMatches, renderMatchesList,
@@ -23,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -186,8 +187,9 @@ function exportIcal() {
 
 // ── Refresh ────────────────────────────────────────────────
 async function refreshData() {
-  await loadMatches(true);
+  await performSync({ force: true });
   renderCurrentRoute();
+  showToast('Data refreshed.');
 }
 
 // ── Share Card ─────────────────────────────────────────────
@@ -598,7 +600,7 @@ async function init() {
     }
   });
 
-  await Promise.all([loadMatches(), loadSquads()]);
+  await Promise.all([performSync(), loadSquads()]);
   renderCurrentRoute();
   hideSplash();
   registerServiceWorker();

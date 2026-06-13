@@ -5,6 +5,7 @@ const KEYS = {
   settings:  'wc2026_settings',
   favorites: 'wc2026_favorites',
   collapsed: 'wc2026_collapsed',
+  sync:      'wc2026_sync',
 };
 
 function readJSON(key, fallback) {
@@ -167,6 +168,22 @@ export function toggleCardCollapse(cardId) {
 
 export function isCardCollapsed(cardId) {
   return Boolean(getCollapsedCards()[cardId]);
+}
+
+// ── Sync State ───────────────────────────────────────────
+export function getSyncRecord() {
+  return readJSON(KEYS.sync, { date: null, history: [] });
+}
+
+export function setLastSyncDate(dateStr) {
+  const rec = getSyncRecord();
+  const history = rec.history || [];
+  if (dateStr && !history.includes(dateStr)) history.unshift(dateStr);
+  writeJSON(KEYS.sync, { date: dateStr, history: history.slice(0, 30) });
+}
+
+export function getLastSyncDate() {
+  return getSyncRecord().date;
 }
 
 // ── Clear All ────────────────────────────────────────────

@@ -13,6 +13,7 @@ import {
   isAiEnabled, setAiEnabled, clearStorage,
   isCardCollapsed,
 } from './storage.js';
+import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
@@ -1632,6 +1633,7 @@ export function renderSettings() {
   const theme = getTheme();
   const tz = getTimezone();
   const ai = isAiEnabled();
+  const { lastSync, daysBehind, needsUpdate } = getSyncStatus();
 
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone;
@@ -1696,10 +1698,13 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div>
-            <div class="setting-label">Refresh Data</div>
-            <div class="setting-sub">Re-fetch match data</div>
+            <div class="setting-label">Data Sync</div>
+            <div class="setting-sub">Last updated: ${formatSyncDate(lastSync)}</div>
+            ${needsUpdate && daysBehind !== null ? `<div class="setting-sub" style="color:var(--accent-cyan);margin-top:2px;">⟳ ${daysBehind} day${daysBehind !== 1 ? 's' : ''} of updates available</div>` : ''}
           </div>
-          <button class="btn btn-sm" data-action="refresh-data">Refresh</button>
+          <button class="btn btn-sm ${needsUpdate ? 'btn-primary' : ''}" data-action="refresh-data">
+            ${needsUpdate ? 'Update Now' : 'Refresh'}
+          </button>
         </div>
         <div class="setting-row">
           <div>
@@ -1710,7 +1715,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v3.0.0</span>
+          <span class="text-muted">CupVerse v1.2.0</span>
         </div>
       </div>
     </div>
