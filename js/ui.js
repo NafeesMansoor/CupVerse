@@ -11,7 +11,7 @@ import {
   getFavoriteMatches, toggleFavoriteMatch, isMatchFavorite,
   getTimezone, getTheme, setTheme, setTimezone,
   isAiEnabled, setAiEnabled, clearStorage,
-  isCardCollapsed, getApiScorers,
+  isCardCollapsed, getApiScorers, getGoldenBoot,
 } from './storage.js';
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
@@ -162,6 +162,18 @@ function makeSection(html) {
 // ── HOME ─────────────────────────────────────────────────
 let activePulse = 'upcoming';
 
+// Stadium-inspired gradient backgrounds keyed by venue city
+const STADIUM_GRADIENTS = [
+  'linear-gradient(160deg,#1a3a5c 0%,#0d1f35 50%,#0a1128 100%)',
+  'linear-gradient(160deg,#1f2d1a 0%,#0f1d10 50%,#0a1128 100%)',
+  'linear-gradient(160deg,#2d1a1a 0%,#1a0d0d 50%,#0a1128 100%)',
+  'linear-gradient(160deg,#1a1a2d 0%,#0d0d1a 50%,#0a1128 100%)',
+];
+
+function stadiumGradient(matchId) {
+  return STADIUM_GRADIENTS[Number(matchId) % STADIUM_GRADIENTS.length];
+}
+
 function getPulseMatches(pulse, allMatches, favTeams) {
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -195,234 +207,331 @@ function getPulseMatches(pulse, allMatches, favTeams) {
 export function renderHomeDashboard(pulse) {
   if (pulse) activePulse = pulse;
 
-  const next        = getNextMatch();
-  const stats       = getTournamentStats();
-  const favTeams    = getFavTeams();
-  const allMatches  = getMatches();
-  const intel       = next ? getMatchIntelligence(next) : null;
+  const next       = getNextMatch();
+  const stats      = getTournamentStats();
+  const favTeams   = getFavTeams();
+  const allMatches = getMatches();
+  const intel      = next ? getMatchIntelligence(next) : null;
 
-  // Momentum strip data
-  const todayStr      = new Date().toISOString().slice(0, 10);
-  const todayMatches  = allMatches.filter(m => m.date === todayStr);
-  const liveMatches   = allMatches.filter(m => effectiveStatus(m) === 'live');
-  const totalGoals    = allMatches.reduce((sum, m) => {
+  const now        = new Date();
+  const todayStr   = now.toISOString().slice(0, 10);
+  const liveMatches    = allMatches.filter(m => effectiveStatus(m) === 'live');
+  const completedMatches = allMatches.filter(m => effectiveStatus(m) === 'completed');
+  const totalGoals = allMatches.reduce((sum, m) => {
     const s = effectiveScore(m);
     return sum + (s ? (Number(s.home) + Number(s.away)) : 0);
   }, 0);
 
-  // Pulse matches
-  const pulseMatches = getPulseMatches(activePulse, allMatches, favTeams);
-
-  // ── V3.0 Hero ───────────────────────────────────────────
-  let heroContent = '';
-  let countdownWidget = '';
-
+  // ── § 1  FEATURED MATCH HERO ───────────────────────────
+  let heroHTML = '';
   if (next) {
     const hc = getTeamColor(next.homeTeam.name);
     const ac = getTeamColor(next.awayTeam.name);
     const vi = next.venueInfo || {};
-    // Pull first sentence of narrative as hero storyline
-    const rawNarrative = intel ? intel.narrative : '';
-    const storyline = rawNarrative
-      ? rawNarrative.split(/\.\s/)[0].replace(/\.$/, '') + '.'
-      : 'The tournament stage is set for a defining encounter.';
-
-    heroContent = `
-      <div class="v3-hero" style="background:linear-gradient(160deg,${hc}28 0%,rgba(11,18,32,0.88) 55%,${ac}18 100%);">
-        <div class="wc-branding">⚽ FIFA World Cup 2026 · USA · Canada · Mexico</div>
-
-        <div class="hero-v3-matchup">
-          <div class="hero-v3-nation">
-            <span class="hero-v3-flag">${next.homeTeam.flag}</span>
-            <div class="hero-v3-name">${next.homeTeam.name}</div>
+    heroHTML = `
+      <div class="home-hero" style="background:linear-gradient(160deg,${hc}35 0%,#0a1128 45%,${ac}25 100%);">
+        <div class="home-hero-trophy">🏆</div>
+        <div class="home-hero-branding">FIFA World Cup 2026™</div>
+        <div class="home-hero-matchup">
+          <div class="home-hero-team">
+            <span class="home-hero-flag">${next.homeTeam.flag}</span>
+            <span class="home-hero-name">${displayName(next.homeTeam.name)}</span>
           </div>
-          <div class="hero-v3-center">
-            <div class="hero-v3-vs">VS</div>
-            <div class="hero-v3-stage">${next.stage}${next.group ? ` · Group ${next.group}` : ''}</div>
+          <div class="home-hero-vs">
+            <span class="home-hero-vs-text">VS</span>
+            <span class="home-hero-stage">${next.stage}${next.group ? ` · Grp ${next.group}` : ''}</span>
           </div>
-          <div class="hero-v3-nation">
-            <span class="hero-v3-flag">${next.awayTeam.flag}</span>
-            <div class="hero-v3-name">${next.awayTeam.name}</div>
+          <div class="home-hero-team">
+            <span class="home-hero-flag">${next.awayTeam.flag}</span>
+            <span class="home-hero-name">${displayName(next.awayTeam.name)}</span>
           </div>
         </div>
-
         ${intel ? `
-        <div class="hero-v3-prob">
-          <div class="hwp-prob-row">
-            <span class="prob-home">${intel.prediction.home}% ${next.homeTeam.name}</span>
-            <span>${intel.prediction.draw}% Draw</span>
-            <span class="prob-away">${next.awayTeam.name} ${intel.prediction.away}%</span>
+        <div class="home-hero-prob">
+          <div class="hhp-bar">
+            <div class="hhp-home" style="width:${intel.prediction.home}%"></div>
+            <div class="hhp-draw"  style="width:${intel.prediction.draw}%"></div>
+            <div class="hhp-away" style="width:${intel.prediction.away}%"></div>
           </div>
-          <div class="hwp-bar" style="height:5px;">
-            <div class="hwp-home" style="width:${intel.prediction.home}%"></div>
-            <div class="hwp-draw" style="width:${intel.prediction.draw}%"></div>
-            <div class="hwp-away" style="width:${intel.prediction.away}%"></div>
+          <div class="hhp-labels">
+            <span>${intel.prediction.home}%</span>
+            <span>${intel.prediction.draw}% Draw</span>
+            <span>${intel.prediction.away}%</span>
           </div>
         </div>` : ''}
-
-        <div class="hero-v3-storyline">${storyline}</div>
-
-        <div class="hero-v3-venue">
-          <span class="hero-v3-venue-item">🏟️ ${next.stadium}${vi.city ? ` · ${vi.city}` : ''}</span>
-          ${vi.capacity ? `<span class="hero-v3-venue-item">👥 ${vi.capacity.toLocaleString()}</span>` : ''}
-          <span class="hero-v3-venue-item">📅 ${fmtDate(next.datetime)}</span>
-          <span class="hero-v3-venue-item">⏰ ${fmtTime(next.datetime)}</span>
-        </div>
-
-        <div class="hero-v3-actions">
-          <button class="hero-v3-view-btn" data-action="open-match" data-id="${next.id}">View Match →</button>
-          <button class="hero-v3-pred-btn" data-action="go-prediction-tree">🏆 Prediction Tree</button>
-        </div>
-      </div>
-    `;
-
-    countdownWidget = `
-      <div class="countdown-widget">
-        <div class="cw-label">Kickoff In</div>
-        <div class="countdown-blocks" data-countdown-target="${next.datetime}">
-          <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
-        </div>
-        <div class="cw-teams">${next.homeTeam.flag} ${next.homeTeam.name}<br>vs<br>${next.awayTeam.name} ${next.awayTeam.flag}</div>
-      </div>
-    `;
+        <div class="home-hero-venue">🏟️ ${next.stadium}${vi.city ? ` · ${vi.city}` : ''} &nbsp;·&nbsp; ${fmtDate(next.datetime)}</div>
+        <button class="home-hero-cta" data-action="open-match" data-id="${next.id}">View Match →</button>
+      </div>`;
   } else {
-    heroContent = `
-      <div class="v3-hero">
-        <div class="wc-branding">⚽ FIFA World Cup 2026</div>
-        <div class="empty-state" style="padding:24px 0;">
-          <div class="empty-state-icon">🏆</div>
-          <p class="empty-state-text">Tournament complete!</p>
+    heroHTML = `
+      <div class="home-hero">
+        <div class="home-hero-branding">FIFA World Cup 2026™</div>
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:2.5rem;">🏆</div>
+          <p style="color:var(--text-secondary);margin-top:8px;">Tournament Complete</p>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
-  // ── Tournament Pulse chips ──────────────────────────────
-  const pulseChips = [
-    { id: 'upcoming',  label: 'Upcoming'  },
-    { id: 'today',     label: 'Today'     },
-    { id: 'tomorrow',  label: 'Tomorrow'  },
-    { id: 'week',      label: 'This Week' },
-    { id: 'favorites', label: 'Favorites' },
-    { id: 'knockouts', label: 'Knockouts' },
-    { id: 'final',     label: 'Final'     },
-  ];
-  const pulseHTML = pulseChips.map(c => `
-    <button class="pulse-chip ${activePulse === c.id ? 'active' : ''}" data-action="pulse-chip" data-pulse="${c.id}">${c.label}</button>
-  `).join('');
+  // ── § 2  COUNTDOWN CARD ────────────────────────────────
+  let countdownHTML = '';
+  if (next) {
+    countdownHTML = `
+      <div class="home-countdown">
+        <div class="hcd-label">KICKOFF IN</div>
+        <div class="countdown-blocks hcd-blocks" data-countdown-target="${next.datetime}">
+          <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">DAYS</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">HRS</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">MIN</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">SEC</span></div>
+        </div>
+        <div class="hcd-match">${next.homeTeam.flag} ${displayName(next.homeTeam.name)} vs ${displayName(next.awayTeam.name)} ${next.awayTeam.flag}</div>
+      </div>`;
+  }
 
-  // ── Pulse match grid ────────────────────────────────────
-  const pulseGrid = pulseMatches.length
-    ? `<div class="match-grid">${pulseMatches.map(m => matchCardHTML(m)).join('')}</div>`
-    : `<div class="empty-state" style="padding:28px 0;">
-         <div class="empty-state-icon">📅</div>
-         <p class="empty-state-text">No matches for this filter.</p>
-       </div>`;
+  // ── § 3  LIVE CENTER ───────────────────────────────────
+  const motd = (() => {
+    const scored = completedMatches
+      .map(m => { const s = effectiveScore(m); return s ? { m, goals: Number(s.home) + Number(s.away) } : null; })
+      .filter(Boolean)
+      .sort((a, b) => b.goals - a.goals);
+    return scored[0]?.m || null;
+  })();
 
-  // ── Favorite team widget ────────────────────────────────
-  let favWidget = '<p class="text-muted" style="font-size:0.85rem;">Go to Teams to add your favorites.</p>';
-  if (favTeams.length) {
-    const favUpcoming = allMatches
-      .filter(m => (favTeams.includes(m.homeTeam.code) || favTeams.includes(m.awayTeam.code)) && effectiveStatus(m) === 'upcoming')
-      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-    if (favUpcoming.length) {
-      const fm = favUpcoming[0];
-      favWidget = `
-        <div style="cursor:pointer;" data-action="open-match" data-id="${fm.id}">
-          <div style="font-weight:700;margin-bottom:4px;">${fm.homeTeam.flag} ${fm.homeTeam.name} vs ${fm.awayTeam.name} ${fm.awayTeam.flag}</div>
-          <div class="text-muted text-small">${fmtDate(fm.datetime)} · ${fmtTime(fm.datetime)}</div>
-          <div class="text-small" style="color:var(--accent-blue-bright);margin-top:4px;">${fm.stage}</div>
-        </div>`;
-    } else {
-      favWidget = '<p class="text-muted" style="font-size:0.85rem;">No upcoming matches for your favorite teams.</p>';
+  const upsetMatch = (() => {
+    return completedMatches.find(m => {
+      const s = effectiveScore(m);
+      return s && Math.abs(Number(s.home) - Number(s.away)) >= 3;
+    }) || null;
+  })();
+
+  const liveCenterCards = [];
+
+  if (liveMatches.length) {
+    liveCenterCards.push(`
+      <div class="lc-card lc-card--live" data-action="open-match" data-id="${liveMatches[0].id}">
+        <div class="lc-badge lc-badge--live"><span class="sb-live-dot"></span> LIVE</div>
+        <div class="lc-card-flags">${liveMatches[0].homeTeam.flag} ${liveMatches[0].awayTeam.flag}</div>
+        <div class="lc-card-title">${displayName(liveMatches[0].homeTeam.name)} vs ${displayName(liveMatches[0].awayTeam.name)}</div>
+        <div class="lc-card-sub">${liveMatches.length} match${liveMatches.length !== 1 ? 'es' : ''} live now</div>
+      </div>`);
+  } else {
+    liveCenterCards.push(`
+      <div class="lc-card lc-card--dim">
+        <div class="lc-badge">⚽ LIVE</div>
+        <div class="lc-card-flags">🌍</div>
+        <div class="lc-card-title">No Live Matches</div>
+        <div class="lc-card-sub">Next match soon</div>
+      </div>`);
+  }
+
+  if (motd) {
+    const ms = effectiveScore(motd);
+    liveCenterCards.push(`
+      <div class="lc-card lc-card--motd" data-action="open-match" data-id="${motd.id}">
+        <div class="lc-badge lc-badge--gold">🔥 MATCH OF THE DAY</div>
+        <div class="lc-card-flags">${motd.homeTeam.flag} ${motd.awayTeam.flag}</div>
+        <div class="lc-card-title">${displayName(motd.homeTeam.name)} vs ${displayName(motd.awayTeam.name)}</div>
+        <div class="lc-card-sub">${ms ? `${ms.home} – ${ms.away}` : motd.stage}</div>
+      </div>`);
+  }
+
+  if (upsetMatch) {
+    const us = effectiveScore(upsetMatch);
+    liveCenterCards.push(`
+      <div class="lc-card lc-card--upset" data-action="open-match" data-id="${upsetMatch.id}">
+        <div class="lc-badge lc-badge--red">📈 BIGGEST UPSET</div>
+        <div class="lc-card-flags">${upsetMatch.homeTeam.flag} ${upsetMatch.awayTeam.flag}</div>
+        <div class="lc-card-title">${displayName(upsetMatch.homeTeam.name)} vs ${displayName(upsetMatch.awayTeam.name)}</div>
+        <div class="lc-card-sub">${us ? `${us.home} – ${us.away}` : 'Result'}</div>
+      </div>`);
+  }
+
+  const liveCenterHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">🔴 LIVE CENTER</span>
+      <a href="#calendar" class="hsh-more">View All →</a>
+    </div>
+    <div class="lc-scroll">${liveCenterCards.join('')}</div>`;
+
+  // ── § 4  FEATURED MATCHES CAROUSEL ────────────────────
+  const carouselMatches = (() => {
+    const upcoming = allMatches
+      .filter(m => effectiveStatus(m) === 'upcoming')
+      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+      .slice(0, 6);
+    // If fewer than 3 upcoming, pad with recent completed
+    if (upcoming.length < 3) {
+      const recent = completedMatches.slice(-3);
+      return [...upcoming, ...recent].slice(0, 6);
     }
-  }
+    return upcoming;
+  })();
 
-  const progress = stats.totalMatches ? Math.round((stats.played / stats.totalMatches) * 100) : 0;
+  const carouselCards = carouselMatches.map(m => {
+    const st = effectiveStatus(m);
+    const sc = effectiveScore(m);
+    const hc = getTeamColor(m.homeTeam.name);
+    const ac = getTeamColor(m.awayTeam.name);
+    const isKnockout = !m.group;
+    const isFinal = m.stage?.toLowerCase().includes('final') && !m.stage?.toLowerCase().includes('quarter') && !m.stage?.toLowerCase().includes('semi');
+    const cardClass = isFinal ? 'fc-card fc-card--final' : isKnockout ? 'fc-card fc-card--knockout' : 'fc-card';
+    return `
+      <div class="${cardClass}" data-action="open-match" data-id="${m.id}"
+           style="background:linear-gradient(145deg,${hc}30 0%,rgba(10,17,40,0.95) 55%,${ac}20 100%);">
+        ${isFinal ? '<div class="fc-ribbon fc-ribbon--final">🏆 FINAL</div>' : isKnockout ? '<div class="fc-ribbon fc-ribbon--knockout">⚡ KNOCKOUT</div>' : ''}
+        ${st === 'live' ? '<div class="fc-live-badge"><span class="sb-live-dot"></span> LIVE</div>' : ''}
+        <div class="fc-stage">${m.stage}${m.group ? ` · Group ${m.group}` : ''}</div>
+        <div class="fc-teams">
+          <div class="fc-team">
+            <span class="fc-flag">${m.homeTeam.flag}</span>
+            <span class="fc-name">${displayName(m.homeTeam.name)}</span>
+          </div>
+          <div class="fc-score">
+            ${sc ? `<span class="fc-score-val">${sc.home}–${sc.away}</span>` : '<span class="fc-score-vs">VS</span>'}
+          </div>
+          <div class="fc-team fc-team--away">
+            <span class="fc-flag">${m.awayTeam.flag}</span>
+            <span class="fc-name">${displayName(m.awayTeam.name)}</span>
+          </div>
+        </div>
+        <div class="fc-meta">🏟️ ${m.stadium} &nbsp;·&nbsp; ${fmtDateShort(m.datetime)} ${fmtTime(m.datetime)}</div>
+        <div class="fc-cta">Quick View →</div>
+      </div>`;
+  }).join('');
+
+  const carouselHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">FEATURED MATCHES</span>
+      <a href="#calendar" class="hsh-more">View Calendar →</a>
+    </div>
+    <div class="fc-scroll">${carouselCards}</div>`;
+
+  // ── § 5  GOLDEN BOOT RACE ──────────────────────────────
+  const boot = getGoldenBoot().slice(0, 6);
+  const maxGoals = boot[0]?.goals || 1;
+  const bootRows = boot.length
+    ? boot.map((p, i) => `
+        <div class="gb-row">
+          <span class="gb-rank">${i + 1}</span>
+          <div class="gb-info">
+            <span class="gb-name">${p.name}</span>
+            <span class="gb-team">${p.team}</span>
+          </div>
+          <div class="gb-bar-wrap">
+            <div class="gb-bar-fill" style="width:${Math.round((p.goals / maxGoals) * 100)}%"></div>
+          </div>
+          <span class="gb-goals">${p.goals} ⚽</span>
+        </div>`).join('')
+    : `<p class="text-muted" style="font-size:0.85rem;text-align:center;padding:12px 0;">Scoring data loads from API on first sync.</p>`;
+
+  const goldenBootHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">🏆 GOLDEN BOOT RACE</span>
+      <a href="#scorers" class="hsh-more">Full List →</a>
+    </div>
+    <div class="glass-card gb-card">${bootRows}</div>`;
+
+  // ── § 6  TOURNAMENT SNAPSHOT ───────────────────────────
+  const snapshotHTML = `
+    <div class="home-snapshot">
+      <div class="hs-item">
+        <div class="hs-val">${stats.played}</div>
+        <div class="hs-label">Played</div>
+      </div>
+      <div class="hs-item">
+        <div class="hs-val">${totalGoals}</div>
+        <div class="hs-label">Goals</div>
+      </div>
+      <div class="hs-item ${liveMatches.length ? 'hs-item--live' : ''}">
+        <div class="hs-val">${liveMatches.length}</div>
+        <div class="hs-label">Live</div>
+      </div>
+      <div class="hs-item">
+        <div class="hs-val">${stats.upcoming}</div>
+        <div class="hs-label">Remaining</div>
+      </div>
+    </div>`;
+
+  // ── § 7  MATCH SCHEDULE PREVIEW ────────────────────────
+  const scheduleMatches = allMatches
+    .filter(m => effectiveStatus(m) === 'upcoming')
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+    .slice(0, 4);
+
+  const scheduleRows = scheduleMatches.map(m => `
+    <div class="sched-row" data-action="open-match" data-id="${m.id}">
+      <div class="sched-date">${fmtDateShort(m.datetime)}<br><span class="sched-time">${fmtTime(m.datetime)}</span></div>
+      <div class="sched-teams">
+        <span>${m.homeTeam.flag} ${displayName(m.homeTeam.name)}</span>
+        <span class="sched-vs">vs</span>
+        <span>${m.awayTeam.flag} ${displayName(m.awayTeam.name)}</span>
+      </div>
+      <div class="sched-stage">${m.stage}${m.group ? ` G${m.group}` : ''}</div>
+    </div>`).join('');
+
+  const scheduleHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">MATCH SCHEDULE</span>
+      <a href="#calendar" class="hsh-more">View Full Calendar →</a>
+    </div>
+    <div class="glass-card sched-card">
+      ${scheduleRows || '<p class="text-muted" style="text-align:center;padding:12px;">No upcoming matches.</p>'}
+    </div>`;
+
+  // ── § 8  TOURNAMENT JOURNEY ────────────────────────────
+  const journeyStages = [
+    { label: 'Group Stage',   dates: 'Jun 12 – Jun 27', key: 'group'   },
+    { label: 'Round of 32',   dates: 'Jun 28 – Jul 1',  key: 'r32'     },
+    { label: 'Round of 16',   dates: 'Jul 2 – Jul 5',   key: 'r16'     },
+    { label: 'Quarterfinals', dates: 'Jul 8 – Jul 9',   key: 'qf'      },
+    { label: 'Semifinals',    dates: 'Jul 12 – Jul 13', key: 'sf'      },
+    { label: 'Final',         dates: 'Jul 19',          key: 'final'   },
+  ];
+
+  // Determine current stage from played matches
+  const currentStageKey = (() => {
+    const d = now;
+    if (d < new Date('2026-06-28')) return 'group';
+    if (d < new Date('2026-07-02')) return 'r32';
+    if (d < new Date('2026-07-06')) return 'r16';
+    if (d < new Date('2026-07-10')) return 'qf';
+    if (d < new Date('2026-07-14')) return 'sf';
+    return 'final';
+  })();
+
+  const journeyRows = journeyStages.map(s => {
+    const isCurrent = s.key === currentStageKey;
+    const isPast = journeyStages.indexOf(s) < journeyStages.findIndex(j => j.key === currentStageKey);
+    return `
+      <div class="tj-row ${isCurrent ? 'tj-row--current' : isPast ? 'tj-row--past' : ''}">
+        <div class="tj-dot ${isCurrent ? 'tj-dot--current' : isPast ? 'tj-dot--past' : ''}"></div>
+        <div class="tj-info">
+          <span class="tj-label">${s.label}</span>
+          <span class="tj-dates">${s.dates}</span>
+        </div>
+        ${isCurrent ? '<span class="tj-now">NOW</span>' : ''}
+      </div>`;
+  }).join('');
+
+  const journeyHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">TOURNAMENT JOURNEY</span>
+    </div>
+    <div class="glass-card tj-card">${journeyRows}</div>`;
 
   return makeSection(`
-    <div class="hero-row">
-      ${heroContent}
-      ${countdownWidget}
-    </div>
-
-    <div class="tournament-pulse">${pulseHTML}</div>
-
-    <div class="momentum-strip">
-      <div class="momentum-item">
-        <div class="momentum-val">${todayMatches.length}</div>
-        <div class="momentum-label">Today's Matches</div>
-      </div>
-      <div class="momentum-item">
-        <div class="momentum-val">${liveMatches.length}</div>
-        <div class="momentum-label">Live Now</div>
-      </div>
-      <div class="momentum-item">
-        <div class="momentum-val">${totalGoals}</div>
-        <div class="momentum-label">Total Goals</div>
-      </div>
-      <div class="momentum-item">
-        <div class="momentum-val">48</div>
-        <div class="momentum-label">Nations</div>
-      </div>
-    </div>
-
-    <div class="glass-card" data-card-id="home-matches" data-collapsed="${isCardCollapsed('home-matches')}">
-      <div class="section-header">
-        <h2>${activePulse === 'upcoming' ? 'Next Matches' : pulseChips.find(c => c.id === activePulse)?.label || 'Matches'}</h2>
-        <span class="section-badge">${pulseMatches.length}</span>
-      </div>
-      ${pulseGrid}
-    </div>
-
-    <div class="glass-card" data-card-id="home-progress" data-collapsed="${isCardCollapsed('home-progress')}">
-      <div class="section-header">
-        <h2>Tournament Progress</h2>
-        <span class="section-badge">${stats.remainingDays}d left</span>
-      </div>
-      <div class="stats-row">
-        <div class="stat-item">
-          <div class="stat-value">${stats.played}</div>
-          <div class="stat-label">Played</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">${totalGoals}</div>
-          <div class="stat-label">Goals</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">${stats.upcoming}</div>
-          <div class="stat-label">Remaining</div>
-        </div>
-      </div>
-      <div style="margin-top:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <span class="text-small text-muted">Tournament Progress</span>
-          <span class="text-small text-muted">${progress}%</span>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" style="width:${progress}%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="glass-card" data-card-id="home-favs" data-collapsed="${isCardCollapsed('home-favs')}">
-      <div class="section-header"><h2>Favorite Teams</h2></div>
-      ${favWidget}
-    </div>
-
-    <!-- Tournament Journal (locked until Final ends 2026-07-19) -->
-    <div class="journal-locked-card">
-      <div class="jlc-icon">📔</div>
-      <div class="jlc-title">Tournament Journal</div>
-      <div class="jlc-desc">Generate your comprehensive FIFA World Cup 2026 report — match-by-match, group analysis, knockout drama, and your personal notes.</div>
-      <div class="jlc-lock">🔒 Available after the FIFA World Cup 2026 Final</div>
-    </div>
+    ${heroHTML}
+    ${countdownHTML}
+    ${liveCenterHTML}
+    ${carouselHTML}
+    ${goldenBootHTML}
+    ${snapshotHTML}
+    ${scheduleHTML}
+    ${journeyHTML}
   `);
 }
 

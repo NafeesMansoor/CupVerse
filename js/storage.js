@@ -1,12 +1,13 @@
 const KEYS = {
-  scores:     'wc2026_scores',
-  notes:      'wc2026_notes',
-  scorers:    'wc2026_scorers',
-  settings:   'wc2026_settings',
-  favorites:  'wc2026_favorites',
-  collapsed:  'wc2026_collapsed',
-  sync:       'wc2026_sync',
-  apiScorers: 'wc2026_api_scorers',
+  scores:      'wc2026_scores',
+  notes:       'wc2026_notes',
+  scorers:     'wc2026_scorers',
+  settings:    'wc2026_settings',
+  favorites:   'wc2026_favorites',
+  collapsed:   'wc2026_collapsed',
+  sync:        'wc2026_sync',
+  apiScorers:  'wc2026_api_scorers',
+  goldenBoot:  'wc2026_golden_boot',
 };
 
 function readJSON(key, fallback) {
@@ -181,6 +182,15 @@ export function setApiScorers(matchId, home, away) {
   const all = readJSON(KEYS.apiScorers, {});
   all[String(matchId)] = { home, away };
   writeJSON(KEYS.apiScorers, all);
+}
+
+// ── Golden Boot ───────────────────────────────────────────
+export function getGoldenBoot() {
+  return readJSON(KEYS.goldenBoot, []);
+}
+
+export function setGoldenBoot(list) {
+  writeJSON(KEYS.goldenBoot, list);
 }
 
 // ── Sync State ───────────────────────────────────────────
