@@ -1,5 +1,6 @@
 import { loadMatches } from './data.js';
 import { getLastSyncDate, setLastSyncDate } from './storage.js';
+import { applyApiScores } from './api.js';
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -25,6 +26,7 @@ export function formatSyncDate(dateStr) {
 }
 
 // Ensures data is always loaded; forces a fresh fetch when the client is behind.
+// Also pulls live scores from worldcup26.ir and stores them.
 // Returns { success, date, skipped?, error? }
 export async function performSync({ force = false } = {}) {
   const { needsUpdate, today } = getSyncStatus();
@@ -33,10 +35,15 @@ export async function performSync({ force = false } = {}) {
   try {
     await loadMatches(shouldFetch);
     if (shouldFetch) setLastSyncDate(today);
-    return { success: true, date: today, skipped: !shouldFetch };
   } catch (err) {
-    // Network failed — try loading from cache so the app still works
+    // Network failed for local data — try cache so the app still works
     try { await loadMatches(false); } catch (_) { /* no cache */ }
-    return { success: false, error: err.message };
   }
+
+  // Always attempt live score sync regardless of whether local data needed refresh
+  try {
+    await applyApiScores();
+  } catch (_) { /* offline or API down — silently continue with cached scores */ }
+
+  return { success: true, date: today, skipped: !shouldFetch };
 }

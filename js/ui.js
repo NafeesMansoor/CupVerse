@@ -11,7 +11,7 @@ import {
   getFavoriteMatches, toggleFavoriteMatch, isMatchFavorite,
   getTimezone, getTheme, setTheme, setTimezone,
   isAiEnabled, setAiEnabled, clearStorage,
-  isCardCollapsed,
+  isCardCollapsed, getApiScorers,
 } from './storage.js';
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
@@ -537,6 +537,7 @@ export function renderMatchDetail(id) {
 
   const score     = getScore(match.id);
   const status    = effectiveStatus(match);
+  const apiScorers = getApiScorers(match.id);
   const note      = getNote(match.id) || { text: '', photos: [] };
   const starred   = isMatchFavorite(match.id);
   const homeSquad = getTeamSquad(match.homeTeam.name);
@@ -592,6 +593,18 @@ export function renderMatchDetail(id) {
     broadcastBottom = `
       <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:700;color:var(--accent-live);">
         <span class="sb-live-dot"></span> Match in progress
+      </div>`;
+  } else if (status === 'completed' && apiScorers) {
+    const goalRow = (scorers, align) => scorers.length
+      ? `<div style="display:flex;flex-direction:column;gap:3px;align-items:${align};">
+           ${scorers.map(s => `<span style="font-size:0.78rem;color:var(--text-secondary);">⚽ ${s}</span>`).join('')}
+         </div>`
+      : '';
+    broadcastBottom = `
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;width:100%;max-width:380px;padding-top:4px;">
+        ${goalRow(apiScorers.home, 'flex-start')}
+        <div></div>
+        ${goalRow(apiScorers.away, 'flex-end')}
       </div>`;
   }
 
@@ -1715,7 +1728,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v1.2.0</span>
+          <span class="text-muted">CupVerse v1.3.0</span>
         </div>
       </div>
     </div>

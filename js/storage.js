@@ -1,11 +1,12 @@
 const KEYS = {
-  scores:    'wc2026_scores',
-  notes:     'wc2026_notes',
-  scorers:   'wc2026_scorers',
-  settings:  'wc2026_settings',
-  favorites: 'wc2026_favorites',
-  collapsed: 'wc2026_collapsed',
-  sync:      'wc2026_sync',
+  scores:     'wc2026_scores',
+  notes:      'wc2026_notes',
+  scorers:    'wc2026_scorers',
+  settings:   'wc2026_settings',
+  favorites:  'wc2026_favorites',
+  collapsed:  'wc2026_collapsed',
+  sync:       'wc2026_sync',
+  apiScorers: 'wc2026_api_scorers',
 };
 
 function readJSON(key, fallback) {
@@ -168,6 +169,18 @@ export function toggleCardCollapse(cardId) {
 
 export function isCardCollapsed(cardId) {
   return Boolean(getCollapsedCards()[cardId]);
+}
+
+// ── API Goal Scorers ─────────────────────────────────────
+export function getApiScorers(matchId) {
+  const all = readJSON(KEYS.apiScorers, {});
+  return all[String(matchId)] || null;
+}
+
+export function setApiScorers(matchId, home, away) {
+  const all = readJSON(KEYS.apiScorers, {});
+  all[String(matchId)] = { home, away };
+  writeJSON(KEYS.apiScorers, all);
 }
 
 // ── Sync State ───────────────────────────────────────────
