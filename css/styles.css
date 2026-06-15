@@ -3956,6 +3956,8 @@ a { text-decoration: none; color: inherit; }
   transition: transform .2s, box-shadow .2s;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .lc-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
 .lc-card--live  { border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.06); }
@@ -3976,9 +3978,72 @@ a { text-decoration: none; color: inherit; }
 .lc-badge--live { color: var(--accent-cyan, #00e5ff); }
 .lc-badge--gold { color: var(--accent-gold, #f5b042); }
 .lc-badge--red  { color: #ff6b6b; }
-.lc-card-flags  { font-size: 1.6rem; margin-bottom: 6px; letter-spacing: -2px; }
-.lc-card-title  { font-size: 0.73rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; margin-bottom: 4px; }
-.lc-card-sub    { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; }
+.lc-card-sub    { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; margin-top: auto; }
+
+/* Live center matchup layout — mirrors fc-card teams structure */
+.lc-matchup {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+  margin-bottom: 8px;
+}
+.lc-team {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.lc-team--right { align-items: flex-end; text-align: right; }
+.lc-flag { font-size: 1.6rem; line-height: 1; }
+.lc-tname {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lc-centre {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+  padding: 6px 3px 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lc-centre--score {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 7px;
+  letter-spacing: 0;
+}
+.lc-no-match {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  padding: 6px 0 8px;
+}
+.lc-no-match-icon { font-size: 1.8rem; line-height: 1; }
+.lc-no-match-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.4;
+}
 
 /* ── § 4  Featured Matches Carousel ─────────────────── */
 .fc-scroll {
@@ -4319,7 +4384,10 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ── Left: Analytics ── */
-.dhg-analytics { justify-content: flex-start; }
+.dhg-analytics {
+  justify-content: flex-start;
+  border-top: 2px solid rgba(100,160,255,0.35);
+}
 
 .dha-eyebrow {
   font-size: 0.48rem;
@@ -4374,6 +4442,7 @@ a { text-decoration: none; color: inherit; }
 .dhg-countdown {
   text-align: center;
   gap: 8px;
+  border-top: 2px solid rgba(0,229,255,0.4);
 }
 
 .dhc-label {
@@ -4405,12 +4474,33 @@ a { text-decoration: none; color: inherit; }
 .dhc-blocks .cd-label { font-size: 0.4rem; letter-spacing: 0.08em; margin-top: 2px; }
 .dhc-blocks .cd-sep   { font-size: 0.75rem; margin-bottom: 10px; opacity: 0.5; font-weight: 700; }
 
-.dhc-match {
-  font-size: 0.68rem;
-  color: var(--text-secondary);
+/* Team name row below countdown — no flags, names only */
+.dhc-vs-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   margin-top: 8px;
-  line-height: 1.5;
+  flex-wrap: wrap;
+}
+.dhc-tname {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-secondary);
   text-align: center;
+  line-height: 1.2;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dhc-vs-text {
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
 }
 
 .dhc-stage {
@@ -4432,6 +4522,7 @@ a { text-decoration: none; color: inherit; }
   gap: 0;
   justify-content: stretch;
   padding: 0;
+  border-top: 2px solid rgba(245,176,66,0.35);
 }
 
 .dh-action-card {
@@ -4451,6 +4542,23 @@ a { text-decoration: none; color: inherit; }
 .dh-action-card:hover,
 .dh-action-card:active {
   background: rgba(255,255,255,0.07);
+}
+.dh-action-card--install,
+.dh-action-card--sync {
+  background: linear-gradient(180deg, rgba(0,229,255,0.07) 0%, transparent 100%);
+}
+.dh-action-card--fixtures {
+  background: linear-gradient(180deg, rgba(245,176,66,0.07) 0%, transparent 100%);
+}
+.dh-action-card--install:hover,
+.dh-action-card--install:active,
+.dh-action-card--sync:hover,
+.dh-action-card--sync:active {
+  background: rgba(0,229,255,0.12);
+}
+.dh-action-card--fixtures:hover,
+.dh-action-card--fixtures:active {
+  background: rgba(245,176,66,0.12);
 }
 
 .dh-action-icon {

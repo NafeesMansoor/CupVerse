@@ -231,11 +231,11 @@ export function renderHomeDashboard(pulse) {
   const heroGradient = `linear-gradient(135deg, ${hc}38 0%, rgba(8,14,30,0.97) 46%, ${ac}28 100%)`;
 
   const rightTopCard = isInstalled
-    ? `<div class="dh-action-card" data-action="sync-data">
+    ? `<div class="dh-action-card dh-action-card--sync" data-action="sync-data">
          <div class="dh-action-icon">🔄</div>
          <div class="dh-action-label">Sync Data</div>
        </div>`
-    : `<div class="dh-action-card" data-action="install-guide">
+    : `<div class="dh-action-card dh-action-card--install" data-action="install-guide">
          <div class="dh-action-icon">📲</div>
          <div class="dh-action-label">Install App</div>
        </div>`;
@@ -251,9 +251,12 @@ export function renderHomeDashboard(pulse) {
          <span class="cd-sep">:</span>
          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
        </div>
-       <div class="dhc-match">${next.homeTeam.flag} vs ${next.awayTeam.flag}<br>
-         <span class="dhc-stage">${next.stage}${next.group ? ` · G${next.group}` : ''}</span>
-       </div>`
+       <div class="dhc-vs-row">
+         <span class="dhc-tname">${displayName(next.homeTeam.name)}</span>
+         <span class="dhc-vs-text">vs</span>
+         <span class="dhc-tname">${displayName(next.awayTeam.name)}</span>
+       </div>
+       <div class="dhc-stage">${next.stage}${next.group ? ` · G${next.group}` : ''}</div>`
     : `<div class="dhc-label">FIFA WORLD CUP</div>
        <div class="dhc-done">🏆<br><span>Tournament Complete</span></div>`;
 
@@ -293,7 +296,7 @@ export function renderHomeDashboard(pulse) {
         <div class="dhg-col dhg-actions">
           ${rightTopCard}
           <div class="dh-action-divider"></div>
-          <div class="dh-action-card" data-action="nav-fixtures">
+          <div class="dh-action-card dh-action-card--fixtures" data-action="nav-fixtures">
             <div class="dh-action-icon">📅</div>
             <div class="dh-action-label">Fixtures</div>
           </div>
@@ -323,16 +326,27 @@ export function renderHomeDashboard(pulse) {
     liveCenterCards.push(`
       <div class="lc-card lc-card--live" data-action="open-match" data-id="${liveMatches[0].id}">
         <div class="lc-badge lc-badge--live"><span class="sb-live-dot"></span> LIVE</div>
-        <div class="lc-card-flags">${liveMatches[0].homeTeam.flag} ${liveMatches[0].awayTeam.flag}</div>
-        <div class="lc-card-title">${displayName(liveMatches[0].homeTeam.name)} vs ${displayName(liveMatches[0].awayTeam.name)}</div>
+        <div class="lc-matchup">
+          <div class="lc-team">
+            <span class="lc-flag">${liveMatches[0].homeTeam.flag}</span>
+            <span class="lc-tname">${displayName(liveMatches[0].homeTeam.name)}</span>
+          </div>
+          <div class="lc-centre">VS</div>
+          <div class="lc-team lc-team--right">
+            <span class="lc-flag">${liveMatches[0].awayTeam.flag}</span>
+            <span class="lc-tname">${displayName(liveMatches[0].awayTeam.name)}</span>
+          </div>
+        </div>
         <div class="lc-card-sub">${liveMatches.length} match${liveMatches.length !== 1 ? 'es' : ''} live now</div>
       </div>`);
   } else {
     liveCenterCards.push(`
       <div class="lc-card lc-card--dim">
         <div class="lc-badge">⚽ LIVE</div>
-        <div class="lc-card-flags">🌍</div>
-        <div class="lc-card-title">No Live Matches</div>
+        <div class="lc-no-match">
+          <span class="lc-no-match-icon">🌍</span>
+          <span class="lc-no-match-text">No Live<br>Matches</span>
+        </div>
         <div class="lc-card-sub">Next match soon</div>
       </div>`);
   }
@@ -342,9 +356,18 @@ export function renderHomeDashboard(pulse) {
     liveCenterCards.push(`
       <div class="lc-card lc-card--motd" data-action="open-match" data-id="${motd.id}">
         <div class="lc-badge lc-badge--gold">🔥 MATCH OF THE DAY</div>
-        <div class="lc-card-flags">${motd.homeTeam.flag} ${motd.awayTeam.flag}</div>
-        <div class="lc-card-title">${displayName(motd.homeTeam.name)} vs ${displayName(motd.awayTeam.name)}</div>
-        <div class="lc-card-sub">${ms ? `${ms.home} – ${ms.away}` : motd.stage}</div>
+        <div class="lc-matchup">
+          <div class="lc-team">
+            <span class="lc-flag">${motd.homeTeam.flag}</span>
+            <span class="lc-tname">${displayName(motd.homeTeam.name)}</span>
+          </div>
+          <div class="lc-centre${ms ? ' lc-centre--score' : ''}">${ms ? `${ms.home}–${ms.away}` : 'FT'}</div>
+          <div class="lc-team lc-team--right">
+            <span class="lc-flag">${motd.awayTeam.flag}</span>
+            <span class="lc-tname">${displayName(motd.awayTeam.name)}</span>
+          </div>
+        </div>
+        <div class="lc-card-sub">${motd.stage}</div>
       </div>`);
   }
 
@@ -353,9 +376,18 @@ export function renderHomeDashboard(pulse) {
     liveCenterCards.push(`
       <div class="lc-card lc-card--upset" data-action="open-match" data-id="${upsetMatch.id}">
         <div class="lc-badge lc-badge--red">📈 BIGGEST UPSET</div>
-        <div class="lc-card-flags">${upsetMatch.homeTeam.flag} ${upsetMatch.awayTeam.flag}</div>
-        <div class="lc-card-title">${displayName(upsetMatch.homeTeam.name)} vs ${displayName(upsetMatch.awayTeam.name)}</div>
-        <div class="lc-card-sub">${us ? `${us.home} – ${us.away}` : 'Result'}</div>
+        <div class="lc-matchup">
+          <div class="lc-team">
+            <span class="lc-flag">${upsetMatch.homeTeam.flag}</span>
+            <span class="lc-tname">${displayName(upsetMatch.homeTeam.name)}</span>
+          </div>
+          <div class="lc-centre${us ? ' lc-centre--score' : ''}">${us ? `${us.home}–${us.away}` : 'FT'}</div>
+          <div class="lc-team lc-team--right">
+            <span class="lc-flag">${upsetMatch.awayTeam.flag}</span>
+            <span class="lc-tname">${displayName(upsetMatch.awayTeam.name)}</span>
+          </div>
+        </div>
+        <div class="lc-card-sub">Result</div>
       </div>`);
   }
 
@@ -1849,7 +1881,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.3.1</span>
+          <span class="text-muted">CupVerse v2.3.2</span>
         </div>
       </div>
     </div>
