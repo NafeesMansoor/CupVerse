@@ -6,16 +6,40 @@ function parseScorers(raw) {
   if (!inner || inner.toLowerCase() === 'null') return [];
   return inner
     .split(',')
-    .map(s => s.replace(/[“”‘’""'']/g, '').trim())
+    .map(s => s.replace(/[""''""'']/g, '').trim())
     .filter(s => s && s.toLowerCase() !== 'null');
 }
 
-// Strip jersey number prefix and minute suffix from scorer string → clean player name
-function cleanScorerName(raw) {
-  return raw
-    .replace(/^\d+\s+/, '')          // strip leading jersey "10 Mbappe"
-    .replace(/\s+\d+['′'+].*$/, '')  // strip minute suffix "45'"
-    .replace(/\(OG\)/g, '')
+// Produce a clean player name from the raw API scorer string.
+// The worldcup26.ir API returns strings in inconsistent formats, e.g.:
+//   "A. Diallo 90"        – name + bare minute (no apostrophe)
+//   "Breel Embolo 17 (p)" – name + minute + penalty marker
+//   "B. Khoukhi Qatar"    – name + embedded team name
+//   "Mbappe 45'"          – name + minute with apostrophe
+//   "10 Mbappe"           – jersey number + name
+function cleanScorerName(raw, teamNames) {
+  let s = raw.trim();
+
+  // 1. Strip embedded team name appended at the end (e.g. "B. Khoukhi Qatar")
+  if (teamNames) {
+    for (const team of teamNames) {
+      if (!team) continue;
+      if (s.endsWith(' ' + team)) {
+        s = s.slice(0, -(team.length + 1)).trim();
+        break;
+      }
+    }
+  }
+
+  return s
+    // 2. Leading jersey number "10 Mbappe" → "Mbappe"
+    .replace(/^\d+\s+/, '')
+    // 3. Trailing minute with optional stoppage time, apostrophe, and markers
+    //    handles: "90", "45'", "90+3'", "17 (p)", "45 (OG)", "90+2' (p)"
+    .replace(/\s+\d+(?:\+\d+)?['′]?(?:\s*\([^)]+\))*\s*$/, '')
+    // 4. Any remaining standalone markers
+    .replace(/\(\s*OG\s*\)/gi, '')
+    .replace(/\(\s*p\s*\)/gi, '')
     .trim();
 }
 
@@ -43,25 +67,33 @@ export async function applyApiScores() {
   const games = await fetchLiveGames();
   const goalMap = {};
 
+  // Collect all team names so cleanScorerName can strip embedded ones
+  const teamNames = new Set(
+    games.flatMap(g => [g.homeTeamName, g.awayTeamName]).filter(Boolean)
+  );
+
   games.forEach(g => {
     if (!g.finished) return;
 
     setScore(g.id, g.homeScore, g.awayScore);
-    setApiScorers(g.id, g.homeScorers, g.awayScorers);
 
-    const tally = (scorers, teamName) => {
-      scorers.forEach(raw => {
-        const name = cleanScorerName(raw);
-        if (!name) return;
+    // Clean names once; use the same cleaned list for both storage and the leaderboard
+    const cleanHome = g.homeScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
+    const cleanAway = g.awayScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
+    setApiScorers(g.id, cleanHome, cleanAway);
+
+    const tally = (names, teamName) => {
+      names.forEach(name => {
         if (!goalMap[name]) goalMap[name] = { name, team: teamName, goals: 0 };
         goalMap[name].goals++;
       });
     };
-    tally(g.homeScorers, g.homeTeamName);
-    tally(g.awayScorers, g.awayTeamName);
+    tally(cleanHome, g.homeTeamName);
+    tally(cleanAway, g.awayTeamName);
   });
 
-  const boot = Object.values(goalMap).sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
+  const boot = Object.values(goalMap)
+    .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
   setGoldenBoot(boot);
 
   return { updated: games.filter(g => g.finished).length, total: games.length };
