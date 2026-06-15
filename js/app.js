@@ -572,6 +572,10 @@ function handleAction(event) {
       navigateTo('calendar');
       break;
 
+    case 'nav-fixtures':
+      navigateTo('matches');
+      break;
+
     case 'go-prediction-tree':
       navigateTo('prediction-tree');
       break;

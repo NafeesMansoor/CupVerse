@@ -226,6 +226,10 @@ export function renderHomeDashboard(pulse) {
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches
     || !!window.navigator.standalone;
 
+  const hc = next ? getTeamColor(next.homeTeam.name) : '#4DA3FF';
+  const ac = next ? getTeamColor(next.awayTeam.name) : '#F5B042';
+  const heroGradient = `linear-gradient(135deg, ${hc}38 0%, rgba(8,14,30,0.97) 46%, ${ac}28 100%)`;
+
   const rightTopCard = isInstalled
     ? `<div class="dh-action-card" data-action="sync-data">
          <div class="dh-action-icon">🔄</div>
@@ -247,44 +251,52 @@ export function renderHomeDashboard(pulse) {
          <span class="cd-sep">:</span>
          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
        </div>
-       <div class="dhc-match">${next.homeTeam.flag} vs ${next.awayTeam.flag}<br><span class="dhc-stage">${next.stage}${next.group ? ` G${next.group}` : ''}</span></div>`
+       <div class="dhc-match">${next.homeTeam.flag} vs ${next.awayTeam.flag}<br>
+         <span class="dhc-stage">${next.stage}${next.group ? ` · G${next.group}` : ''}</span>
+       </div>`
     : `<div class="dhc-label">FIFA WORLD CUP</div>
        <div class="dhc-done">🏆<br><span>Tournament Complete</span></div>`;
 
   const dashHeroHTML = `
-    <div class="dash-hero-card">
-      <div class="dhg-analytics dhg-col">
-        <div class="dha-eyebrow">TOURNAMENT</div>
-        <div class="dha-stats">
-          <div class="dha-item">
-            <div class="dha-val">${stats.played}</div>
-            <div class="dha-lbl">Played</div>
-          </div>
-          <div class="dha-item">
-            <div class="dha-val">${totalGoals}</div>
-            <div class="dha-lbl">Goals</div>
-          </div>
-          <div class="dha-item${liveMatches.length ? ' dha-item--live' : ''}">
-            <div class="dha-val">${liveMatches.length}</div>
-            <div class="dha-lbl">Live</div>
-          </div>
-          <div class="dha-item">
-            <div class="dha-val">${stats.upcoming}</div>
-            <div class="dha-lbl">Left</div>
+    <div class="dash-hero-card" style="background:${heroGradient};">
+      <div class="dh-branding-row">
+        <span class="dh-trophy-icon">🏆</span>
+        <span class="dh-brand-text">FIFA WORLD CUP 2026™</span>
+      </div>
+      <div class="dh-main-grid">
+        <div class="dhg-col dhg-analytics">
+          <div class="dha-eyebrow">STATS</div>
+          <div class="dha-stats">
+            <div class="dha-item">
+              <div class="dha-val">${stats.played}</div>
+              <div class="dha-lbl">Played</div>
+            </div>
+            <div class="dha-item">
+              <div class="dha-val">${totalGoals}</div>
+              <div class="dha-lbl">Goals</div>
+            </div>
+            <div class="dha-item${liveMatches.length ? ' dha-item--live' : ''}">
+              <div class="dha-val">${liveMatches.length}</div>
+              <div class="dha-lbl">Live</div>
+            </div>
+            <div class="dha-item">
+              <div class="dha-val">${stats.upcoming}</div>
+              <div class="dha-lbl">Left</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="dhg-countdown dhg-col">
-        ${countdownCol}
-      </div>
+        <div class="dhg-col dhg-countdown">
+          ${countdownCol}
+        </div>
 
-      <div class="dhg-actions dhg-col">
-        ${rightTopCard}
-        <div class="dh-action-divider"></div>
-        <div class="dh-action-card" data-action="nav-calendar">
-          <div class="dh-action-icon">📅</div>
-          <div class="dh-action-label">Fixtures</div>
+        <div class="dhg-col dhg-actions">
+          ${rightTopCard}
+          <div class="dh-action-divider"></div>
+          <div class="dh-action-card" data-action="nav-fixtures">
+            <div class="dh-action-icon">📅</div>
+            <div class="dh-action-label">Fixtures</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -432,26 +444,60 @@ export function renderHomeDashboard(pulse) {
     </div>
     <div class="glass-card gb-card">${bootRows}</div>`;
 
-  // ── § 6  TOURNAMENT SNAPSHOT ───────────────────────────
-  const snapshotHTML = `
-    <div class="home-snapshot">
-      <div class="hs-item">
-        <div class="hs-val">${stats.played}</div>
-        <div class="hs-label">Played</div>
+  // ── § 6  FAVOURITE TEAM ────────────────────────────────
+  const allTeams = getTeams();
+  const favTeamItems = favTeams.slice(0, 2).map(code => {
+    const team = allTeams.find(t => t.code === code);
+    if (!team) return null;
+    const nextM = getTeamNextMatch(team.name);
+    const tc = getTeamColor(team.name);
+    return { team, nextM, tc };
+  }).filter(Boolean);
+
+  let favTeamHTML = '';
+  if (favTeamItems.length === 0) {
+    favTeamHTML = `
+      <div class="home-section-header">
+        <span class="hsh-title">⭐ MY TEAM</span>
       </div>
-      <div class="hs-item">
-        <div class="hs-val">${totalGoals}</div>
-        <div class="hs-label">Goals</div>
+      <div class="glass-card fav-team-empty">
+        <div class="fte-icon">⭐</div>
+        <div class="fte-title">No Favourite Team</div>
+        <div class="fte-sub">Track your team's World Cup journey in real time.</div>
+        <ol class="fte-steps">
+          <li>Open the <strong>Teams</strong> tab in the bottom nav</li>
+          <li>Find your nation</li>
+          <li>Tap <strong>☆</strong> next to the team name</li>
+        </ol>
+        <a href="#teams" class="btn btn-primary fte-cta">Browse 48 Teams →</a>
+      </div>`;
+  } else {
+    const teamRows = favTeamItems.map(({ team, nextM, tc }) => {
+      const isHome = nextM && nextM.homeTeam.name === team.name;
+      const opp    = nextM ? (isHome ? nextM.awayTeam : nextM.homeTeam) : null;
+      return `
+        <div class="fav-team-row" data-action="open-team" data-name="${team.name}" style="border-left-color:${tc};">
+          <div class="ftr-flag">${team.flag}</div>
+          <div class="ftr-info">
+            <div class="ftr-name">${displayName(team.name)}</div>
+            <div class="ftr-meta">#${team.fifaRank} FIFA · Group ${team.group}</div>
+            ${opp ? `
+              <div class="ftr-next">
+                <span class="ftr-next-label">NEXT</span>
+                ${opp.flag} ${displayName(opp.name)} · ${fmtDateShort(nextM.datetime)} ${fmtTime(nextM.datetime)}
+              </div>` : `<div class="ftr-meta" style="margin-top:4px;">No upcoming matches</div>`}
+          </div>
+          ${nextM ? `<button class="ftr-view-btn" data-action="open-match" data-id="${nextM.id}">View →</button>` : ''}
+        </div>`;
+    }).join('');
+
+    favTeamHTML = `
+      <div class="home-section-header">
+        <span class="hsh-title">⭐ MY TEAM</span>
+        <a href="#teams" class="hsh-more">Edit →</a>
       </div>
-      <div class="hs-item ${liveMatches.length ? 'hs-item--live' : ''}">
-        <div class="hs-val">${liveMatches.length}</div>
-        <div class="hs-label">Live</div>
-      </div>
-      <div class="hs-item">
-        <div class="hs-val">${stats.upcoming}</div>
-        <div class="hs-label">Remaining</div>
-      </div>
-    </div>`;
+      <div class="glass-card fav-team-card">${teamRows}</div>`;
+  }
 
   // ── § 7  TOURNAMENT JOURNEY ────────────────────────────
   const journeyStages = [
@@ -498,8 +544,8 @@ export function renderHomeDashboard(pulse) {
     ${dashHeroHTML}
     ${liveCenterHTML}
     ${goldenBootHTML}
+    ${favTeamHTML}
     ${carouselHTML}
-    ${snapshotHTML}
     ${journeyHTML}
   `);
 }
