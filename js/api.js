@@ -6,7 +6,7 @@ function parseScorers(raw) {
   if (!inner || inner.toLowerCase() === 'null') return [];
   return inner
     .split(',')
-    .map(s => s.replace(/[""''""'']/g, '').trim())
+    .map(s => s.replace(/["'‘’‚‛“”„‟‹›«»]/g, '').trim())
     .filter(s => s && s.toLowerCase() !== 'null');
 }
 
@@ -18,7 +18,8 @@ function parseScorers(raw) {
 //   "Mbappe 45'"          – name + minute with apostrophe
 //   "10 Mbappe"           – jersey number + name
 function cleanScorerName(raw, teamNames) {
-  let s = raw.trim();
+  // Step 0: strip ALL quote variants (API sometimes wraps names in quotes)
+  let s = raw.replace(/["'''‚‛""„‟‹›«»]/g, '').trim();
 
   // 1. Strip embedded team name at end (case-insensitive match handles API inconsistencies)
   if (teamNames) {

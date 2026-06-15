@@ -86,9 +86,44 @@ function groupColor(g) { return GROUP_COLORS[g] || '#666'; }
 const SHORT_NAMES = { 'Bosnia and Herzegovina': 'Bosnia' };
 function displayName(name) { return SHORT_NAMES[name] || name; }
 
-// Strip trailing digits from cached scorer names (handles stale pre-fix storage)
+// Strip quotes + trailing digits from stored scorer names (handles stale pre-fix storage)
 function sanitizeScorerName(name) {
-  return (name || '').replace(/\s+\d+$/, '').replace(/\(\s*p(?:en)?\s*\)/gi, '').replace(/\(\s*OG\s*\)/gi, '').trim();
+  return (name || '')
+    .replace(/["'''‚‛""„‟‹›«»]/g, '')
+    .replace(/\s+\d+(?:\+\d+)?['′]?\s*$/, '')
+    .replace(/\(\s*p(?:en)?\s*\)/gi, '')
+    .replace(/\(\s*OG\s*\)/gi, '')
+    .replace(/\s+\d+$/, '')
+    .trim();
+}
+
+// Match a short API scorer name ("J. Quiñones") to full squad player using initial + last name
+function resolvePlayerFromSquad(apiName, teamName) {
+  const squad = getSquad(teamName);
+  if (!squad || !squad.length) return null;
+  const q = apiName.trim().toLowerCase();
+  // 1. Exact
+  let found = squad.find(p => p.name.toLowerCase() === q);
+  if (found) return found;
+  // 2. "A. LastName" → match by initial + last name fragment
+  const m = q.match(/^([a-zÀ-ɏ])\.\s*(.+)$/);
+  if (m) {
+    const [, init, last] = m;
+    found = squad.find(p => {
+      const ws = p.name.toLowerCase().split(/\s+/);
+      return ws.length >= 2 && ws[0][0] === init && ws.slice(1).join(' ').includes(last);
+    });
+    if (found) return found;
+    // looser: any word in full name matches last part
+    found = squad.find(p => p.name[0].toLowerCase() === init && p.name.toLowerCase().includes(last));
+    if (found) return found;
+  }
+  // 3. Any meaningful word in the API name exists in squad name
+  for (const part of q.split(/\s+/).filter(p => p.length > 3)) {
+    found = squad.find(p => p.name.toLowerCase().includes(part));
+    if (found) return found;
+  }
+  return null;
 }
 
 // ── Status helpers ────────────────────────────────────────
@@ -231,9 +266,13 @@ export function renderHomeDashboard(pulse) {
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches
     || !!window.navigator.standalone;
 
+  const isLight = document.documentElement.dataset.theme === 'light';
   const hc = next ? getTeamColor(next.homeTeam.name) : '#4DA3FF';
   const ac = next ? getTeamColor(next.awayTeam.name) : '#F5B042';
-  const heroGradient = `linear-gradient(135deg, ${hc}38 0%, rgba(8,14,30,0.97) 46%, ${ac}28 100%)`;
+  // Very subtle team-color hints at the edges — columns provide the main visual identity
+  const heroGradient = isLight
+    ? `linear-gradient(135deg, ${hc}18 0%, rgba(238,242,249,0.0) 50%, ${ac}12 100%)`
+    : `linear-gradient(135deg, ${hc}22 0%, rgba(8,14,30,0.0) 50%, ${ac}15 100%)`;
 
   const rightTopCard = isInstalled
     ? `<div class="dh-action-card dh-action-card--sync" data-action="sync-data">
@@ -403,6 +442,55 @@ export function renderHomeDashboard(pulse) {
     </div>
     <div class="lc-scroll">${liveCenterCards.join('')}</div>`;
 
+  // ── § 3.5  GROUP STANDINGS ────────────────────────────
+  const allScores = getAllScores();
+  const groupStandings = getGroupStandings(allScores);
+  const groupKeys = Object.keys(groupStandings).sort();
+
+  const gsCards = groupKeys.map(grp => {
+    const gColor = groupColor(grp);
+    const rows = groupStandings[grp].map((t, i) => {
+      const gd = t.gf - t.ga;
+      return `
+        <div class="gs-row${i < 2 ? ' gs-row--qualify' : ''}">
+          <div class="gs-col-team">
+            <span class="gs-rank">${i + 1}</span>
+            <span class="gs-flag-sm">${t.flag}</span>
+            <span class="gs-team-name">${displayName(t.name)}</span>
+          </div>
+          <span class="gs-stat-val">${t.mp}</span>
+          <span class="gs-stat-val">${t.w}</span>
+          <span class="gs-stat-val">${t.d}</span>
+          <span class="gs-stat-val">${t.l}</span>
+          <span class="gs-stat-val gs-gd-val">${gd >= 0 ? '+' : ''}${gd}</span>
+          <span class="gs-stat-val gs-pts-val">${t.pts}</span>
+        </div>`;
+    }).join('');
+    return `
+      <div class="gs-group-card">
+        <div class="gs-group-hdr">
+          <span class="gs-badge" style="background:${gColor}22;color:${gColor}">GROUP ${grp}</span>
+        </div>
+        <div class="gs-thead">
+          <span class="gs-th-team"></span>
+          <span class="gs-th-stat">P</span>
+          <span class="gs-th-stat">W</span>
+          <span class="gs-th-stat">D</span>
+          <span class="gs-th-stat">L</span>
+          <span class="gs-th-stat">GD</span>
+          <span class="gs-th-stat gs-th-pts">Pts</span>
+        </div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  const groupStandingsHTML = `
+    <div class="home-section-header">
+      <span class="hsh-title">📊 GROUP STANDINGS</span>
+      <a href="#standings" class="hsh-more">Full Tables →</a>
+    </div>
+    <div class="gs-scroll">${gsCards}</div>`;
+
   // ── § 4  FEATURED MATCHES CAROUSEL ────────────────────
   const carouselMatches = (() => {
     const upcoming = allMatches
@@ -427,7 +515,7 @@ export function renderHomeDashboard(pulse) {
     const cardClass = isFinal ? 'fc-card fc-card--final' : isKnockout ? 'fc-card fc-card--knockout' : 'fc-card';
     return `
       <div class="${cardClass}" data-action="open-match" data-id="${m.id}"
-           style="background:linear-gradient(145deg,${hc}30 0%,rgba(10,17,40,0.95) 55%,${ac}20 100%);">
+           style="background:linear-gradient(145deg,${hc}30 0%,${isLight ? 'rgba(240,244,253,0.94)' : 'rgba(10,17,40,0.95)'} 55%,${ac}20 100%);">
         ${isFinal ? '<div class="fc-ribbon fc-ribbon--final">🏆 FINAL</div>' : isKnockout ? '<div class="fc-ribbon fc-ribbon--knockout">⚡ KNOCKOUT</div>' : ''}
         ${st === 'live' ? '<div class="fc-live-badge"><span class="sb-live-dot"></span> LIVE</div>' : ''}
         <div class="fc-stage">${m.stage}${m.group ? ` · Group ${m.group}` : ''}</div>
@@ -460,18 +548,26 @@ export function renderHomeDashboard(pulse) {
   const boot = getGoldenBoot().slice(0, 5);
   const maxGoals = boot[0]?.goals || 1;
   const bootRows = boot.length
-    ? boot.map((p, i) => `
-        <div class="gb-row">
+    ? boot.map((p, i) => {
+        const cleanN = sanitizeScorerName(p.name);
+        const resolved = resolvePlayerFromSquad(cleanN, p.team);
+        const dispName = resolved ? resolved.name : cleanN;
+        const clickAttr = resolved
+          ? `data-action="open-player" data-team="${p.team}" data-player-num="${resolved.number}" style="cursor:pointer"`
+          : '';
+        return `
+        <div class="gb-row" ${clickAttr}>
           <span class="gb-rank">${i + 1}</span>
           <div class="gb-info">
-            <span class="gb-name">${sanitizeScorerName(p.name)}</span>
+            <span class="gb-name">${dispName}</span>
             <span class="gb-team">${p.team}</span>
           </div>
           <div class="gb-bar-wrap">
             <div class="gb-bar-fill" style="width:${Math.round((p.goals / maxGoals) * 100)}%"></div>
           </div>
           <span class="gb-goals">${p.goals} ⚽</span>
-        </div>`).join('')
+        </div>`;
+      }).join('')
     : `<p class="text-muted" style="font-size:0.85rem;text-align:center;padding:12px 0;">Scoring data loads from API on first sync.</p>`;
 
   const goldenBootHTML = `
@@ -580,6 +676,7 @@ export function renderHomeDashboard(pulse) {
   return makeSection(`
     ${dashHeroHTML}
     ${liveCenterHTML}
+    ${groupStandingsHTML}
     ${goldenBootHTML}
     ${favTeamHTML}
     ${carouselHTML}
@@ -1618,13 +1715,21 @@ export function renderScorers() {
           <span class="gbt-team">Team</span>
           <span class="gbt-goals">Goals</span>
         </div>
-        ${liveData.map((p, i) => `
-          <div class="gb-table-row ${i < 3 ? `gbt-top-${i + 1}` : ''}">
+        ${liveData.map((p, i) => {
+          const cleanN = sanitizeScorerName(p.name);
+          const resolved = resolvePlayerFromSquad(cleanN, p.team);
+          const dispName = resolved ? resolved.name : cleanN;
+          const clickAttr = resolved
+            ? `data-action="open-player" data-team="${p.team}" data-player-num="${resolved.number}" style="cursor:pointer"`
+            : '';
+          return `
+          <div class="gb-table-row ${i < 3 ? `gbt-top-${i + 1}` : ''}" ${clickAttr}>
             <span class="gbt-rank">${medals[i] || i + 1}</span>
-            <span class="gbt-player-name">${sanitizeScorerName(p.name)}</span>
+            <span class="gbt-player-name">${dispName}</span>
             <span class="gbt-team-name">${p.team}</span>
             <span class="gbt-goals-val">${p.goals} ⚽</span>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>`
     : `<div class="gb-watch-note">Live scoring data loads on first sync. Tap Sync Data to refresh.</div>`;
 
@@ -1886,7 +1991,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.3.3</span>
+          <span class="text-muted">CupVerse v2.3.4</span>
         </div>
       </div>
     </div>
