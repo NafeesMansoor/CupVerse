@@ -86,6 +86,11 @@ function groupColor(g) { return GROUP_COLORS[g] || '#666'; }
 const SHORT_NAMES = { 'Bosnia and Herzegovina': 'Bosnia' };
 function displayName(name) { return SHORT_NAMES[name] || name; }
 
+// Strip trailing digits from cached scorer names (handles stale pre-fix storage)
+function sanitizeScorerName(name) {
+  return (name || '').replace(/\s+\d+$/, '').replace(/\(\s*p(?:en)?\s*\)/gi, '').replace(/\(\s*OG\s*\)/gi, '').trim();
+}
+
 // ── Status helpers ────────────────────────────────────────
 function effectiveStatus(match) {
   const score = getScore(match.id);
@@ -459,7 +464,7 @@ export function renderHomeDashboard(pulse) {
         <div class="gb-row">
           <span class="gb-rank">${i + 1}</span>
           <div class="gb-info">
-            <span class="gb-name">${p.name}</span>
+            <span class="gb-name">${sanitizeScorerName(p.name)}</span>
             <span class="gb-team">${p.team}</span>
           </div>
           <div class="gb-bar-wrap">
@@ -1616,7 +1621,7 @@ export function renderScorers() {
         ${liveData.map((p, i) => `
           <div class="gb-table-row ${i < 3 ? `gbt-top-${i + 1}` : ''}">
             <span class="gbt-rank">${medals[i] || i + 1}</span>
-            <span class="gbt-player-name">${p.name}</span>
+            <span class="gbt-player-name">${sanitizeScorerName(p.name)}</span>
             <span class="gbt-team-name">${p.team}</span>
             <span class="gbt-goals-val">${p.goals} ⚽</span>
           </div>`).join('')}
@@ -1881,7 +1886,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.3.2</span>
+          <span class="text-muted">CupVerse v2.3.3</span>
         </div>
       </div>
     </div>

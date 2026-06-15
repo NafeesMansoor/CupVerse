@@ -20,12 +20,14 @@ function parseScorers(raw) {
 function cleanScorerName(raw, teamNames) {
   let s = raw.trim();
 
-  // 1. Strip embedded team name appended at the end (e.g. "B. Khoukhi Qatar")
+  // 1. Strip embedded team name at end (case-insensitive match handles API inconsistencies)
   if (teamNames) {
+    const sLow = s.toLowerCase();
     for (const team of teamNames) {
       if (!team) continue;
-      if (s.endsWith(' ' + team)) {
-        s = s.slice(0, -(team.length + 1)).trim();
+      const suffix = ' ' + team.trim();
+      if (s.endsWith(suffix) || sLow.endsWith(suffix.toLowerCase())) {
+        s = s.slice(0, -(suffix.length)).trim();
         break;
       }
     }
@@ -35,11 +37,13 @@ function cleanScorerName(raw, teamNames) {
     // 2. Leading jersey number "10 Mbappe" → "Mbappe"
     .replace(/^\d+\s+/, '')
     // 3. Trailing minute with optional stoppage time, apostrophe, and markers
-    //    handles: "90", "45'", "90+3'", "17 (p)", "45 (OG)", "90+2' (p)"
+    //    handles: "90", "45'", "90+3'", "17 (p)", "45 (OG)", "90+2' (p)", "9"
     .replace(/\s+\d+(?:\+\d+)?['′]?(?:\s*\([^)]+\))*\s*$/, '')
-    // 4. Any remaining standalone markers
+    // 4. Standalone OG/penalty markers
     .replace(/\(\s*OG\s*\)/gi, '')
-    .replace(/\(\s*p\s*\)/gi, '')
+    .replace(/\(\s*p(?:en)?\s*\)/gi, '')
+    // 5. Final safety net — catches any trailing digits the regex above missed
+    .replace(/\s+\d+$/, '')
     .trim();
 }
 
@@ -67,9 +71,9 @@ export async function applyApiScores() {
   const games = await fetchLiveGames();
   const goalMap = {};
 
-  // Collect all team names so cleanScorerName can strip embedded ones
+  // Collect all team names so cleanScorerName can strip embedded ones; trim to avoid whitespace mismatches
   const teamNames = new Set(
-    games.flatMap(g => [g.homeTeamName, g.awayTeamName]).filter(Boolean)
+    games.flatMap(g => [g.homeTeamName, g.awayTeamName]).filter(Boolean).map(t => t.trim())
   );
 
   games.forEach(g => {
