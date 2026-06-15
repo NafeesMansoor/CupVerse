@@ -93,7 +93,7 @@ a { text-decoration: none; color: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 20px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
   background: rgba(11, 18, 32, 0.88);
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
@@ -104,7 +104,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 .brand {
-  font-size: 1.1rem;
+  font-size: 1.22rem;
   font-weight: 1500;
   letter-spacing: 0.05em;
   background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-bright));
@@ -4263,3 +4263,341 @@ a { text-decoration: none; color: inherit; }
 [data-theme="light"] .lc-card   { background: rgba(0,0,0,0.04); }
 [data-theme="light"] .hs-item   { background: rgba(0,0,0,0.04); }
 [data-theme="light"] .hsh-title { color: #666; }
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD HERO — 3-column card
+   ══════════════════════════════════════════════════════════ */
+.dash-hero-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.dhg-col {
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.dhg-col + .dhg-col {
+  border-left: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Left: Analytics ── */
+.dhg-analytics { justify-content: flex-start; }
+
+.dha-eyebrow {
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.dha-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+}
+
+.dha-item {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 7px 4px;
+  text-align: center;
+}
+
+.dha-item--live { border: 1px solid rgba(0,229,255,0.3); }
+.dha-item--live .dha-val { color: var(--accent-cyan, #00e5ff); }
+
+.dha-val {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.dha-lbl {
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ── Middle: Countdown ── */
+.dhg-countdown {
+  text-align: center;
+  gap: 6px;
+}
+
+.dhc-label {
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-cyan, #00e5ff);
+  margin-bottom: 6px;
+}
+
+.dhc-blocks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.dhc-blocks .cd-block {
+  min-width: 28px;
+  padding: 4px 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+}
+
+.dhc-blocks .cd-val  { font-size: 1rem; font-weight: 900; }
+.dhc-blocks .cd-label { font-size: 0.42rem; letter-spacing: 0.06em; }
+.dhc-blocks .cd-sep  { font-size: 0.65rem; margin-bottom: 6px; opacity: 0.6; }
+
+.dhc-match {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.dhc-stage {
+  font-size: 0.48rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dhc-done {
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Right: Actions ── */
+.dhg-actions {
+  gap: 0;
+  justify-content: stretch;
+  padding: 0;
+}
+
+.dh-action-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 14px 6px;
+  transition: background 0.18s;
+  width: 100%;
+}
+
+.dh-action-card:hover,
+.dh-action-card:active {
+  background: rgba(255,255,255,0.05);
+}
+
+.dh-action-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.dh-action-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.dh-action-divider {
+  height: 1px;
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+}
+
+/* Light theme */
+[data-theme="light"] .dash-hero-card { background: rgba(255,255,255,0.85); }
+[data-theme="light"] .dha-item       { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .dhc-blocks .cd-block { background: rgba(0,0,0,0.06); }
+
+/* Compact on very small screens */
+@media (max-width: 360px) {
+  .dha-val  { font-size: 0.95rem; }
+  .dhc-blocks .cd-val { font-size: 0.88rem; }
+  .dhc-blocks .cd-block { min-width: 24px; }
+  .dh-action-icon { font-size: 1.1rem; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   INSTALL GUIDE MODAL
+   ══════════════════════════════════════════════════════════ */
+.cv-install-guide-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.cv-install-guide-wrap.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.cv-guide-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.cv-guide-card {
+  position: relative;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(20px);
+  transition: transform 0.22s ease;
+}
+
+.cv-install-guide-wrap.visible .cv-guide-card { transform: translateY(0); }
+
+.cv-guide-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  padding-right: 32px;
+}
+
+.cv-guide-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.cv-guide-platform {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.cv-guide-platform.active {
+  border-color: rgba(0,229,255,0.3);
+  background: rgba(0,229,255,0.05);
+}
+
+.cv-guide-platform-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.cv-guide-steps { display: flex; flex-direction: column; gap: 8px; }
+
+.cv-guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.cv-guide-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 50%;
+  background: var(--accent-blue, #4DA3FF);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GOLDEN BOOT LIVE TABLE (Scorers page)
+   ══════════════════════════════════════════════════════════ */
+.gb-live-table { display: flex; flex-direction: column; gap: 0; }
+
+.gb-table-header {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 52px;
+  gap: 4px;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.gb-table-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 52px;
+  gap: 4px;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  align-items: center;
+}
+
+.gb-table-row:last-child { border-bottom: none; }
+.gb-table-row.gbt-top-1 { background: rgba(245,176,66,0.06); }
+.gb-table-row.gbt-top-2 { background: rgba(192,192,192,0.05); }
+.gb-table-row.gbt-top-3 { background: rgba(205,127,50,0.05); }
+
+.gbt-rank { font-size: 0.85rem; text-align: center; }
+
+.gbt-player-name {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.gbt-team-name {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.gbt-goals-val {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent-gold, #f5b042);
+  text-align: right;
+}

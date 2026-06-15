@@ -15,7 +15,7 @@ import {
 } from './storage.js';
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
-import { getMatchIntelligence, getTeamColor, getTeamData, GOLDEN_BOOT_CONTENDERS } from './intelligence.js';
+import { getMatchIntelligence, getTeamColor, getTeamData } from './intelligence.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
@@ -222,75 +222,72 @@ export function renderHomeDashboard(pulse) {
     return sum + (s ? (Number(s.home) + Number(s.away)) : 0);
   }, 0);
 
-  // ── § 1  FEATURED MATCH HERO ───────────────────────────
-  let heroHTML = '';
-  if (next) {
-    const hc = getTeamColor(next.homeTeam.name);
-    const ac = getTeamColor(next.awayTeam.name);
-    const vi = next.venueInfo || {};
-    heroHTML = `
-      <div class="home-hero" style="background:linear-gradient(160deg,${hc}35 0%,#0a1128 45%,${ac}25 100%);">
-        <div class="home-hero-trophy">🏆</div>
-        <div class="home-hero-branding">FIFA World Cup 2026™</div>
-        <div class="home-hero-matchup">
-          <div class="home-hero-team">
-            <span class="home-hero-flag">${next.homeTeam.flag}</span>
-            <span class="home-hero-name">${displayName(next.homeTeam.name)}</span>
-          </div>
-          <div class="home-hero-vs">
-            <span class="home-hero-vs-text">VS</span>
-            <span class="home-hero-stage">${next.stage}${next.group ? ` · Grp ${next.group}` : ''}</span>
-          </div>
-          <div class="home-hero-team">
-            <span class="home-hero-flag">${next.awayTeam.flag}</span>
-            <span class="home-hero-name">${displayName(next.awayTeam.name)}</span>
-          </div>
-        </div>
-        ${intel ? `
-        <div class="home-hero-prob">
-          <div class="hhp-bar">
-            <div class="hhp-home" style="width:${intel.prediction.home}%"></div>
-            <div class="hhp-draw"  style="width:${intel.prediction.draw}%"></div>
-            <div class="hhp-away" style="width:${intel.prediction.away}%"></div>
-          </div>
-          <div class="hhp-labels">
-            <span>${intel.prediction.home}%</span>
-            <span>${intel.prediction.draw}% Draw</span>
-            <span>${intel.prediction.away}%</span>
-          </div>
-        </div>` : ''}
-        <div class="home-hero-venue">🏟️ ${next.stadium}${vi.city ? ` · ${vi.city}` : ''} &nbsp;·&nbsp; ${fmtDate(next.datetime)}</div>
-        <button class="home-hero-cta" data-action="open-match" data-id="${next.id}">View Match →</button>
-      </div>`;
-  } else {
-    heroHTML = `
-      <div class="home-hero">
-        <div class="home-hero-branding">FIFA World Cup 2026™</div>
-        <div style="text-align:center;padding:20px 0;">
-          <div style="font-size:2.5rem;">🏆</div>
-          <p style="color:var(--text-secondary);margin-top:8px;">Tournament Complete</p>
-        </div>
-      </div>`;
-  }
+  // ── § 1  DASHBOARD HERO (3-column: Analytics | Countdown | Actions) ──
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches
+    || !!window.navigator.standalone;
 
-  // ── § 2  COUNTDOWN CARD ────────────────────────────────
-  let countdownHTML = '';
-  if (next) {
-    countdownHTML = `
-      <div class="home-countdown">
-        <div class="hcd-label">KICKOFF IN</div>
-        <div class="countdown-blocks hcd-blocks" data-countdown-target="${next.datetime}">
-          <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">DAYS</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">HRS</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">MIN</span></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">SEC</span></div>
+  const rightTopCard = isInstalled
+    ? `<div class="dh-action-card" data-action="sync-data">
+         <div class="dh-action-icon">🔄</div>
+         <div class="dh-action-label">Sync Data</div>
+       </div>`
+    : `<div class="dh-action-card" data-action="install-guide">
+         <div class="dh-action-icon">📲</div>
+         <div class="dh-action-label">Install App</div>
+       </div>`;
+
+  const countdownCol = next
+    ? `<div class="dhc-label">NEXT MATCH</div>
+       <div class="countdown-blocks dhc-blocks" data-countdown-target="${next.datetime}">
+         <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">D</span></div>
+         <span class="cd-sep">:</span>
+         <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">H</span></div>
+         <span class="cd-sep">:</span>
+         <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">M</span></div>
+         <span class="cd-sep">:</span>
+         <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
+       </div>
+       <div class="dhc-match">${next.homeTeam.flag} vs ${next.awayTeam.flag}<br><span class="dhc-stage">${next.stage}${next.group ? ` G${next.group}` : ''}</span></div>`
+    : `<div class="dhc-label">FIFA WORLD CUP</div>
+       <div class="dhc-done">🏆<br><span>Tournament Complete</span></div>`;
+
+  const dashHeroHTML = `
+    <div class="dash-hero-card">
+      <div class="dhg-analytics dhg-col">
+        <div class="dha-eyebrow">TOURNAMENT</div>
+        <div class="dha-stats">
+          <div class="dha-item">
+            <div class="dha-val">${stats.played}</div>
+            <div class="dha-lbl">Played</div>
+          </div>
+          <div class="dha-item">
+            <div class="dha-val">${totalGoals}</div>
+            <div class="dha-lbl">Goals</div>
+          </div>
+          <div class="dha-item${liveMatches.length ? ' dha-item--live' : ''}">
+            <div class="dha-val">${liveMatches.length}</div>
+            <div class="dha-lbl">Live</div>
+          </div>
+          <div class="dha-item">
+            <div class="dha-val">${stats.upcoming}</div>
+            <div class="dha-lbl">Left</div>
+          </div>
         </div>
-        <div class="hcd-match">${next.homeTeam.flag} ${displayName(next.homeTeam.name)} vs ${displayName(next.awayTeam.name)} ${next.awayTeam.flag}</div>
-      </div>`;
-  }
+      </div>
+
+      <div class="dhg-countdown dhg-col">
+        ${countdownCol}
+      </div>
+
+      <div class="dhg-actions dhg-col">
+        ${rightTopCard}
+        <div class="dh-action-divider"></div>
+        <div class="dh-action-card" data-action="nav-calendar">
+          <div class="dh-action-icon">📅</div>
+          <div class="dh-action-label">Fixtures</div>
+        </div>
+      </div>
+    </div>`;
 
   // ── § 3  LIVE CENTER ───────────────────────────────────
   const motd = (() => {
@@ -411,7 +408,7 @@ export function renderHomeDashboard(pulse) {
     <div class="fc-scroll">${carouselCards}</div>`;
 
   // ── § 5  GOLDEN BOOT RACE ──────────────────────────────
-  const boot = getGoldenBoot().slice(0, 6);
+  const boot = getGoldenBoot().slice(0, 5);
   const maxGoals = boot[0]?.goals || 1;
   const bootRows = boot.length
     ? boot.map((p, i) => `
@@ -456,33 +453,7 @@ export function renderHomeDashboard(pulse) {
       </div>
     </div>`;
 
-  // ── § 7  MATCH SCHEDULE PREVIEW ────────────────────────
-  const scheduleMatches = allMatches
-    .filter(m => effectiveStatus(m) === 'upcoming')
-    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-    .slice(0, 4);
-
-  const scheduleRows = scheduleMatches.map(m => `
-    <div class="sched-row" data-action="open-match" data-id="${m.id}">
-      <div class="sched-date">${fmtDateShort(m.datetime)}<br><span class="sched-time">${fmtTime(m.datetime)}</span></div>
-      <div class="sched-teams">
-        <span>${m.homeTeam.flag} ${displayName(m.homeTeam.name)}</span>
-        <span class="sched-vs">vs</span>
-        <span>${m.awayTeam.flag} ${displayName(m.awayTeam.name)}</span>
-      </div>
-      <div class="sched-stage">${m.stage}${m.group ? ` G${m.group}` : ''}</div>
-    </div>`).join('');
-
-  const scheduleHTML = `
-    <div class="home-section-header">
-      <span class="hsh-title">MATCH SCHEDULE</span>
-      <a href="#calendar" class="hsh-more">View Full Calendar →</a>
-    </div>
-    <div class="glass-card sched-card">
-      ${scheduleRows || '<p class="text-muted" style="text-align:center;padding:12px;">No upcoming matches.</p>'}
-    </div>`;
-
-  // ── § 8  TOURNAMENT JOURNEY ────────────────────────────
+  // ── § 7  TOURNAMENT JOURNEY ────────────────────────────
   const journeyStages = [
     { label: 'Group Stage',   dates: 'Jun 12 – Jun 27', key: 'group'   },
     { label: 'Round of 32',   dates: 'Jun 28 – Jul 1',  key: 'r32'     },
@@ -524,13 +495,11 @@ export function renderHomeDashboard(pulse) {
     <div class="glass-card tj-card">${journeyRows}</div>`;
 
   return makeSection(`
-    ${heroHTML}
-    ${countdownHTML}
+    ${dashHeroHTML}
     ${liveCenterHTML}
-    ${carouselHTML}
     ${goldenBootHTML}
+    ${carouselHTML}
     ${snapshotHTML}
-    ${scheduleHTML}
     ${journeyHTML}
   `);
 }
@@ -1555,37 +1524,34 @@ export function renderCalendar(opts = {}) {
 // ── GOLDEN BOOT RACE ──────────────────────────────────────
 export function renderScorers() {
   const medals = ['🥇', '🥈', '🥉'];
-  const contenders = GOLDEN_BOOT_CONTENDERS;
+  const liveData = getGoldenBoot().slice(0, 15);
+  const hasLiveData = liveData.length > 0;
 
-  const cardsHTML = contenders.map((p, i) => {
-    const rankClass = i < 3 ? ` rank-${i + 1}` : '';
-    return `
-      <div class="golden-boot-card${rankClass}">
-        <div class="gb-rank">${medals[i] || `#${i + 1}`}</div>
-        <div class="gb-flag">${p.flag}</div>
-        <div class="gb-info">
-          <div class="gb-name">${p.name}</div>
-          <div class="gb-team">${p.team}</div>
+  const tableHTML = hasLiveData
+    ? `<div class="gb-live-table">
+        <div class="gb-table-header">
+          <span class="gbt-rank">#</span>
+          <span class="gbt-player">Player</span>
+          <span class="gbt-team">Team</span>
+          <span class="gbt-goals">Goals</span>
         </div>
-        <div class="gb-stats">
-          <div class="gb-goals">${p.goals}</div>
-          <div class="gb-goals-label">Goals</div>
-          ${p.assists > 0 ? `<div class="gb-assists">${p.assists} Ast</div>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
+        ${liveData.map((p, i) => `
+          <div class="gb-table-row ${i < 3 ? `gbt-top-${i + 1}` : ''}">
+            <span class="gbt-rank">${medals[i] || i + 1}</span>
+            <span class="gbt-player-name">${p.name}</span>
+            <span class="gbt-team-name">${p.team}</span>
+            <span class="gbt-goals-val">${p.goals} ⚽</span>
+          </div>`).join('')}
+      </div>`
+    : `<div class="gb-watch-note">Live scoring data loads on first sync. Tap Sync Data to refresh.</div>`;
 
   return makeSection(`
     <div class="glass-card">
       <div class="section-header">
         <h2>Golden Boot Race</h2>
-        <span class="gb-contender-badge">⚽ Contenders</span>
+        <span class="gb-contender-badge">${hasLiveData ? `⚽ Top ${liveData.length}` : '⚽ Live'}</span>
       </div>
-      <div class="gb-watch-note">
-        Watch these stars battle for the Golden Boot at FIFA World Cup 2026. Scorers updated as the tournament progresses.
-      </div>
-      <div class="golden-boot-list">${cardsHTML}</div>
+      ${tableHTML}
     </div>
   `);
 }
@@ -1837,7 +1803,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v1.4.0</span>
+          <span class="text-muted">CupVerse v2.1.0</span>
         </div>
       </div>
     </div>

@@ -10,9 +10,13 @@ function parseScorers(raw) {
     .filter(s => s && s.toLowerCase() !== 'null');
 }
 
-// Strip minute suffix from scorer string → clean player name
+// Strip jersey number prefix and minute suffix from scorer string → clean player name
 function cleanScorerName(raw) {
-  return raw.replace(/\s+\d+['′+].*$/, '').replace(/\(OG\)/, '').trim();
+  return raw
+    .replace(/^\d+\s+/, '')          // strip leading jersey "10 Mbappe"
+    .replace(/\s+\d+['′'+].*$/, '')  // strip minute suffix "45'"
+    .replace(/\(OG\)/g, '')
+    .trim();
 }
 
 export async function fetchLiveGames() {

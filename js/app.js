@@ -24,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '2.1.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -298,6 +298,59 @@ function handleSaveNote(id) {
   }
 }
 
+// ── Install Guide Modal ───────────────────────────────────
+function showInstallGuide() {
+  const existing = document.getElementById('cv-install-guide');
+  if (existing) existing.remove();
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  const el = document.createElement('div');
+  el.id = 'cv-install-guide';
+  el.className = 'cv-install-guide-wrap';
+  el.innerHTML = `
+    <div class="cv-guide-backdrop" data-action="close-install-guide"></div>
+    <div class="cv-guide-card glass-card">
+      <button class="cv-modal-close" data-action="close-install-guide">×</button>
+      <div class="cv-guide-title">📲 Install CupVerse</div>
+      <div class="cv-guide-sub">Add to your home screen for the full app experience.</div>
+
+      <div class="cv-guide-platform ${isIOS ? 'active' : ''}">
+        <div class="cv-guide-platform-label">🍎 iPhone / iPad (Safari)</div>
+        <div class="cv-guide-steps">
+          <div class="cv-guide-step"><span class="cv-guide-num">1</span>Open this page in <strong>Safari</strong></div>
+          <div class="cv-guide-step"><span class="cv-guide-num">2</span>Tap the <strong>Share</strong> button (square with arrow)</div>
+          <div class="cv-guide-step"><span class="cv-guide-num">3</span>Scroll and tap <strong>"Add to Home Screen"</strong></div>
+          <div class="cv-guide-step"><span class="cv-guide-num">4</span>Tap <strong>"Add"</strong> — CupVerse appears on your screen</div>
+        </div>
+      </div>
+
+      <div class="cv-guide-platform ${!isIOS ? 'active' : ''}">
+        <div class="cv-guide-platform-label">🤖 Android (Chrome)</div>
+        <div class="cv-guide-steps">
+          <div class="cv-guide-step"><span class="cv-guide-num">1</span>Open this page in <strong>Chrome</strong></div>
+          <div class="cv-guide-step"><span class="cv-guide-num">2</span>Tap the <strong>⋮ menu</strong> (top right)</div>
+          <div class="cv-guide-step"><span class="cv-guide-num">3</span>Tap <strong>"Add to Home screen"</strong></div>
+          <div class="cv-guide-step"><span class="cv-guide-num">4</span>Tap <strong>"Add"</strong> to confirm</div>
+        </div>
+      </div>
+
+      <div class="cv-guide-platform">
+        <div class="cv-guide-platform-label">🖥️ Desktop (Chrome / Edge)</div>
+        <div class="cv-guide-steps">
+          <div class="cv-guide-step"><span class="cv-guide-num">1</span>Look for the <strong>install icon</strong> in the address bar</div>
+          <div class="cv-guide-step"><span class="cv-guide-num">2</span>Click it and select <strong>"Install"</strong></div>
+        </div>
+      </div>
+
+      ${deferredInstallPrompt ? `
+      <button class="btn btn-primary" style="width:100%;margin-top:14px;" data-action="install-pwa">Install Now</button>` : ''}
+    </div>`;
+
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+}
+
 // ── Update Banner ──────────────────────────────────────────
 function showUpdateBanner() {
   const banner = document.getElementById('update-banner');
@@ -501,6 +554,24 @@ function handleAction(event) {
       }
       break;
 
+    case 'install-guide':
+      showInstallGuide();
+      break;
+
+    case 'close-install-guide': {
+      const guide = document.getElementById('cv-install-guide');
+      if (guide) { guide.classList.remove('visible'); setTimeout(() => guide.remove(), 220); }
+      break;
+    }
+
+    case 'sync-data':
+      refreshData();
+      break;
+
+    case 'nav-calendar':
+      navigateTo('calendar');
+      break;
+
     case 'go-prediction-tree':
       navigateTo('prediction-tree');
       break;
@@ -597,6 +668,8 @@ async function init() {
     if (e.key === 'Escape') {
       const modal = document.getElementById('cv-player-modal');
       if (modal) { modal.classList.remove('visible'); setTimeout(() => modal.remove(), 220); }
+      const guide = document.getElementById('cv-install-guide');
+      if (guide) { guide.classList.remove('visible'); setTimeout(() => guide.remove(), 220); }
     }
   });
 
