@@ -1993,7 +1993,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.4.1</span>
+          <span class="text-muted">CupVerse v2.4.2</span>
         </div>
       </div>
     </div>

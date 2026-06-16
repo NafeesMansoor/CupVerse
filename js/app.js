@@ -24,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.4.1';
+const APP_VERSION = '2.4.2';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -699,7 +699,11 @@ function registerServiceWorker() {
     if (hadController) showUpdateBanner();
   });
 
-  navigator.serviceWorker.register('./sw.js').catch(err => {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    // Force an immediate update check so installed PWAs pick up new SW versions
+    // without waiting for the browser's default 24h check interval.
+    reg.update();
+  }).catch(err => {
     console.warn('SW registration failed', err);
   });
 }

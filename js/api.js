@@ -1,4 +1,33 @@
+import { getMatches } from './data.js';
+import { setScore, setApiScorers, setGoldenBoot } from './storage.js';
+
 const API_BASE = 'https://worldcup26.ir';
+
+// worldcup26.ir uses different team names than the local data.
+// Keys are the normalised API name; values are the normalised local name.
+const TEAM_ALIASES = {
+  'south korea':   'korea republic',
+  'czech republic':'czechia',
+  'united states': 'usa',
+  'ivory coast':   'cote dvoire',   // local "Cote D'Voire" normalises to "cote dvoire"
+  'cape verde':    'cabo verde',
+  'turkey':        'turkiye',        // local "Türkiye" NFD-normalises to "turkiye"
+};
+
+// Strip accents + punctuation, lowercase — used to match API names to local names.
+function normTeam(name) {
+  return (name || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // ü→u, ç→c, etc.
+    .replace(/[^a-z0-9\s]/g, '')                      // drop apostrophes, hyphens
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveTeam(apiName) {
+  const n = normTeam(apiName);
+  return TEAM_ALIASES[n] || n;
+}
 
 function parseScorers(raw) {
   if (!raw || raw === 'null') return [];
@@ -6,7 +35,7 @@ function parseScorers(raw) {
   if (!inner || inner.toLowerCase() === 'null') return [];
   return inner
     .split(',')
-    .map(s => s.replace(/["'‘’‚‛“”„‟‹›«»]/g, '').trim())
+    .map(s => s.replace(/["'''‚‛""„‟‹›«»]/g, '').trim())
     .filter(s => s && s.toLowerCase() !== 'null');
 }
 
@@ -71,14 +100,22 @@ export async function fetchLiveGames() {
   }));
 }
 
-import { setScore, setApiScorers, setGoldenBoot } from './storage.js';
-
 // Write scores + scorers to localStorage for finished matches, and compute golden boot.
+// Matches API games to local matches by team name (not by id) because the API's internal
+// numbering diverges from the local match ids from game 13 onwards.
 export async function applyApiScores() {
   const games = await fetchLiveGames();
   const goalMap = {};
 
-  // Collect all team names so cleanScorerName can strip embedded ones; trim to avoid whitespace mismatches
+  // Build a lookup: "normalisedHome|normalisedAway" → local match id
+  const localMatches = getMatches();
+  const localById = new Map();
+  localMatches.forEach(m => {
+    const key = `${normTeam(m.homeTeam.name)}|${normTeam(m.awayTeam.name)}`;
+    localById.set(key, m.id);
+  });
+
+  // Collect all API team names for cleanScorerName's embedded-team-name stripping
   const teamNames = new Set(
     games.flatMap(g => [g.homeTeamName, g.awayTeamName]).filter(Boolean).map(t => t.trim())
   );
@@ -86,12 +123,16 @@ export async function applyApiScores() {
   games.forEach(g => {
     if (!g.finished) return;
 
-    setScore(g.id, g.homeScore, g.awayScore);
+    // Resolve local match id by team names, not by API id
+    const lookupKey = `${resolveTeam(g.homeTeamName)}|${resolveTeam(g.awayTeamName)}`;
+    const localId = localById.get(lookupKey);
+    if (!localId) return; // unrecognised match — skip
 
-    // Clean names once; use the same cleaned list for both storage and the leaderboard
+    setScore(localId, g.homeScore, g.awayScore);
+
     const cleanHome = g.homeScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
     const cleanAway = g.awayScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
-    setApiScorers(g.id, cleanHome, cleanAway);
+    setApiScorers(localId, cleanHome, cleanAway);
 
     const tally = (names, teamName) => {
       names.forEach(name => {
