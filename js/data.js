@@ -71,8 +71,9 @@ function resolveStatus(datetimeStr, matchId) {
   const now = new Date();
   const diffMs = matchTime - now;
   if (diffMs > 0) return 'upcoming';
-  if (diffMs > -7200000) {
-    // Within the live window — only show live if the API hasn't confirmed finish
+  if (diffMs > -10800000) {
+    // Within 3 h of kickoff — only keep "live" if the API hasn't confirmed finish.
+    // 3 h covers 90 min play + stoppage + any delay before worldcup26.ir marks finished.
     const scores = getAllScores();
     if (scores[String(matchId)]) return 'completed';
     return 'live';
