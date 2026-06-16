@@ -1,3 +1,5 @@
+import { getAllScores } from './storage.js';
+
 const DATA_URL = './world_cup_data.json';
 
 const TEAM_META = {
@@ -60,12 +62,21 @@ function teamMeta(name) {
   return TEAM_META[name] || { flag: '🏳️', code: name.slice(0, 3).toUpperCase() };
 }
 
-function resolveStatus(datetimeStr) {
+// Resolve match status from the clock.  If we have a stored API score for this
+// match (only written when worldcup26.ir returns finished=TRUE), trust that over
+// the 2-hour live window so the match shows "completed" immediately after the
+// final whistle rather than staying "live" until the clock ticks past 2 h.
+function resolveStatus(datetimeStr, matchId) {
   const matchTime = new Date(datetimeStr);
   const now = new Date();
   const diffMs = matchTime - now;
   if (diffMs > 0) return 'upcoming';
-  if (diffMs > -7200000) return 'live';
+  if (diffMs > -7200000) {
+    // Within the live window — only show live if the API hasn't confirmed finish
+    const scores = getAllScores();
+    if (scores[String(matchId)]) return 'completed';
+    return 'live';
+  }
   return 'completed';
 }
 
@@ -96,7 +107,7 @@ function enrichMatch(raw) {
     stadium: venueName,
     homeTeam: { name: raw.homeTeam, flag: meta.flag, code: meta.code },
     awayTeam: { name: raw.awayTeam, flag: awayMeta.flag, code: awayMeta.code },
-    status: resolveStatus(raw.datetime),
+    status: resolveStatus(raw.datetime, raw.id),
     score: null,
     goals: [],
     potm: null,
