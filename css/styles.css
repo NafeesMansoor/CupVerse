@@ -1137,7 +1137,7 @@ a { text-decoration: none; color: inherit; }
 .standings-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.87rem;
+  font-size: 0.97rem;
   min-width: 480px;
 }
 .standings-table th {
@@ -1167,7 +1167,7 @@ a { text-decoration: none; color: inherit; }
 .standings-pos {
   width: 28px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-align: center;
 }
@@ -1177,12 +1177,12 @@ a { text-decoration: none; color: inherit; }
   gap: 9px;
   text-align: left;
 }
-.standings-team-flag { font-size: 1.1rem; }
-.standings-team-name { font-weight: 600; font-size: 0.88rem; }
-.standings-num { color: var(--text-secondary); font-size: 0.85rem; }
+.standings-team-flag { font-size: 1.2rem; }
+.standings-team-name { font-weight: 600; font-size: 0.98rem; }
+.standings-num { color: var(--text-secondary); font-size: 0.95rem; }
 .standings-pts {
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--text-primary);
 }
 /* Qualification coloring */

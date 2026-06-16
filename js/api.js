@@ -83,6 +83,17 @@ function cleanScorerName(raw, teamNames) {
     .trim();
 }
 
+// worldcup26.ir sometimes returns wrong/garbled scorer names or misattributes own goals.
+// Verified against ESPN's official goal data — keyed by local match id, replaces the
+// cleaned scorer list entirely for that side.
+const SCORER_OVERRIDES = {
+  8:  { home: ['Miro Muheim (OG)'], away: ['Breel Embolo'] },               // Qatar vs Switzerland
+  11: { away: ['Keito Nakamura', 'Daichi Kamada'] },                       // Netherlands vs Japan
+  13: { home: ['Abdulelah Al-Amri'], away: ['Maxi Araújo'] },              // Saudi Arabia vs Uruguay
+  15: { home: ['Ramin Rezaeian', 'Mohammad Mohebbi'], away: ['Elijah Just', 'Elijah Just'] }, // Iran vs New Zealand
+  16: { home: ['Mohamed Hany (OG)'] },                                    // Belgium vs Egypt
+};
+
 export async function fetchLiveGames() {
   const res = await fetch(`${API_BASE}/get/games`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`worldcup26.ir API returned ${res.status}`);
@@ -130,8 +141,9 @@ export async function applyApiScores() {
 
     setScore(localId, g.homeScore, g.awayScore);
 
-    const cleanHome = g.homeScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
-    const cleanAway = g.awayScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
+    const override = SCORER_OVERRIDES[localId];
+    const cleanHome = override?.home || g.homeScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
+    const cleanAway = override?.away || g.awayScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
     setApiScorers(localId, cleanHome, cleanAway);
 
     const tally = (names, teamName) => {

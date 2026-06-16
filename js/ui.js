@@ -313,6 +313,19 @@ export function renderHomeDashboard(pulse) {
         <span class="dh-brand-text">FIFA WORLD CUP 2026™</span>
       </div>
       <div class="dh-main-grid">
+        <div class="dhg-col dhg-actions">
+          ${rightTopCard}
+          <div class="dh-action-divider"></div>
+          <div class="dh-action-card dh-action-card--fixtures" data-action="nav-fixtures">
+            <div class="dh-action-icon">📅</div>
+            <div class="dh-action-label">Fixtures</div>
+          </div>
+        </div>
+
+        <div class="dhg-col dhg-countdown">
+          ${countdownCol}
+        </div>
+
         <div class="dhg-col dhg-analytics">
           <div class="dha-eyebrow">STATS</div>
           <div class="dha-stats">
@@ -334,25 +347,15 @@ export function renderHomeDashboard(pulse) {
             </div>
           </div>
         </div>
-
-        <div class="dhg-col dhg-countdown">
-          ${countdownCol}
-        </div>
-
-        <div class="dhg-col dhg-actions">
-          ${rightTopCard}
-          <div class="dh-action-divider"></div>
-          <div class="dh-action-card dh-action-card--fixtures" data-action="nav-fixtures">
-            <div class="dh-action-icon">📅</div>
-            <div class="dh-action-label">Fixtures</div>
-          </div>
-        </div>
       </div>
     </div>`;
 
   // ── § 3  LIVE CENTER ───────────────────────────────────
+  const todaysCompleted = completedMatches.filter(m => m.date === todayStr);
+
   const motd = (() => {
-    const scored = completedMatches
+    const pool = todaysCompleted.length ? todaysCompleted : completedMatches;
+    const scored = pool
       .map(m => { const s = effectiveScore(m); return s ? { m, goals: Number(s.home) + Number(s.away) } : null; })
       .filter(Boolean)
       .sort((a, b) => b.goals - a.goals);
@@ -360,10 +363,12 @@ export function renderHomeDashboard(pulse) {
   })();
 
   const upsetMatch = (() => {
-    return completedMatches.find(m => {
-      const s = effectiveScore(m);
-      return s && Math.abs(Number(s.home) - Number(s.away)) >= 3;
-    }) || null;
+    const pool = todaysCompleted.length ? todaysCompleted : completedMatches;
+    const margins = pool
+      .map(m => { const s = effectiveScore(m); return s ? { m, margin: Math.abs(Number(s.home) - Number(s.away)) } : null; })
+      .filter(x => x && x.margin >= 3)
+      .sort((a, b) => b.margin - a.margin);
+    return margins[0]?.m || null;
   })();
 
   const liveCenterCards = [];
@@ -1993,7 +1998,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.5.0</span>
+          <span class="text-muted">CupVerse v2.5.1</span>
         </div>
       </div>
     </div>
