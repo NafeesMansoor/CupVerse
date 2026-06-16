@@ -24,7 +24,8 @@ function cleanScorerName(raw, teamNames) {
   // Step 0b: strip Arabic/Persian script — worldcup26.ir returns Farsi names for
   // Iranian players (e.g. "تارمی 23" or "Taremi تارمی 23"); keep only Latin chars.
   s = s.replace(/[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+/g, '').trim();
-  if (!s) return '';
+  // If nothing remains, or only a bare minute number remains (pure-Farsi entry), skip.
+  if (!s || /^\d+$/.test(s)) return '';
 
   // 1. Strip embedded team name at end (case-insensitive match handles API inconsistencies)
   if (teamNames) {

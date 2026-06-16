@@ -88,7 +88,7 @@ function displayName(name) { return SHORT_NAMES[name] || name; }
 
 // Strip quotes, Arabic/Persian script, and trailing digits from stored scorer names
 function sanitizeScorerName(name) {
-  return (name || '')
+  const s = (name || '')
     .replace(/["'''‚‛""„‟‹›«»]/g, '')
     .replace(/[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+/g, '')
     .replace(/\s+\d+(?:\+\d+)?['′]?\s*$/, '')
@@ -96,6 +96,7 @@ function sanitizeScorerName(name) {
     .replace(/\(\s*OG\s*\)/gi, '')
     .replace(/\s+\d+$/, '')
     .trim();
+  return /^\d+$/.test(s) ? '' : s;
 }
 
 // Match a short API scorer name ("J. Quiñones") to full squad player using initial + last name
