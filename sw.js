@@ -1,4 +1,4 @@
-const APP_VERSION = '2.3.4';
+const APP_VERSION = '2.4.1';
 const CACHE_NAME = `cupverse-v${APP_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -50,6 +50,10 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = event.request.url;
+
+  // Never intercept cross-origin requests (live score API, CDN libs, etc.)
+  // so they always reach the network — SW CacheStorage would serve stale API responses.
+  if (!url.startsWith(self.location.origin)) return;
 
   if (url.includes('world_cup_data.json') || url.includes('squads.json')) {
     event.respondWith(

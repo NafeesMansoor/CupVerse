@@ -86,10 +86,11 @@ function groupColor(g) { return GROUP_COLORS[g] || '#666'; }
 const SHORT_NAMES = { 'Bosnia and Herzegovina': 'Bosnia' };
 function displayName(name) { return SHORT_NAMES[name] || name; }
 
-// Strip quotes + trailing digits from stored scorer names (handles stale pre-fix storage)
+// Strip quotes, Arabic/Persian script, and trailing digits from stored scorer names
 function sanitizeScorerName(name) {
   return (name || '')
     .replace(/["'''‚‛""„‟‹›«»]/g, '')
+    .replace(/[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+/g, '')
     .replace(/\s+\d+(?:\+\d+)?['′]?\s*$/, '')
     .replace(/\(\s*p(?:en)?\s*\)/gi, '')
     .replace(/\(\s*OG\s*\)/gi, '')
@@ -1991,7 +1992,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.3.4</span>
+          <span class="text-muted">CupVerse v2.4.1</span>
         </div>
       </div>
     </div>

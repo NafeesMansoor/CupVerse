@@ -21,6 +21,11 @@ function cleanScorerName(raw, teamNames) {
   // Step 0: strip ALL quote variants (API sometimes wraps names in quotes)
   let s = raw.replace(/["'''‚‛""„‟‹›«»]/g, '').trim();
 
+  // Step 0b: strip Arabic/Persian script — worldcup26.ir returns Farsi names for
+  // Iranian players (e.g. "تارمی 23" or "Taremi تارمی 23"); keep only Latin chars.
+  s = s.replace(/[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]+/g, '').trim();
+  if (!s) return '';
+
   // 1. Strip embedded team name at end (case-insensitive match handles API inconsistencies)
   if (teamNames) {
     const sLow = s.toLowerCase();
