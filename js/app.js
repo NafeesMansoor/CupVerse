@@ -24,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.4.4';
+const APP_VERSION = '2.5.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -693,22 +693,25 @@ function hideSplash() {
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
-  // Track whether there was already a SW in control when this page loaded.
-  // If so, a controllerchange means a NEW version just took over — reload
-  // immediately so the user runs the new JS rather than seeing a stale banner
-  // that persists across app background/foreground cycles.
   const hadController = !!navigator.serviceWorker.controller;
 
+  // sessionStorage persists across reloads but not across app closes.
+  // We set this flag just before reloading so that the fresh page knows it
+  // was already reloaded once and should not trigger another reload —
+  // preventing the infinite loop caused by the new SW re-claiming the page
+  // and firing controllerchange again immediately after each reload.
+  const justReloaded = sessionStorage.getItem('cv_sw_reload') === '1';
+  if (justReloaded) sessionStorage.removeItem('cv_sw_reload');
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (hadController) {
+    if (hadController && !justReloaded) {
+      sessionStorage.setItem('cv_sw_reload', '1');
       showToast('Updating CupVerse…');
       setTimeout(() => window.location.reload(), 800);
     }
   });
 
   navigator.serviceWorker.register('./sw.js').then(reg => {
-    // Force an immediate update check so installed PWAs pick up new SW versions
-    // without waiting for the browser's default check interval.
     reg.update();
   }).catch(err => {
     console.warn('SW registration failed', err);
