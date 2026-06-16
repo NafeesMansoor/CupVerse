@@ -20,6 +20,17 @@ import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
 
+// ── Icon set (inline stroke-style SVGs, replaces emoji for a cleaner look) ──
+const ICONS = {
+  trophy: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10v3.2a5 5 0 0 1-5 5 5 5 0 0 1-5-5V3Z"/><path d="M7 4.2H4.6a2.3 2.3 0 0 0 0 4.6H6.4M17 4.2h2.4a2.3 2.3 0 1 1 0 4.6H17.6"/><path d="M10.2 11v3.2M13.8 11v3.2M8.4 19.5h7.2l1 3H7.4l1-3Z"/></svg>`,
+  sync: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11a8.5 8.5 0 0 1 14.6-5.9L20 7"/><path d="M20 3.5V7h-3.5"/><path d="M20.5 13a8.5 8.5 0 0 1-14.6 5.9L4 17"/><path d="M4 20.5V17h3.5"/></svg>`,
+  install: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 17v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/></svg>`,
+  calendar: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>`,
+  live: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M7.5 7.5a6.5 6.5 0 0 0 0 9M16.5 7.5a6.5 6.5 0 0 1 0 9M4.5 4.5a10.5 10.5 0 0 0 0 15M19.5 4.5a10.5 10.5 0 0 1 0 15"/></svg>`,
+  globe: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/></svg>`,
+  star: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.95 6.06 6.69.6-5.06 4.5 1.53 6.56L12 16.9l-6.11 3.32 1.53-6.56-5.06-4.5 6.69-.6L12 2.5Z"/></svg>`,
+};
+
 // ── Timezone & Time helpers ───────────────────────────────
 const TIMEZONES = [
   { label: 'Device Default', value: '' },
@@ -278,11 +289,11 @@ export function renderHomeDashboard(pulse) {
 
   const rightTopCard = isInstalled
     ? `<div class="dh-action-card dh-action-card--sync" data-action="sync-data">
-         <div class="dh-action-icon">🔄</div>
+         <div class="dh-action-icon">${ICONS.sync}</div>
          <div class="dh-action-label">Sync Data</div>
        </div>`
     : `<div class="dh-action-card dh-action-card--install" data-action="install-guide">
-         <div class="dh-action-icon">📲</div>
+         <div class="dh-action-icon">${ICONS.install}</div>
          <div class="dh-action-label">Install App</div>
        </div>`;
 
@@ -304,12 +315,12 @@ export function renderHomeDashboard(pulse) {
        </div>
        <div class="dhc-stage">${next.stage}${next.group ? ` · G${next.group}` : ''}</div>`
     : `<div class="dhc-label">FIFA WORLD CUP</div>
-       <div class="dhc-done">🏆<br><span>Tournament Complete</span></div>`;
+       <div class="dhc-done">${ICONS.trophy}<br><span>Tournament Complete</span></div>`;
 
   const dashHeroHTML = `
     <div class="dash-hero-card" style="background:${heroGradient};">
       <div class="dh-branding-row">
-        <span class="dh-trophy-icon">🏆</span>
+        <span class="dh-trophy-icon">${ICONS.trophy}</span>
         <span class="dh-brand-text">FIFA WORLD CUP 2026™</span>
       </div>
       <div class="dh-main-grid">
@@ -317,7 +328,7 @@ export function renderHomeDashboard(pulse) {
           ${rightTopCard}
           <div class="dh-action-divider"></div>
           <div class="dh-action-card dh-action-card--fixtures" data-action="nav-fixtures">
-            <div class="dh-action-icon">📅</div>
+            <div class="dh-action-icon">${ICONS.calendar}</div>
             <div class="dh-action-label">Fixtures</div>
           </div>
         </div>
@@ -351,24 +362,19 @@ export function renderHomeDashboard(pulse) {
     </div>`;
 
   // ── § 3  LIVE CENTER ───────────────────────────────────
-  const todaysCompleted = completedMatches.filter(m => m.date === todayStr);
-
-  const motd = (() => {
-    const pool = todaysCompleted.length ? todaysCompleted : completedMatches;
-    const scored = pool
-      .map(m => { const s = effectiveScore(m); return s ? { m, goals: Number(s.home) + Number(s.away) } : null; })
-      .filter(Boolean)
-      .sort((a, b) => b.goals - a.goals);
-    return scored[0]?.m || null;
-  })();
-
-  const upsetMatch = (() => {
-    const pool = todaysCompleted.length ? todaysCompleted : completedMatches;
-    const margins = pool
-      .map(m => { const s = effectiveScore(m); return s ? { m, margin: Math.abs(Number(s.home) - Number(s.away)) } : null; })
-      .filter(x => x && x.margin >= 3)
-      .sort((a, b) => b.margin - a.margin);
-    return margins[0]?.m || null;
+  // "Watch Out": today's match featuring the highest FIFA-ranked team in action.
+  const watchOutPick = (() => {
+    const todaysAll = allMatches.filter(m => m.date === todayStr);
+    const pool = todaysAll.length ? todaysAll : (next ? [next] : []);
+    if (!pool.length) return null;
+    return pool
+      .map(m => {
+        const hr = getTeamData(m.homeTeam.name).rank;
+        const ar = getTeamData(m.awayTeam.name).rank;
+        const top = hr <= ar ? m.homeTeam : m.awayTeam;
+        return { m, rank: Math.min(hr, ar), topTeam: top };
+      })
+      .sort((a, b) => a.rank - b.rank)[0];
   })();
 
   const liveCenterCards = [];
@@ -376,7 +382,8 @@ export function renderHomeDashboard(pulse) {
   if (liveMatches.length) {
     liveCenterCards.push(`
       <div class="lc-card lc-card--live" data-action="open-match" data-id="${liveMatches[0].id}">
-        <div class="lc-badge lc-badge--live"><span class="sb-live-dot"></span> LIVE</div>
+        <div class="lc-accent lc-accent--live"></div>
+        <div class="lc-badge lc-badge--live"><span class="sb-live-dot"></span> Live Now</div>
         <div class="lc-matchup">
           <div class="lc-team">
             <span class="lc-flag">${liveMatches[0].homeTeam.flag}</span>
@@ -393,61 +400,45 @@ export function renderHomeDashboard(pulse) {
   } else {
     liveCenterCards.push(`
       <div class="lc-card lc-card--dim">
-        <div class="lc-badge">⚽ LIVE</div>
+        <div class="lc-accent"></div>
+        <div class="lc-badge">${ICONS.live} Live</div>
         <div class="lc-no-match">
-          <span class="lc-no-match-icon">🌍</span>
+          <span class="lc-no-match-icon">${ICONS.globe}</span>
           <span class="lc-no-match-text">No Live<br>Matches</span>
         </div>
         <div class="lc-card-sub">Next match soon</div>
       </div>`);
   }
 
-  if (motd) {
-    const ms = effectiveScore(motd);
+  if (watchOutPick) {
+    const { m: wo, rank, topTeam } = watchOutPick;
+    const ws = effectiveScore(wo);
+    const woStatus = effectiveStatus(wo);
     liveCenterCards.push(`
-      <div class="lc-card lc-card--motd" data-action="open-match" data-id="${motd.id}">
-        <div class="lc-badge lc-badge--gold">🔥 MATCH OF THE DAY</div>
+      <div class="lc-card lc-card--watch" data-action="open-match" data-id="${wo.id}">
+        <div class="lc-accent lc-accent--watch"></div>
+        <div class="lc-badge lc-badge--gold">${ICONS.star} Watch Out</div>
         <div class="lc-matchup">
           <div class="lc-team">
-            <span class="lc-flag">${motd.homeTeam.flag}</span>
-            <span class="lc-tname">${displayName(motd.homeTeam.name)}</span>
+            <span class="lc-flag">${wo.homeTeam.flag}</span>
+            <span class="lc-tname">${displayName(wo.homeTeam.name)}</span>
           </div>
-          <div class="lc-centre${ms ? ' lc-centre--score' : ''}">${ms ? `${ms.home}–${ms.away}` : 'FT'}</div>
+          <div class="lc-centre${ws ? ' lc-centre--score' : ''}">${ws ? `${ws.home}–${ws.away}` : 'VS'}</div>
           <div class="lc-team lc-team--right">
-            <span class="lc-flag">${motd.awayTeam.flag}</span>
-            <span class="lc-tname">${displayName(motd.awayTeam.name)}</span>
+            <span class="lc-flag">${wo.awayTeam.flag}</span>
+            <span class="lc-tname">${displayName(wo.awayTeam.name)}</span>
           </div>
         </div>
-        <div class="lc-card-sub">${motd.stage}</div>
-      </div>`);
-  }
-
-  if (upsetMatch) {
-    const us = effectiveScore(upsetMatch);
-    liveCenterCards.push(`
-      <div class="lc-card lc-card--upset" data-action="open-match" data-id="${upsetMatch.id}">
-        <div class="lc-badge lc-badge--red">📈 BIGGEST UPSET</div>
-        <div class="lc-matchup">
-          <div class="lc-team">
-            <span class="lc-flag">${upsetMatch.homeTeam.flag}</span>
-            <span class="lc-tname">${displayName(upsetMatch.homeTeam.name)}</span>
-          </div>
-          <div class="lc-centre${us ? ' lc-centre--score' : ''}">${us ? `${us.home}–${us.away}` : 'FT'}</div>
-          <div class="lc-team lc-team--right">
-            <span class="lc-flag">${upsetMatch.awayTeam.flag}</span>
-            <span class="lc-tname">${displayName(upsetMatch.awayTeam.name)}</span>
-          </div>
-        </div>
-        <div class="lc-card-sub">Result</div>
+        <div class="lc-card-sub">${displayName(topTeam.name)} · FIFA #${rank}${woStatus === 'live' ? ' · Live' : ''}</div>
       </div>`);
   }
 
   const liveCenterHTML = `
     <div class="home-section-header">
-      <span class="hsh-title">🔴 LIVE CENTER</span>
+      <span class="hsh-title">${ICONS.live} Live Center</span>
       <a href="#calendar" class="hsh-more">View All →</a>
     </div>
-    <div class="lc-scroll">${liveCenterCards.join('')}</div>`;
+    <div class="lc-grid">${liveCenterCards.join('')}</div>`;
 
   // ── § 3.5  GROUP STANDINGS ────────────────────────────
   const allScores = getAllScores();
@@ -1998,7 +1989,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.5.1</span>
+          <span class="text-muted">CupVerse v2.5.2</span>
         </div>
       </div>
     </div>
