@@ -1,4 +1,4 @@
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.8.0';
 const CACHE_NAME = `cupverse-v${APP_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   './js/shareCard.js',
   './js/router.js',
   './js/intelligence.js',
+  './js/photos.js',
   './js/prediction.js',
   './js/sync.js',
   './js/api.js',

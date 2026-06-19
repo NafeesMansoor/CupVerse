@@ -15,7 +15,8 @@ import {
 } from './storage.js';
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
-import { getMatchIntelligence, getTeamColor, getTeamData } from './intelligence.js';
+import { getMatchIntelligence, getTeamColor, getTeamData, getTeamProfile } from './intelligence.js';
+import { observePlayerPhotos } from './photos.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
@@ -92,6 +93,42 @@ const GROUP_COLORS = {
 };
 
 function groupColor(g) { return GROUP_COLORS[g] || '#666'; }
+
+// ── Jersey SVG generator ──────────────────────────────────
+// Generates a clean football-shirt SVG from primary + secondary colors.
+// pattern: 'plain' | 'stripes-v'
+function jerseyKitSVG(primary, secondary, pattern = 'plain', label = '') {
+  let defs = '';
+  let bodyFill = primary;
+
+  if (pattern === 'stripes-v') {
+    const pid = `sv_${primary.slice(1)}_${secondary.slice(1)}`;
+    defs = `<defs>
+      <pattern id="${pid}" x="0" y="0" width="10" height="1" patternUnits="userSpaceOnUse">
+        <rect width="5" height="1" fill="${primary}"/>
+        <rect x="5" width="5" height="1" fill="${secondary}"/>
+      </pattern>
+    </defs>`;
+    bodyFill = `url(#${pid})`;
+  }
+
+  // Slightly darken the primary for an outline/shadow effect
+  return `<svg class="kit-svg" viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" aria-label="${label}">
+    ${defs}
+    <!-- Body -->
+    <path d="M22 18 L2 35 L16 42 L16 98 L84 98 L84 42 L98 35 L78 18 Q65 28 50 28 Q35 28 22 18Z"
+          fill="${bodyFill}" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+    <!-- Collar -->
+    <path d="M36 20 Q42 6 50 10 Q58 6 64 20 Q57 29 50 27 Q43 29 36 20Z"
+          fill="${secondary}" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
+    <!-- Left sleeve -->
+    <path d="M2 35 L16 42 L20 34 L11 21Z"
+          fill="${secondary}" opacity="0.85"/>
+    <!-- Right sleeve -->
+    <path d="M98 35 L84 42 L80 34 L89 21Z"
+          fill="${secondary}" opacity="0.85"/>
+  </svg>`;
+}
 
 // ── Display name normalization ────────────────────────────
 const SHORT_NAMES = { 'Bosnia and Herzegovina': 'Bosnia' };
@@ -550,12 +587,16 @@ export function renderHomeDashboard(pulse) {
         const cleanN = sanitizeScorerName(p.name);
         const resolved = resolvePlayerFromSquad(cleanN, p.team);
         const dispName = resolved ? resolved.name : cleanN;
+        const photoName = resolved ? resolved.name : cleanN;
         const clickAttr = resolved
           ? `data-action="open-player" data-team="${p.team}" data-player-num="${resolved.number}" style="cursor:pointer"`
           : '';
         return `
         <div class="gb-row" ${clickAttr}>
           <span class="gb-rank">${i + 1}</span>
+          <div class="gb-thumb" style="background:${pAvatarColor(photoName)}" data-player-photo="${photoName}">
+            <span class="gb-thumb-initials">${pInitials(photoName)}</span>
+          </div>
           <div class="gb-info">
             <span class="gb-name">${dispName}</span>
             <span class="gb-team">${p.team}</span>
@@ -1351,7 +1392,7 @@ function pShortName(name) {
 function playerCardHTML(p, teamName) {
   return `
     <div class="player-card" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
-      <div class="pc-avatar" style="background:${pAvatarColor(p.name)}">
+      <div class="pc-avatar" style="background:${pAvatarColor(p.name)}" data-player-photo="${p.name}">
         <span class="pc-initials">${pInitials(p.name)}</span>
         <span class="pc-num">#${p.number}</span>
       </div>
@@ -1392,6 +1433,7 @@ export function updateSquadGrid(teamName, players, view) {
       </div>`;
   } else {
     grid.innerHTML = `<div class="squad-grid">${players.map(p => playerCardHTML(p, teamName)).join('')}</div>`;
+    observePlayerPhotos(grid);
   }
 }
 
@@ -1412,7 +1454,7 @@ export function showPlayerModal(player, teamName, teamFlag) {
     <div class="cv-modal-card glass-card">
       <button class="cv-modal-close" data-action="close-player-modal">×</button>
       <div class="cv-modal-header">
-        <div class="cv-modal-avatar" style="background:${bg}">
+        <div class="cv-modal-avatar" style="background:${bg}" data-player-photo="${player.name}">
           <div class="cv-modal-initials">${pInitials(player.name)}</div>
           <div class="cv-modal-jersey">#${player.number}</div>
         </div>
@@ -1441,7 +1483,7 @@ export function showPlayerModal(player, teamName, teamFlag) {
 }
 
 // ── TEAM PROFILE ─────────────────────────────────────────
-export function renderTeamProfile(teamName) {
+export function renderTeamProfile(teamName) {  // eslint-disable-line
   const allTeams   = getTeams();
   const teamMeta   = allTeams.find(t => t.name === teamName);
   const td         = getTeamData(teamName);
@@ -1495,7 +1537,9 @@ export function renderTeamProfile(teamName) {
   const kpCard = (label, stat, p) => !p ? '' : `
     <div class="kp-card" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
       <div class="kp-label">${label}</div>
-      <div class="kp-avatar" style="background:${pAvatarColor(p.name)}">${pInitials(p.name)}</div>
+      <div class="kp-avatar" style="background:${pAvatarColor(p.name)}" data-player-photo="${p.name}">
+        <span class="kp-initials">${pInitials(p.name)}</span>
+      </div>
       <div class="kp-num">#${p.number}</div>
       <div class="kp-name">${p.name}</div>
       <div class="kp-stat">${stat}</div>
@@ -1533,8 +1577,46 @@ export function renderTeamProfile(teamName) {
       <div class="formation-row formation-gk-row">${fpCard(fGK[0])}</div>
     </div>` : '';
 
+  // ── Team profile (overview / jerseys) ────────────────────
+  const profile = getTeamProfile(teamName);
+  const jerseyRow = profile ? `
+    <div class="jersey-row">
+      <div class="jersey-kit-wrap">
+        <div class="jersey-kit-label">Home</div>
+        ${jerseyKitSVG(profile.homeKit.primary, profile.homeKit.secondary, profile.homeKit.pattern, `${teamMeta.name} home kit`)}
+      </div>
+      <div class="jersey-kit-wrap">
+        <div class="jersey-kit-label">Away</div>
+        ${jerseyKitSVG(profile.awayKit.primary, profile.awayKit.secondary, profile.awayKit.pattern, `${teamMeta.name} away kit`)}
+      </div>
+    </div>` : '';
+
+  const writeupBlock = profile ? `
+    <div class="team-writeup glass-card">
+      <div class="intel-section-label">Team Overview</div>
+      <p class="writeup-body">${profile.overview}</p>
+      <div class="writeup-swot">
+        <div class="swot-item swot-strength">
+          <span class="swot-icon">💪</span>
+          <div>
+            <div class="swot-label">Strength</div>
+            <div class="swot-text">${profile.strength}</div>
+          </div>
+        </div>
+        <div class="swot-item swot-weakness">
+          <span class="swot-icon">⚠️</span>
+          <div>
+            <div class="swot-label">Weakness</div>
+            <div class="swot-text">${profile.weakness}</div>
+          </div>
+        </div>
+      </div>
+      ${jerseyRow}
+    </div>` : '';
+
   // ── Tab panels ───────────────────────────────────────────
   const overviewPanel = `
+    ${writeupBlock}
     <div class="stats-row" style="grid-template-columns:repeat(${completedMatches.length ? 4 : 3},1fr);">
       <div class="stat-item"><div class="stat-value">#${teamMeta.fifaRank}</div><div class="stat-label">FIFA Rank</div></div>
       <div class="stat-item"><div class="stat-value">${td.wcApps || '—'}</div><div class="stat-label">WC Apps</div></div>
@@ -1748,13 +1830,19 @@ export function renderScorers() {
           const cleanN = sanitizeScorerName(p.name);
           const resolved = resolvePlayerFromSquad(cleanN, p.team);
           const dispName = resolved ? resolved.name : cleanN;
+          const photoName = resolved ? resolved.name : cleanN;
           const clickAttr = resolved
             ? `data-action="open-player" data-team="${p.team}" data-player-num="${resolved.number}" style="cursor:pointer"`
             : '';
           return `
           <div class="gb-table-row ${i < 3 ? `gbt-top-${i + 1}` : ''}" ${clickAttr}>
             <span class="gbt-rank">${medals[i] || i + 1}</span>
-            <span class="gbt-player-name">${dispName}</span>
+            <span class="gbt-player-wrap">
+              <span class="gbt-thumb" style="background:${pAvatarColor(photoName)}" data-player-photo="${photoName}">
+                <span class="gbt-thumb-initials">${pInitials(photoName)}</span>
+              </span>
+              <span class="gbt-player-name">${dispName}</span>
+            </span>
             <span class="gbt-team-name">${p.team}</span>
             <span class="gbt-goals-val">${p.goals} ⚽</span>
           </div>`;

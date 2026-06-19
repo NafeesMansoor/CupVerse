@@ -3431,6 +3431,97 @@ a { text-decoration: none; color: inherit; }
   word-break: break-word;
 }
 .kp-stat { font-size: 0.68rem; color: var(--text-muted); }
+.kp-initials { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1; transition: opacity 0.2s; }
+.kp-avatar.has-photo .kp-initials { opacity: 0; }
+
+/* ── Player photo lazy-load states ─────────────────── */
+.pc-avatar,
+.kp-avatar,
+.cv-modal-avatar {
+  transition: background-image 0.3s ease;
+  overflow: hidden;
+}
+.pc-avatar.has-photo .pc-initials,
+.pc-avatar.has-photo .pc-num { opacity: 0; transition: opacity 0.25s; }
+.cv-modal-avatar.has-photo .cv-modal-initials,
+.cv-modal-avatar.has-photo .cv-modal-jersey { opacity: 0; transition: opacity 0.25s; }
+
+/* ── Golden Boot thumbnails ────────────────────────── */
+.gb-thumb {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background-size: cover; background-position: center top;
+}
+.gb-thumb-initials { font-size: 0.7rem; font-weight: 800; color: #fff; line-height: 1; transition: opacity 0.25s; }
+.gb-thumb.has-photo .gb-thumb-initials { opacity: 0; }
+
+/* Full scorers page thumb */
+.gbt-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center;
+  background-size: cover; background-position: center top;
+  vertical-align: middle;
+}
+.gbt-thumb-initials { font-size: 0.65rem; font-weight: 800; color: #fff; line-height: 1; transition: opacity 0.25s; }
+.gbt-thumb.has-photo .gbt-thumb-initials { opacity: 0; }
+.gbt-player-wrap { display: inline-flex; align-items: center; gap: 7px; }
+
+/* ── Team Writeup card ─────────────────────────────── */
+.team-writeup {
+  margin-bottom: 10px;
+}
+.writeup-body {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 6px 0 14px;
+}
+.writeup-swot {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 14px;
+}
+.swot-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.swot-strength { background: rgba(40,167,69,0.1); border: 1px solid rgba(40,167,69,0.2); }
+.swot-weakness { background: rgba(255,166,0,0.08); border: 1px solid rgba(255,166,0,0.18); }
+.swot-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.swot-label {
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 2px;
+}
+.swot-strength .swot-label { color: #28a745; }
+.swot-weakness .swot-label { color: #f5a623; }
+.swot-text { color: var(--text-secondary); }
+
+/* ── Jersey kit display ────────────────────────────── */
+.jersey-row {
+  display: flex; gap: 20px; justify-content: center;
+  padding-top: 4px;
+}
+.jersey-kit-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.jersey-kit-label {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-muted);
+}
+.kit-svg {
+  width: 64px; height: auto;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+  transition: transform 0.2s ease;
+}
+.kit-svg:hover { transform: scale(1.08) rotate(-3deg); }
 
 /* ── Formation ─────────────────────────────────────── */
 .formation-pitch {

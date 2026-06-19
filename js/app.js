@@ -15,6 +15,7 @@ import {
 } from './prediction.js';
 import { getStadiumByName } from './venues.js';
 import { parseRoute, navigateTo } from './router.js';
+import { observePlayerPhotos, stopObservingPhotos, initPhotoObserver } from './photos.js';
 import { createCountdown, createBlockCountdown } from './countdown.js';
 import { generateShareCard } from './shareCard.js';
 import {
@@ -24,7 +25,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.8.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -109,6 +110,14 @@ function renderCurrentRoute() {
   if (route.page === 'calendar') {
     initCalendarFilters();
   }
+
+  // Lazy-load player photos on pages that show player avatars
+  stopObservingPhotos();
+  if (route.page === 'home' || route.page === 'scorers') {
+    initPhotoObserver();
+    observePlayerPhotos(document.getElementById('app'));
+  }
+
   attachCountdown();
 }
 
@@ -521,6 +530,13 @@ function handleAction(event) {
       const tab = btn.dataset.tab;
       document.querySelectorAll('.tp-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
       document.querySelectorAll('.tp-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+      if (tab === 'squad') {
+        // Start lazy-loading player photos now that the squad panel is visible
+        const squadPanel = document.querySelector('.tp-tab-panel[data-tab="squad"]');
+        if (squadPanel) observePlayerPhotos(squadPanel);
+      } else {
+        stopObservingPhotos();
+      }
       break;
     }
 
@@ -529,7 +545,14 @@ function handleAction(event) {
       const num = parseInt(btn.dataset.playerNum);
       const player = getSquad(teamName).find(p => p.number === num);
       const team = getTeams().find(t => t.name === teamName);
-      if (player && team) showPlayerModal(player, teamName, team.flag);
+      if (player && team) {
+        showPlayerModal(player, teamName, team.flag);
+        // Lazy-load photo in the modal after it appears in the DOM
+        requestAnimationFrame(() => {
+          const modal = document.getElementById('cv-player-modal');
+          if (modal) observePlayerPhotos(modal);
+        });
+      }
       break;
     }
 
