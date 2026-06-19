@@ -16,6 +16,7 @@
   --accent-blue:       #4DA3FF;
   --accent-blue-bright:#70BAFF;
   --accent-gold:       #F5C542;
+  --accent-cyan:       #00E5FF;
   --accent-success:    #3DDC97;
   --accent-live:       #FF4D4D;
 
@@ -1023,49 +1024,80 @@ a { text-decoration: none; color: inherit; }
    ══════════════════════════════════════════════════ */
 .calendar-date-strip {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
-  padding: 4px 0 10px;
+  padding: 4px 4px 10px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
 }
 .calendar-date-strip::-webkit-scrollbar { display: none; }
+.cal-sticky-bar {
+  position: sticky;
+  top: 53px;
+  z-index: 30;
+  padding-bottom: 4px;
+}
 .date-pill {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   cursor: pointer;
   transition: var(--transition);
   text-align: center;
-  min-width: 54px;
+  min-width: 50px;
+  scroll-snap-align: center;
 }
-.date-pill:hover { border-color: var(--border-hover); }
+.date-pill:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.date-pill:active { transform: scale(0.95); }
 .date-pill.active {
   background: rgba(77, 163, 255, 0.15);
-  border-color: rgba(77, 163, 255, 0.35);
+  border-color: rgba(77, 163, 255, 0.5);
 }
+.date-pill.is-today {
+  border-color: var(--accent-cyan, #00E5FF);
+  background: rgba(0, 229, 255, 0.06);
+}
+.date-pill.is-today.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--accent-cyan, #00E5FF);
+}
+.date-pill--no-match { opacity: 0.35; }
+.date-pill--no-match:hover { opacity: 0.6; }
 .date-pill-day {
-  font-size: 0.66rem;
+  font-size: 0.58rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 .date-pill.active .date-pill-day { color: var(--accent-blue); }
-.date-pill-num { font-size: 1.05rem; font-weight: 700; margin-top: 1px; }
+.date-pill.is-today .date-pill-day { color: var(--accent-cyan, #00E5FF); font-size: 0.52rem; }
+.date-pill-num { font-size: 1.05rem; font-weight: 700; margin-top: 2px; line-height: 1; }
 .date-pill.active .date-pill-num { color: var(--accent-blue); }
+.date-pill-mon {
+  font-size: 0.56rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+.date-pill.active .date-pill-mon { color: rgba(77,163,255,0.7); }
 .date-pill-count {
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   background: var(--accent-blue);
   color: #fff;
   border-radius: 999px;
   padding: 1px 5px;
-  margin-top: 3px;
+  margin-top: 4px;
   display: inline-block;
   font-weight: 700;
 }
-.date-pill.active .date-pill-count { background: rgba(77, 163, 255, 0.5); }
+.date-pill.active .date-pill-count { background: rgba(77, 163, 255, 0.6); }
+.date-pill.is-today .date-pill-count { background: var(--accent-cyan, #00E5FF); color: #0a1128; }
 
 /* ══════════════════════════════════════════════════
    TOP SCORERS
@@ -2359,7 +2391,10 @@ a { text-decoration: none; color: inherit; }
   padding: 9px 12px; border-radius: var(--radius-md);
   background: var(--bg-elevated); border: 1px solid var(--border);
   border-left: 3px solid transparent; transition: var(--transition);
+  cursor: pointer;
 }
+.gvc-team-row:hover { background: var(--bg-card); border-color: var(--border-hover); transform: translateX(2px); }
+.gvc-team-row:active { transform: scale(0.98); }
 .gvc-team-row.qualify-1,
 .gvc-team-row.qualify-2 { border-left-color: var(--accent-success); }
 .gvc-team-row.qualify-3 { border-left-color: var(--accent-gold); }

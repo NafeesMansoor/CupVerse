@@ -6,12 +6,13 @@ const API_BASE = 'https://worldcup26.ir';
 // worldcup26.ir uses different team names than the local data.
 // Keys are the normalised API name; values are the normalised local name.
 const TEAM_ALIASES = {
-  'south korea':   'korea republic',
-  'czech republic':'czechia',
-  'united states': 'usa',
-  'ivory coast':   'cote dvoire',   // local "Cote D'Voire" normalises to "cote dvoire"
-  'cape verde':    'cabo verde',
-  'turkey':        'turkiye',        // local "Türkiye" NFD-normalises to "turkiye"
+  'south korea':                      'korea republic',
+  'czech republic':                   'czechia',
+  'united states':                    'usa',
+  'ivory coast':                      'cote dvoire',   // local "Cote D'Voire" normalises to "cote dvoire"
+  'cape verde':                       'cabo verde',
+  'turkey':                           'turkiye',        // local "Türkiye" NFD-normalises to "turkiye"
+  'democratic republic of the congo': 'dr congo',       // API uses full name; local uses "DR Congo"
 };
 
 // Strip accents + punctuation, lowercase — used to match API names to local names.

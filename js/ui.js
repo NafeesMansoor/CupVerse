@@ -1587,44 +1587,28 @@ function applyCalFilters(matches) {
   });
 }
 
-function buildMonthGrid(year, month, matchDateMap, selectedDate) {
-  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthName = new Date(year, month, 1).toLocaleString('en-US', { month: 'long' });
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  const cells = [];
-  // Padding before 1st
-  for (let i = 0; i < firstDow; i++) cells.push('<div class="cal-day-cell"></div>');
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+function buildDateStrip(allDates, matchDateMap, selectedDate, todayStr) {
+  return allDates.map(dateStr => {
     const count   = matchDateMap.get(dateStr) || 0;
-    const sel     = dateStr === selectedDate;
-    const today   = dateStr === todayStr;
+    const isSel   = dateStr === selectedDate;
+    const isToday = dateStr === todayStr;
+    const d   = new Date(dateStr + 'T12:00:00');
+    const dow = isToday ? 'TODAY' : d.toLocaleDateString('en-US', { weekday: 'short' });
+    const day = d.getDate();
+    const mon = d.toLocaleDateString('en-US', { month: 'short' });
 
-    let cls = 'cal-day-cell in-month';
-    if (count)  cls += ' has-matches';
-    if (sel)    cls += ' is-selected';
-    if (today)  cls += ' is-today';
+    let cls = 'date-pill';
+    if (isSel)   cls += ' active';
+    if (isToday) cls += ' is-today';
+    if (!count)  cls += ' date-pill--no-match';
 
-    const action = count ? `data-action="calendar-date" data-date="${dateStr}"` : '';
-    const dot    = count && !sel ? '<div class="cal-day-dot"></div>' : '';
-
-    cells.push(`<div class="${cls}" ${action}>${d}${dot}</div>`);
-  }
-
-  return `
-    <div class="cal-month-card">
-      <div class="cal-month-title">${monthName} <span class="cal-month-year">${year}</span></div>
-      <div class="cal-dow-row">
-        <span class="cal-dow">Sun</span><span class="cal-dow">Mon</span><span class="cal-dow">Tue</span>
-        <span class="cal-dow">Wed</span><span class="cal-dow">Thu</span><span class="cal-dow">Fri</span>
-        <span class="cal-dow">Sat</span>
-      </div>
-      <div class="cal-days-grid">${cells.join('')}</div>
-    </div>
-  `;
+    return `<div class="${cls}" data-action="calendar-date" data-date="${dateStr}" data-ds-date="${dateStr}">
+      <div class="date-pill-day">${dow}</div>
+      <div class="date-pill-num">${day}</div>
+      <div class="date-pill-mon">${mon}</div>
+      ${count ? `<div class="date-pill-count">${count}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 export function renderCalendar(opts = {}) {
@@ -1635,6 +1619,7 @@ export function renderCalendar(opts = {}) {
 
   const allMatches = getMatches();
   const filtered   = applyCalFilters(allMatches);
+  const todayStr   = new Date().toISOString().slice(0, 10);
 
   // Build date→count map from filtered matches
   const matchDateMap = new Map();
@@ -1642,19 +1627,21 @@ export function renderCalendar(opts = {}) {
     matchDateMap.set(m.date, (matchDateMap.get(m.date) || 0) + 1);
   });
 
-  // Default selected date: first match date or today
+  // Default selected date: today if it has matches, else first match date
   if (!calendarDate) {
     const firstDate = [...matchDateMap.keys()].sort()[0];
-    calendarDate = firstDate || new Date().toISOString().slice(0, 10);
+    calendarDate = matchDateMap.has(todayStr) ? todayStr : (firstDate || todayStr);
+  }
+
+  // All tournament days June 11 – July 19
+  const stripDates = [];
+  for (let d = new Date('2026-06-11T12:00:00'); d <= new Date('2026-07-19T12:00:00'); d.setDate(d.getDate() + 1)) {
+    stripDates.push(d.toISOString().slice(0, 10));
   }
 
   const matchesForDate = applyCalFilters(getMatchesByDate(calendarDate));
   const selDt = new Date(calendarDate + 'T12:00:00');
   const selectedLabel = selDt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
-  // June 2026 (month index 5) + July 2026 (month index 6)
-  const juneGrid = buildMonthGrid(2026, 5, matchDateMap, calendarDate);
-  const julyGrid = buildMonthGrid(2026, 6, matchDateMap, calendarDate);
 
   const allTeams = getTeams();
   const teamOptions = allTeams
@@ -1663,25 +1650,21 @@ export function renderCalendar(opts = {}) {
     .join('');
 
   const hasFilter = calFilterTeam || calFilterFavs;
+  const dateStripHTML = buildDateStrip(stripDates, matchDateMap, calendarDate, todayStr);
 
   return makeSection(`
-    <div class="glass-card" style="position:sticky;top:53px;z-index:30;">
-      <div class="section-header" style="margin-bottom:10px;">
-        <h2>Calendar</h2>
-        ${hasFilter ? `<button class="cal-clear-btn" data-action="cal-clear-filters">✕ Clear</button>` : ''}
-      </div>
+    <div class="glass-card cal-sticky-bar">
       <div class="cal-filter-panel">
         <select id="cal-team-filter" data-action="cal-filter" data-filter="team">
           <option value="">All Teams</option>${teamOptions}
         </select>
-        <button class="cal-favs-toggle ${calFilterFavs ? 'active' : ''}" data-action="cal-filter" data-filter="favs">⭐ Favorites</button>
-        <button class="cal-ical-btn" data-action="ical-export">📅 iCal</button>
+        <button class="cal-favs-toggle ${calFilterFavs ? 'active' : ''}" data-action="cal-filter" data-filter="favs">⭐ Favs</button>
+        ${hasFilter ? `<button class="cal-clear-btn" data-action="cal-clear-filters">✕</button>` : ''}
+        <button class="cal-ical-btn" data-action="ical-export">📅</button>
       </div>
-    </div>
-
-    <div class="cal-months-grid">
-      ${juneGrid}
-      ${julyGrid}
+      <div class="calendar-date-strip" id="cal-date-strip">
+        ${dateStripHTML}
+      </div>
     </div>
 
     <div class="glass-card">
@@ -1989,7 +1972,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.5.2</span>
+          <span class="text-muted">CupVerse v2.6.0</span>
         </div>
       </div>
     </div>
@@ -2055,10 +2038,10 @@ export function renderStandings() {
       const qualifyClass = i < 2 ? `qualify-${i + 1}` : i === 2 ? 'qualify-3' : '';
       const chance = baseChances[i] ?? 2;
       return `
-        <div class="gvc-team-row ${qualifyClass}">
+        <div class="gvc-team-row ${qualifyClass}" data-action="open-team" data-name="${team.name}">
           <span class="gvc-medal">${MEDALS[i] || `${i + 1}`}</span>
           <span class="gvc-flag">${team.flag}</span>
-          <span class="gvc-name">${team.name}</span>
+          <span class="gvc-name">${displayName(team.name)}</span>
           <span class="gvc-record">${record} · GD ${gdStr}</span>
           <span class="gvc-pts">${team.pts}pts</span>
         </div>

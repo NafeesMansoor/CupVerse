@@ -24,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.5.2';
+const APP_VERSION = '2.6.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -145,9 +145,27 @@ function initMatchFilters() {
 }
 
 // ── Calendar filters ──────────────────────────────────────
+function scrollDateStrip(targetDate) {
+  requestAnimationFrame(() => {
+    const strip = document.getElementById('cal-date-strip');
+    if (!strip) return;
+    const target = targetDate
+      ? strip.querySelector(`[data-ds-date="${targetDate}"]`)
+      : (strip.querySelector('.date-pill.active') || strip.querySelector('.date-pill.is-today'));
+    if (!target) return;
+    const left = target.offsetLeft - (strip.clientWidth / 2) + (target.offsetWidth / 2);
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'instant' });
+  });
+}
+
 function initCalendarFilters() {
   const teamSel = document.getElementById('cal-team-filter');
-  if (teamSel) teamSel.addEventListener('change', () => renderApp(renderCalendar({ team: teamSel.value })));
+  if (teamSel) teamSel.addEventListener('change', () => {
+    renderApp(renderCalendar({ team: teamSel.value }));
+    initCalendarFilters();
+    scrollDateStrip();
+  });
+  scrollDateStrip();
 }
 
 // ── iCal Export ───────────────────────────────────────────
@@ -449,6 +467,7 @@ function handleAction(event) {
     case 'calendar-date':
       renderApp(renderCalendar({ date }));
       initCalendarFilters();
+      scrollDateStrip(date);
       attachCountdown();
       break;
 
@@ -459,12 +478,14 @@ function handleAction(event) {
         renderApp(renderCalendar({ favs: !isActive }));
       }
       initCalendarFilters();
+      scrollDateStrip();
       break;
     }
 
     case 'cal-clear-filters':
       renderApp(renderCalendar({ clearFilters: true }));
       initCalendarFilters();
+      scrollDateStrip();
       break;
 
     case 'ical-export':
