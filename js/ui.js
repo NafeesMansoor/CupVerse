@@ -16,7 +16,7 @@ import {
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, getTeamProfile } from './intelligence.js';
-import { observePlayerPhotos } from './photos.js';
+import { observePlayerPhotos, getTeamAssetsSync } from './photos.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
@@ -1578,18 +1578,23 @@ export function renderTeamProfile(teamName) {  // eslint-disable-line
     </div>` : '';
 
   // ── Team profile (overview / jerseys) ────────────────────
-  const profile = getTeamProfile(teamName);
-  const jerseyRow = profile ? `
+  const profile    = getTeamProfile(teamName);
+  const teamAssets = getTeamAssetsSync(teamName);
+  const jerseyRow  = `
     <div class="jersey-row">
       <div class="jersey-kit-wrap">
         <div class="jersey-kit-label">Home</div>
-        ${jerseyKitSVG(profile.homeKit.primary, profile.homeKit.secondary, profile.homeKit.pattern, `${teamMeta.name} home kit`)}
+        ${teamAssets?.kit_home
+          ? `<img class="kit-png" src="${teamAssets.kit_home}" alt="${teamMeta.name} home kit" loading="lazy" onerror="this.style.display='none'">`
+          : profile ? jerseyKitSVG(profile.homeKit.primary, profile.homeKit.secondary, profile.homeKit.pattern, `${teamMeta.name} home kit`) : ''}
       </div>
       <div class="jersey-kit-wrap">
         <div class="jersey-kit-label">Away</div>
-        ${jerseyKitSVG(profile.awayKit.primary, profile.awayKit.secondary, profile.awayKit.pattern, `${teamMeta.name} away kit`)}
+        ${teamAssets?.kit_away
+          ? `<img class="kit-png" src="${teamAssets.kit_away}" alt="${teamMeta.name} away kit" loading="lazy" onerror="this.style.display='none'">`
+          : profile ? jerseyKitSVG(profile.awayKit.primary, profile.awayKit.secondary, profile.awayKit.pattern, `${teamMeta.name} away kit`) : ''}
       </div>
-    </div>` : '';
+    </div>`;
 
   const writeupBlock = profile ? `
     <div class="team-writeup glass-card">
@@ -1680,7 +1685,9 @@ export function renderTeamProfile(teamName) {  // eslint-disable-line
 
     <div class="tp-hero glass-card" style="border-color:${tc}44;background:linear-gradient(135deg,${tc}1A 0%,var(--bg-card) 100%);">
       <div class="tp-flag-row">
-        <span class="tp-flag">${teamMeta.flag}</span>
+        ${teamAssets?.badge
+          ? `<img class="tp-badge-img" src="${teamAssets.badge}" alt="${teamMeta.name} badge" loading="lazy" onerror="this.outerHTML='<span class=tp-flag>${teamMeta.flag}</span>'">`
+          : `<span class="tp-flag">${teamMeta.flag}</span>`}
         <div class="tp-info">
           <h1 class="tp-name">${displayName(teamMeta.name)}</h1>
           <div class="tp-meta">Group ${teamMeta.group} · #${teamMeta.fifaRank} FIFA · ${td.conf || '—'}</div>
@@ -2109,6 +2116,19 @@ export function renderSettings(appVersion = '2.8.0') {
         <div class="setting-row">
           <div class="setting-label">Version</div>
           <span class="text-muted">CupVerse v${appVersion}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="section-header"><h2>Export</h2></div>
+      <div class="settings-group">
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Download PDF</div>
+            <div class="setting-sub">Save current view as PDF via browser print</div>
+          </div>
+          <button class="btn btn-sm" data-action="generate-pdf">PDF</button>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ import {
 } from './prediction.js';
 import { getStadiumByName } from './venues.js';
 import { parseRoute, navigateTo } from './router.js';
-import { observePlayerPhotos, stopObservingPhotos, initPhotoObserver } from './photos.js';
+import { observePlayerPhotos, stopObservingPhotos, initPhotoObserver, preloadPhotoMap } from './photos.js';
 import { createCountdown, createBlockCountdown } from './countdown.js';
 import { generateShareCard } from './shareCard.js';
 import {
@@ -25,7 +25,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -519,6 +519,10 @@ function handleAction(event) {
       }
       break;
 
+    case 'generate-pdf':
+      window.print();
+      break;
+
     case 'match-tab': {
       const tab = btn.dataset.tab;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -722,7 +726,7 @@ async function init() {
   });
 
   // Phase 1 — render immediately from cached local data
-  await Promise.all([loadMatches(false), loadSquads()]);
+  await Promise.all([loadMatches(false), loadSquads(), preloadPhotoMap()]);
   renderCurrentRoute();
   hideSplash();
   registerServiceWorker();

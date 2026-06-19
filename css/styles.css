@@ -2492,6 +2492,7 @@ a { text-decoration: none; color: inherit; }
   display: flex; align-items: center; gap: 16px;
 }
 .tp-flag { font-size: 3.5rem; line-height: 1; flex-shrink: 0; }
+.tp-badge-img { width: 64px; height: 64px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
 .tp-info { flex: 1; min-width: 0; }
 .tp-name {
   font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;
@@ -3522,6 +3523,12 @@ a { text-decoration: none; color: inherit; }
   transition: transform 0.2s ease;
 }
 .kit-svg:hover { transform: scale(1.08) rotate(-3deg); }
+.kit-png {
+  width: 80px; height: auto;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  transition: transform 0.2s ease;
+}
+.kit-png:hover { transform: scale(1.08) rotate(-3deg); }
 
 /* ── Formation ─────────────────────────────────────── */
 .formation-pitch {
