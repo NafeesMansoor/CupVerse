@@ -858,17 +858,19 @@ export function renderMatchDetail(id) {
       </div>`;
   }
 
-  // ── Countdown (upcoming) ──
+  // ── Countdown (upcoming) — lives BELOW the matchup row so it can use full width ──
   const countdownHTML = status === 'upcoming' ? `
-    <div class="cd-kickoff-label">Kicks off in</div>
-    <div class="countdown-blocks" data-countdown-target="${match.datetime}">
-      <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">D</span></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">H</span></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">M</span></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
+    <div class="mp-hero-countdown">
+      <div class="cd-kickoff-label">Kicks off in</div>
+      <div class="countdown-blocks" data-countdown-target="${match.datetime}">
+        <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">D</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">H</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">M</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
+      </div>
     </div>` : '';
 
   // ── Form badges ──
@@ -944,8 +946,6 @@ export function renderMatchDetail(id) {
 
         <div class="mp-hero-center">
           ${heroScore}
-          <div class="mp-hero-datetime">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
-          ${countdownHTML}
         </div>
 
         <div class="mp-hero-team">
@@ -956,6 +956,9 @@ export function renderMatchDetail(id) {
         </div>
       </div>
 
+      <div class="mp-hero-meta">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)} · ${vi.flag || '🏟️'} ${vi.city || vi.name}</div>
+
+      ${countdownHTML}
       ${scorersRowHTML}
     </div>
 
