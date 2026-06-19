@@ -37,62 +37,142 @@ function compressWikiUrl(url) {
 // A small map for players whose Wikipedia article title differs from their
 // common name, or who share a name with a non-football subject.
 const WIKI_ALIASES = {
+  // ── Brazil single-name players ───────────────────────────────────────────────
+  'Alisson':             'Alisson Becker',
   'Marquinhos':          'Marquinhos (footballer)',
-  'Raphinha':            'Raphinha',
   'Casemiro':            'Casemiro',
   'Weverton':            'Weverton (goalkeeper)',
   'Danilo':              'Danilo Luiz da Silva',
   'Neymar':              'Neymar',
-  'Alisson':             'Alisson Becker',
-  'Vinícius Júnior':     'Vinícius Júnior',
-  'Bruno Guimarães':     'Bruno Guimarães',
+  'Raphinha':            'Raphinha',
+  'Ederson':             'Ederson (goalkeeper)',
+  'Fabinho':             'Fabinho (footballer)',
+  'Bremer':              'Gleison Bremer',
+  'Endrick':             'Endrick (footballer)',
+  'Wesley':              'Wesley (footballer born 2003)',
+
+  // ── Spain ────────────────────────────────────────────────────────────────────
   'Pedri':               'Pedri',
   'Gavi':                'Gavi (footballer)',
   'Rodri':               'Rodri (footballer)',
-  'Mohamed Salah':       'Mohamed Salah',
-  'Sadio Mané':          'Sadio Mané',
-  'Luka Modrić':         'Luka Modrić',
-  'Erling Haaland':      'Erling Haaland',
-  'Kylian Mbappé':       'Kylian Mbappé',
+  'Vitinha':             'Vitinha (footballer)',
+
+  // ── Portugal ─────────────────────────────────────────────────────────────────
   'Cristiano Ronaldo':   'Cristiano Ronaldo',
-  'Son Heung-min':       'Son Heung-min',
-  'Jude Bellingham':     'Jude Bellingham',
-  'Virgil van Dijk':     'Virgil van Dijk',
-  'Kevin De Bruyne':     'Kevin De Bruyne',
-  'Lautaro Martínez':    'Lautaro Martínez',
-  'Jamal Musiala':       'Jamal Musiala',
-  'Alphonso Davies':     'Alphonso Davies',
-  'Achraf Hakimi':       'Achraf Hakimi',
-  'Riyad Mahrez':        'Riyad Mahrez',
-  'Luis Díaz':           'Luis Díaz (footballer)',
-  'Darwin Núñez':        'Darwin Núñez',
-  'Federico Valverde':   'Federico Valverde',
-  'Granit Xhaka':        'Granit Xhaka',
-  'Patrik Schick':       'Patrik Schick',
-  'Edin Džeko':          'Edin Džeko',
-  'Andy Robertson':      'Andy Robertson (footballer)',
-  'Hakan Çalhanoğlu':    'Hakan Çalhanoğlu',
-  'Christian Pulisic':   'Christian Pulisic',
-  'Hirving Lozano':      'Hirving Lozano',
-  'Cody Gakpo':          'Cody Gakpo',
-  'Xavi Simons':         'Xavi Simons',
-  'David Alaba':         'David Alaba',
-  'Akram Afif':          'Akram Afif',
-  'Enner Valencia':      'Enner Valencia',
-  'Jordan Ayew':         'Jordan Ayew',
   'Rúben Dias':          'Rúben Dias',
   'Bruno Fernandes':     'Bruno Fernandes (footballer, born 1994)',
-  'Vitinha':             'Vitinha (footballer)',
+
+  // ── France ───────────────────────────────────────────────────────────────────
+  'Kylian Mbappé':       'Kylian Mbappé',
+
+  // ── England ──────────────────────────────────────────────────────────────────
+  'Jude Bellingham':     'Jude Bellingham',
+
+  // ── Netherlands ──────────────────────────────────────────────────────────────
+  'Virgil van Dijk':     'Virgil van Dijk',
+  'Cody Gakpo':          'Cody Gakpo',
+  'Xavi Simons':         'Xavi Simons',
+
+  // ── Belgium ──────────────────────────────────────────────────────────────────
+  'Kevin De Bruyne':     'Kevin De Bruyne',
+
+  // ── Germany ──────────────────────────────────────────────────────────────────
+  'Jamal Musiala':       'Jamal Musiala',
   'Marcel Sabitzer':     'Marcel Sabitzer',
-  'Wahbi Khazri':        'Wahbi Khazri',
-  'Idrissa Gueye':       'Idrissa Gana Gueye',
-  'Percy Tau':           'Percy Tau',
-  'Miguel Almirón':      'Miguel Almirón',
-  'Eldor Shomurodov':    'Eldor Shomurodov',
-  'Cédric Bakambu':      'Cédric Bakambu',
-  'Chris Wood':          'Chris Wood (footballer)',
-  'Franck Kessié':       'Franck Kessié',
+  'David Alaba':         'David Alaba',
+
+  // ── Norway ───────────────────────────────────────────────────────────────────
+  'Erling Haaland':      'Erling Haaland',
+
+  // ── Croatia ──────────────────────────────────────────────────────────────────
+  'Luka Modrić':         'Luka Modrić',
+
+  // ── Argentina ────────────────────────────────────────────────────────────────
+  'Lautaro Martínez':    'Lautaro Martínez',
+  'Federico Valverde':   'Federico Valverde',
+
+  // ── Uruguay ──────────────────────────────────────────────────────────────────
+  'Darwin Núñez':        'Darwin Núñez',
+
+  // ── Colombia ─────────────────────────────────────────────────────────────────
+  'Luis Díaz':           'Luis Díaz (footballer)',
   'James Rodríguez':     'James Rodríguez',
+
+  // ── Canada ───────────────────────────────────────────────────────────────────
+  'Alphonso Davies':     'Alphonso Davies',
+
+  // ── Morocco ──────────────────────────────────────────────────────────────────
+  'Achraf Hakimi':       'Achraf Hakimi',
+  'Riyad Mahrez':        'Riyad Mahrez',
+
+  // ── Senegal ──────────────────────────────────────────────────────────────────
+  'Sadio Mané':          'Sadio Mané',
+  'Idrissa Gueye':       'Idrissa Gana Gueye',
+
+  // ── Egypt ────────────────────────────────────────────────────────────────────
+  'Mohamed Salah':       'Mohamed Salah',
+  'Trézéguet':           'Trézéguet (Egyptian footballer)',
+
+  // ── South Korea ──────────────────────────────────────────────────────────────
+  'Son Heung-min':       'Son Heung-min',
+
+  // ── USA ──────────────────────────────────────────────────────────────────────
+  'Christian Pulisic':   'Christian Pulisic',
+
+  // ── Mexico ───────────────────────────────────────────────────────────────────
+  'Hirving Lozano':      'Hirving Lozano',
+
+  // ── Switzerland ──────────────────────────────────────────────────────────────
+  'Granit Xhaka':        'Granit Xhaka',
+  'Xherdan Shaqiri':     'Xherdan Shaqiri',
+
+  // ── Czechia ──────────────────────────────────────────────────────────────────
+  'Patrik Schick':       'Patrik Schick',
+
+  // ── Bosnia & Herzegovina ─────────────────────────────────────────────────────
+  'Edin Džeko':          'Edin Džeko',
+
+  // ── Scotland ─────────────────────────────────────────────────────────────────
+  'Andy Robertson':      'Andy Robertson (footballer)',
+
+  // ── Turkey ───────────────────────────────────────────────────────────────────
+  'Hakan Çalhanoğlu':    'Hakan Çalhanoğlu',
+
+  // ── Qatar ────────────────────────────────────────────────────────────────────
+  'Akram Afif':          'Akram Afif',
+
+  // ── Ecuador ──────────────────────────────────────────────────────────────────
+  'Enner Valencia':      'Enner Valencia',
+
+  // ── Ghana ────────────────────────────────────────────────────────────────────
+  'Jordan Ayew':         'Jordan Ayew',
+
+  // ── Paraguay ─────────────────────────────────────────────────────────────────
+  'Miguel Almirón':      'Miguel Almirón',
+
+  // ── Uzbekistan ───────────────────────────────────────────────────────────────
+  'Eldor Shomurodov':    'Eldor Shomurodov',
+
+  // ── DR Congo ─────────────────────────────────────────────────────────────────
+  'Cédric Bakambu':      'Cédric Bakambu',
+
+  // ── New Zealand ──────────────────────────────────────────────────────────────
+  'Chris Wood':          'Chris Wood (footballer)',
+
+  // ── Côte d\'Ivoire ────────────────────────────────────────────────────────────
+  'Franck Kessié':       'Franck Kessié',
+
+  // ── South Africa ─────────────────────────────────────────────────────────────
+  'Percy Tau':           'Percy Tau',
+
+  // ── Vinícius Júnior (Brazil) ─────────────────────────────────────────────────
+  'Vinícius Júnior':     'Vinícius Júnior',
+
+  // ── Bruno Guimarães (Brazil) ─────────────────────────────────────────────────
+  'Bruno Guimarães':     'Bruno Guimarães',
+
+  // ── Wahbi Khazri (Tunisia) ───────────────────────────────────────────────────
+  'Wahbi Khazri':        'Wahbi Khazri',
 };
 
 // ── Core fetch ────────────────────────────────────────────────────────────────

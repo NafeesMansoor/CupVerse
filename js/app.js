@@ -92,7 +92,7 @@ function renderCurrentRoute() {
     case 'calendar':  view = renderCalendar(); break;
     case 'scorers':   view = renderScorers(); break;
     case 'standings': view = renderStandings(); break;
-    case 'settings':         view = renderSettings(); break;
+    case 'settings':         view = renderSettings(APP_VERSION); break;
     case 'prediction-tree':  view = renderPredictionTree(getPredMode()); break;
     default:                 view = renderHomeDashboard(); break;
   }

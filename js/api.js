@@ -1,5 +1,6 @@
 import { getMatches } from './data.js';
 import { setScore, setApiScorers, setGoldenBoot } from './storage.js';
+import { getSquad } from './squad.js';
 
 const API_BASE = 'https://worldcup26.ir';
 
@@ -28,6 +29,74 @@ function normTeam(name) {
 function resolveTeam(apiName) {
   const n = normTeam(apiName);
   return TEAM_ALIASES[n] || n;
+}
+
+// ── Player name normaliser (for squad index keys) ─────────────────────────────
+function normPlayerName(n) {
+  return (n || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ── Squad lookup index ────────────────────────────────────────────────────────
+// Builds two maps for a team's squad so scorer names from the API can be
+// resolved to their proper full names:
+//   byLastFirst  "lastname_firstinitial" → full name  (handles "A. Diallo")
+//   byLast       "lastname"              → full name  (handles bare "Mbappe")
+//   byJersey     jersey number           → full name  (handles "10 Mbappe")
+function buildSquadLookup(teamName) {
+  const players = getSquad(teamName);
+  const byLastFirst = new Map();
+  const byLast      = new Map();
+  const byJersey    = new Map();
+
+  players.forEach(p => {
+    const parts = normPlayerName(p.name).split(' ').filter(Boolean);
+    if (!parts.length) return;
+    const last    = parts[parts.length - 1];
+    const initial = parts[0][0] || '';
+    const lfKey   = `${last}_${initial}`;
+    if (!byLastFirst.has(lfKey)) byLastFirst.set(lfKey, p.name);
+    if (!byLast.has(last))       byLast.set(last, p.name);
+    if (p.number != null)        byJersey.set(Number(p.number), p.name);
+  });
+
+  return { byLastFirst, byLast, byJersey };
+}
+
+// ── Resolve a cleaned scorer name to the squad's canonical full name ──────────
+// Strategy (in order):
+//   1. Jersey number extracted from the raw API string prefix ("10 Mbappe")
+//   2. Last name + first initial              ("A. Diallo" → "Abdoulaye Diallo")
+//   3. Single last name only                 ("Mbappe"    → "Kylian Mbappé")
+// Returns the cleaned name unchanged when no squad match is found.
+function resolvePlayerName(cleaned, raw, lookup) {
+  if (!lookup || !cleaned) return cleaned;
+
+  // 1. jersey prefix in raw
+  const jerseyM = (raw || '').match(/^(\d{1,2})\s+\S/);
+  if (jerseyM) {
+    const num = Number(jerseyM[1]);
+    if (lookup.byJersey.has(num)) return lookup.byJersey.get(num);
+  }
+
+  const parts = normPlayerName(cleaned).split(' ').filter(Boolean);
+  if (!parts.length) return cleaned;
+
+  const last    = parts[parts.length - 1];
+  const initial = parts[0][0] || '';
+
+  // 2. last + first initial (works for both "A. Diallo" and "Antoine Diallo")
+  const lfKey = `${last}_${initial}`;
+  if (lookup.byLastFirst.has(lfKey)) return lookup.byLastFirst.get(lfKey);
+
+  // 3. bare last name only
+  if (lookup.byLast.has(last)) return lookup.byLast.get(last);
+
+  return cleaned;
 }
 
 function parseScorers(raw) {
@@ -119,12 +188,12 @@ export async function applyApiScores() {
   const games = await fetchLiveGames();
   const goalMap = {};
 
-  // Build a lookup: "normalisedHome|normalisedAway" → local match id
+  // Build a lookup: "normalisedHome|normalisedAway" → local match object
   const localMatches = getMatches();
-  const localById = new Map();
+  const localByKey = new Map();
   localMatches.forEach(m => {
     const key = `${normTeam(m.homeTeam.name)}|${normTeam(m.awayTeam.name)}`;
-    localById.set(key, m.id);
+    localByKey.set(key, m);
   });
 
   // Collect all API team names for cleanScorerName's embedded-team-name stripping
@@ -135,16 +204,31 @@ export async function applyApiScores() {
   games.forEach(g => {
     if (!g.finished) return;
 
-    // Resolve local match id by team names, not by API id
+    // Resolve local match by team names, not by API id
     const lookupKey = `${resolveTeam(g.homeTeamName)}|${resolveTeam(g.awayTeamName)}`;
-    const localId = localById.get(lookupKey);
-    if (!localId) return; // unrecognised match — skip
+    const localMatch = localByKey.get(lookupKey);
+    if (!localMatch) return; // unrecognised match — skip
+    const localId = localMatch.id;
+
+    // Build squad lookups for this match so scorer names can be resolved to
+    // proper full names (e.g. "A. Diallo" → "Abdoulaye Diallo", "10 Mbappe" → "Kylian Mbappé")
+    const homeLookup = buildSquadLookup(localMatch.homeTeam.name);
+    const awayLookup = buildSquadLookup(localMatch.awayTeam.name);
+
+    const resolveHome = (raw) => {
+      const cleaned = cleanScorerName(raw, teamNames);
+      return cleaned ? resolvePlayerName(cleaned, raw, homeLookup) : '';
+    };
+    const resolveAway = (raw) => {
+      const cleaned = cleanScorerName(raw, teamNames);
+      return cleaned ? resolvePlayerName(cleaned, raw, awayLookup) : '';
+    };
 
     setScore(localId, g.homeScore, g.awayScore);
 
     const override = SCORER_OVERRIDES[localId];
-    const cleanHome = override?.home || g.homeScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
-    const cleanAway = override?.away || g.awayScorers.map(s => cleanScorerName(s, teamNames)).filter(Boolean);
+    const cleanHome = override?.home || g.homeScorers.map(resolveHome).filter(Boolean);
+    const cleanAway = override?.away || g.awayScorers.map(resolveAway).filter(Boolean);
     setApiScorers(localId, cleanHome, cleanAway);
 
     const tally = (names, teamName) => {

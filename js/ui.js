@@ -2022,7 +2022,7 @@ export function renderVenueDetail(id) {
 }
 
 // ── SETTINGS ──────────────────────────────────────────────
-export function renderSettings() {
+export function renderSettings(appVersion = '2.8.0') {
   const theme = getTheme();
   const tz = getTimezone();
   const ai = isAiEnabled();
@@ -2108,7 +2108,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.7.0</span>
+          <span class="text-muted">CupVerse v${appVersion}</span>
         </div>
       </div>
     </div>
