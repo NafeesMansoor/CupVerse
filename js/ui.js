@@ -16,7 +16,7 @@ import {
 import { getSyncStatus, formatSyncDate } from './sync.js';
 import { navigateTo } from './router.js';
 import { getMatchIntelligence, getTeamColor, getTeamData, getTeamProfile } from './intelligence.js';
-import { observePlayerPhotos, getTeamAssetsSync } from './photos.js';
+import { observePlayerPhotos, getTeamAssetsSync, getPlayerNote, getTeamNotes } from './photos.js';
 import { STADIUMS, getStadiumByName } from './venues.js';
 
 const app = document.getElementById('app');
@@ -1390,6 +1390,7 @@ function pShortName(name) {
 }
 
 function playerCardHTML(p, teamName) {
+  const scoutNote = getPlayerNote(p.name);
   return `
     <div class="player-card" data-action="open-player" data-team="${teamName}" data-player-num="${p.number}">
       <div class="pc-avatar" style="background:${pAvatarColor(p.name)}" data-player-photo="${p.name}">
@@ -1400,6 +1401,7 @@ function playerCardHTML(p, teamName) {
         <div class="pc-name">${p.name}</div>
         <span class="pc-pos-badge pos-${p.pos}">${p.pos}</span>
         <div class="pc-club">${p.club}</div>
+        ${scoutNote ? `<div class="pc-scout-note">${scoutNote}</div>` : ''}
         ${p.captain ? '<div class="pc-captain">© Captain</div>' : ''}
       </div>
     </div>`;
@@ -1477,6 +1479,7 @@ export function showPlayerModal(player, teamName, teamFlag) {
         <div class="cv-detail-row"><span class="cv-detail-lbl">Club</span><span class="cv-detail-val">${player.club}</span></div>
         <div class="cv-detail-row"><span class="cv-detail-lbl">Position</span><span class="cv-detail-val">${POS_FULL[player.pos] || player.pos}</span></div>
       </div>
+      ${(() => { const n = getPlayerNote(player.name); return n ? `<div class="cv-scout-note"><span class="cv-scout-label">Scout Note</span><span class="cv-scout-text">${n}</span></div>` : ''; })()}
     </div>`;
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add('visible'));
@@ -1596,11 +1599,17 @@ export function renderTeamProfile(teamName) {  // eslint-disable-line
       </div>
     </div>`;
 
-  const writeupBlock = profile ? `
+  const guardianNotes = getTeamNotes(teamName);
+  const guardianNotesHTML = guardianNotes.length
+    ? `<div class="guardian-overview">${guardianNotes.map(p => `<p class="guardian-para">${p}</p>`).join('')}<div class="guardian-source">via The Guardian</div></div>`
+    : '';
+
+  const writeupBlock = `
     <div class="team-writeup glass-card">
       <div class="intel-section-label">Team Overview</div>
-      <p class="writeup-body">${profile.overview}</p>
-      <div class="writeup-swot">
+      ${profile ? `<p class="writeup-body">${profile.overview}</p>` : ''}
+      ${guardianNotesHTML}
+      ${profile ? `<div class="writeup-swot">
         <div class="swot-item swot-strength">
           <span class="swot-icon">💪</span>
           <div>
@@ -1615,9 +1624,9 @@ export function renderTeamProfile(teamName) {  // eslint-disable-line
             <div class="swot-text">${profile.weakness}</div>
           </div>
         </div>
-      </div>
+      </div>` : ''}
       ${jerseyRow}
-    </div>` : '';
+    </div>`;
 
   // ── Tab panels ───────────────────────────────────────────
   const overviewPanel = `
@@ -2121,14 +2130,17 @@ export function renderSettings(appVersion = '2.8.0') {
     </div>
 
     <div class="glass-card">
-      <div class="section-header"><h2>Export</h2></div>
+      <div class="section-header"><h2>Tournament Journal</h2></div>
       <div class="settings-group">
-        <div class="setting-row">
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
           <div>
-            <div class="setting-label">Download PDF</div>
-            <div class="setting-sub">Save current view as PDF via browser print</div>
+            <div class="setting-label">Generate Tournament PDF Book</div>
+            <div class="setting-sub" style="margin-top:4px;">A comprehensive World Cup 2026 report — tournament overview, all match reports, group &amp; knockout analysis, team profiles, venue profiles, statistics, and your personal journal entries.</div>
           </div>
-          <button class="btn btn-sm" data-action="generate-pdf">PDF</button>
+          <div style="display:flex;align-items:center;gap:10px;width:100%;">
+            <button class="btn btn-sm" data-action="generate-pdf" disabled style="opacity:0.45;cursor:not-allowed;">Generate PDF</button>
+            <span style="font-size:0.78rem;color:var(--accent-gold);">🔒 Available after the FIFA World Cup 2026 Final</span>
+          </div>
         </div>
       </div>
     </div>

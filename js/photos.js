@@ -199,7 +199,17 @@ export async function preloadPhotoMap() {
   await getPhotoData();
 }
 
-// Synchronous getter — only valid after preloadPhotoMap() has resolved.
+// Synchronous getters — only valid after preloadPhotoMap() has resolved.
 export function getTeamAssetsSync(teamName) {
   return _photoData?.team_assets?.[teamName] ?? null;
+}
+
+// Short Guardian scout note for a player, e.g. "Complete striker", "The Butcher"
+export function getPlayerNote(playerName) {
+  return _photoData?.notes?.[playerName] ?? null;
+}
+
+// Short team overview paragraph(s) from the Guardian guide
+export function getTeamNotes(teamName) {
+  return _photoData?.team_notes?.[teamName] ?? [];
 }
