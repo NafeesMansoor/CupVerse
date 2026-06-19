@@ -787,88 +787,124 @@ export function renderMatchesList(filtered) {
 }
 
 // ── MATCH DETAIL ─────────────────────────────────────────
+
+// Compute actual W/D/L form for a team from completed WC matches (most recent first).
+function getTeamRecentResults(teamName, excludeMatchId) {
+  return getMatches()
+    .filter(m =>
+      String(m.id) !== String(excludeMatchId) &&
+      (m.homeTeam.name === teamName || m.awayTeam.name === teamName) &&
+      !!effectiveScore(m)
+    )
+    .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
+    .slice(0, 5)
+    .map(m => {
+      const s = effectiveScore(m);
+      const isHome = m.homeTeam.name === teamName;
+      const tf = isHome ? Number(s.home) : Number(s.away);
+      const of_ = isHome ? Number(s.away) : Number(s.home);
+      return { result: tf > of_ ? 'W' : tf < of_ ? 'L' : 'D', match: m, score: s };
+    });
+}
+
 export function renderMatchDetail(id) {
   const match = getMatchById(id);
   if (!match) return makeSection('<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">❌</div><p>Match not found.</p></div></div>');
 
-  const score     = getScore(match.id);
-  const status    = effectiveStatus(match);
+  const score      = getScore(match.id);
+  const status     = effectiveStatus(match);
   const apiScorers = getApiScorers(match.id);
-  const note      = getNote(match.id) || { text: '', photos: [] };
-  const starred   = isMatchFavorite(match.id);
-  const homeSquad = getTeamSquad(match.homeTeam.name);
-  const awaySquad = getTeamSquad(match.awayTeam.name);
-  const vi        = match.venueInfo;
-  const intel     = getMatchIntelligence(match);
-  const hc = getTeamColor(match.homeTeam.name);
-  const ac = getTeamColor(match.awayTeam.name);
-  const hData = getTeamData(match.homeTeam.name);
-  const aData = getTeamData(match.awayTeam.name);
+  const note       = getNote(match.id) || { text: '', photos: [] };
+  const starred    = isMatchFavorite(match.id);
+  const homeSquad  = getTeamSquad(match.homeTeam.name);
+  const awaySquad  = getTeamSquad(match.awayTeam.name);
+  const vi         = match.venueInfo;
+  const intel      = getMatchIntelligence(match);
+  const hc         = getTeamColor(match.homeTeam.name);
+  const ac         = getTeamColor(match.awayTeam.name);
 
-  // ── Scoreboard ribbon center ──
-  let sbCenter = '';
+  // Dynamic recent results from actual completed WC matches
+  const hRecent = getTeamRecentResults(match.homeTeam.name, match.id);
+  const aRecent = getTeamRecentResults(match.awayTeam.name, match.id);
+
+  // ── Hero center ──
+  let heroScore;
   if (score) {
-    sbCenter = `<div class="sb-score">${score.home}&nbsp;–&nbsp;${score.away}</div><div class="sb-status-text">Full Time</div>`;
+    heroScore = `<div class="mp-score-display">${score.home} – ${score.away}</div>`;
   } else if (status === 'live') {
-    sbCenter = `<div class="sb-score"><span class="sb-live-dot"></span>LIVE</div>`;
-  } else if (status === 'completed') {
-    sbCenter = `<div class="sb-score" style="font-size:1rem;letter-spacing:0.12em;opacity:0.7;">FT</div><div class="sb-status-text">Full Time</div>`;
+    heroScore = `<div class="mp-score-display mp-score-live"><span class="sb-live-dot"></span> LIVE</div>`;
   } else {
-    sbCenter = `<div class="sb-score" style="font-size:1rem;letter-spacing:0.12em;opacity:0.7;">VS</div><div class="sb-status-text">${fmtTime(match.datetime)}</div>`;
+    heroScore = `<div class="mp-score-display mp-score-vs">VS</div>`;
   }
 
-  // ── Below-ribbon content (read-only — no manual score entry) ──
-  let broadcastBottom = '';
-  if (status === 'upcoming') {
-    const prob = intel ? `
-      <div class="hero-win-prob" style="width:100%;max-width:320px;">
-        <div class="hwp-bar">
-          <div class="hwp-home" style="width:${intel.prediction.home}%"></div>
-          <div class="hwp-draw"  style="width:${intel.prediction.draw}%"></div>
-          <div class="hwp-away" style="width:${intel.prediction.away}%"></div>
-        </div>
-        <div class="hwp-labels">
-          <span>${intel.prediction.home}%</span>
-          <span>${intel.prediction.draw}% Draw</span>
-          <span>${intel.prediction.away}%</span>
-        </div>
-      </div>` : '';
-    broadcastBottom = `
-      <div class="cd-kickoff-label">Kicks off in</div>
-      <div class="countdown-blocks" data-countdown-target="${match.datetime}">
-        <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">Days</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">Hrs</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">Min</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">Sec</span></div>
-      </div>
-      ${prob}`;
-  } else if (status === 'live') {
-    broadcastBottom = `
-      <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:700;color:var(--accent-live);">
-        <span class="sb-live-dot"></span> Match in progress
-      </div>`;
-  } else if (status === 'completed' && apiScorers) {
-    const goalRow = (scorers, align) => scorers.length
-      ? `<div style="display:flex;flex-direction:column;gap:3px;align-items:${align};">
-           ${scorers.map(s => `<span style="font-size:0.78rem;color:var(--text-secondary);">⚽ ${s}</span>`).join('')}
-         </div>`
+  // ── Status badge ──
+  const statusBadge = status === 'live'
+    ? `<span class="mp-status-badge mp-status--live"><span class="sb-live-dot"></span> LIVE</span>`
+    : status === 'completed'
+    ? `<span class="mp-status-badge mp-status--ft">Full Time</span>`
+    : '';
+
+  // ── Scorers row (completed) ──
+  let scorersRowHTML = '';
+  if (score && apiScorers) {
+    const goalRow = scorers => scorers.length
+      ? scorers.map(s => `<span class="mp-scorer-name">⚽ ${s}</span>`).join('')
       : '';
-    broadcastBottom = `
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;width:100%;max-width:380px;padding-top:4px;">
-        ${goalRow(apiScorers.home, 'flex-start')}
-        <div></div>
-        ${goalRow(apiScorers.away, 'flex-end')}
+    scorersRowHTML = `
+      <div class="mp-scorers-row">
+        <div class="mp-scorers-home">${goalRow(apiScorers.home)}</div>
+        <div class="mp-scorers-sep"></div>
+        <div class="mp-scorers-away">${goalRow(apiScorers.away)}</div>
       </div>`;
   }
+
+  // ── Countdown (upcoming) ──
+  const countdownHTML = status === 'upcoming' ? `
+    <div class="cd-kickoff-label">Kicks off in</div>
+    <div class="countdown-blocks" data-countdown-target="${match.datetime}">
+      <div class="cd-block"><span class="cd-val" data-cd="d">--</span><span class="cd-label">D</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-block"><span class="cd-val" data-cd="h">--</span><span class="cd-label">H</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-block"><span class="cd-val" data-cd="m">--</span><span class="cd-label">M</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-block"><span class="cd-val" data-cd="s">--</span><span class="cd-label">S</span></div>
+    </div>` : '';
 
   // ── Form badges ──
   const formBadge = c => {
     const cls = c === 'W' ? 'form-w' : c === 'D' ? 'form-d' : 'form-l';
     return `<span class="form-badge ${cls}">${c}</span>`;
   };
+
+  // ── Recent match cards ──
+  const recentCard = r => {
+    const m = r.match;
+    const s = r.score;
+    return `
+      <div class="mp-rc" data-action="open-match" data-id="${m.id}">
+        <div class="mp-rc-side">
+          <div class="mp-rc-flag">${m.homeTeam.flag}</div>
+          <div class="mp-rc-tname">${displayName(m.homeTeam.name)}</div>
+        </div>
+        <div class="mp-rc-mid">
+          <div class="mp-rc-date">${fmtDateShort(m.datetime)}</div>
+          <div class="mp-rc-score">${s.home} – ${s.away}</div>
+          <div class="mp-rc-comp">World Cup</div>
+        </div>
+        <div class="mp-rc-side">
+          <div class="mp-rc-flag">${m.awayTeam.flag}</div>
+          <div class="mp-rc-tname">${displayName(m.awayTeam.name)}</div>
+        </div>
+      </div>`;
+  };
+
+  const hRecentHTML = hRecent.length
+    ? hRecent.map(recentCard).join('')
+    : `<div class="mp-rc mp-rc--empty">No completed matches yet</div>`;
+  const aRecentHTML = aRecent.length
+    ? aRecent.map(recentCard).join('')
+    : `<div class="mp-rc mp-rc--empty">No completed matches yet</div>`;
 
   // ── Squad (collapsed) ──
   const squadPills = (squad, teamName) => !squad.length ? '' : `
@@ -882,89 +918,133 @@ export function renderMatchDetail(id) {
     </details>`;
 
   const photoThumbsHTML = (note.photos || []).map(src => `<img class="photo-thumb" src="${src}" alt="photo" />`).join('');
+  const intelTabHTML    = renderMatchIntelligence(match);
 
-  // ── Intelligence tab content ──
-  const intelTabHTML = renderMatchIntelligence(match);
+  const stageLabel   = `${match.stage}${match.group ? ` · Group ${match.group}` : ''}`;
+  const statusLabel  = status === 'live' ? 'In Progress'
+    : status === 'completed' ? 'Full Time'
+    : `${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}`;
 
   return makeSection(`
 
-    <!-- ══ BROADCAST HERO ══ -->
-    <div class="broadcast-hero" style="background:linear-gradient(135deg,${hc}28 0%,transparent 40%,transparent 60%,${ac}28 100%),var(--bg-secondary);">
-
-      <div class="broadcast-stage">
-        ${match.stage}${match.group ? `&nbsp;·&nbsp;Group ${match.group}` : ''}
-        ${status === 'live' ? `&nbsp;·&nbsp;<span class="status-badge status-live">🔴 LIVE</span>` : ''}
-        ${status === 'completed' && score ? `&nbsp;·&nbsp;<span class="status-badge status-completed">Full Time</span>` : ''}
+    <!-- ══ COMPACT MATCH HERO ══ -->
+    <div class="mp-hero glass-card" style="background:linear-gradient(135deg,${hc}18 0%,transparent 55%,${ac}14 100%);">
+      <div class="mp-hero-stage">
+        ${stageLabel}
+        ${statusBadge}
       </div>
 
-      <div class="broadcast-shields">
-        <div class="shield-wrap">
-          <div class="shield-outer" style="background:linear-gradient(145deg,rgba(255,255,255,0.65),${hc}55,rgba(11,18,32,0.8));">
-            <div class="shield-inner" style="background:radial-gradient(circle at 35% 35%,${hc}30,rgba(11,18,32,0.92));">
-              ${match.homeTeam.flag}
-            </div>
+      <div class="mp-hero-matchup">
+        <div class="mp-hero-team">
+          <div class="mp-flag-circle" style="border-color:${hc}66;" data-action="open-team" data-name="${match.homeTeam.name}">
+            ${match.homeTeam.flag}
           </div>
-          <div class="shield-team-name team-link" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</div>
+          <div class="mp-hero-tname" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</div>
         </div>
 
-        <div class="broadcast-vs">
-          <div class="broadcast-vs-text">VS</div>
+        <div class="mp-hero-center">
+          ${heroScore}
+          <div class="mp-hero-datetime">${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}</div>
+          ${countdownHTML}
         </div>
 
-        <div class="shield-wrap">
-          <div class="shield-outer" style="background:linear-gradient(145deg,rgba(255,255,255,0.65),${ac}55,rgba(11,18,32,0.8));">
-            <div class="shield-inner" style="background:radial-gradient(circle at 35% 35%,${ac}30,rgba(11,18,32,0.92));">
-              ${match.awayTeam.flag}
-            </div>
+        <div class="mp-hero-team">
+          <div class="mp-flag-circle" style="border-color:${ac}66;" data-action="open-team" data-name="${match.awayTeam.name}">
+            ${match.awayTeam.flag}
           </div>
-          <div class="shield-team-name team-link" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</div>
+          <div class="mp-hero-tname" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</div>
         </div>
       </div>
 
-      <div class="scoreboard-ribbon">
-        <div class="sb-home team-link" data-action="open-team" data-name="${match.homeTeam.name}">${displayName(match.homeTeam.name)}</div>
-        <div class="sb-center">${sbCenter}</div>
-        <div class="sb-away team-link" data-action="open-team" data-name="${match.awayTeam.name}">${displayName(match.awayTeam.name)}</div>
-      </div>
-
-      <div class="broadcast-date">${fmtDate(match.datetime)} &nbsp;·&nbsp; ${vi.flag} ${vi.city || vi.name}</div>
-
-      ${broadcastBottom ? `<div class="broadcast-bottom">${broadcastBottom}</div>` : ''}
+      ${scorersRowHTML}
     </div>
 
     <!-- ══ TAB BAR ══ -->
     <div class="match-tabs">
       <div class="tab-bar">
-        <button class="tab-btn active" data-action="match-tab" data-tab="overview">Overview</button>
-        <button class="tab-btn"        data-action="match-tab" data-tab="intelligence">Intelligence</button>
+        <button class="tab-btn active" data-action="match-tab" data-tab="info">Info</button>
+        <button class="tab-btn"        data-action="match-tab" data-tab="predictions">Predictions</button>
         <button class="tab-btn"        data-action="match-tab" data-tab="journal">Journal</button>
-        <button class="tab-btn"        data-action="match-tab" data-tab="info">Info</button>
+        <button class="tab-btn"        data-action="match-tab" data-tab="squads">Squads</button>
       </div>
 
-      <!-- ── Tab: Overview ── -->
-      <div class="tab-panel active" data-tab="overview">
+      <!-- ── Tab: Info ── -->
+      <div class="tab-panel active" data-tab="info">
+
         <div class="glass-card">
-          <div class="intel-section-label">Recent Form</div>
-          <div class="form-compare">
-            <div class="form-team-side">
-              <span class="form-team-label">${match.homeTeam.flag} ${match.homeTeam.name}</span>
-              <div class="form-strip">${(hData.form||'WDWLW').split('').map(formBadge).join('')}</div>
-            </div>
-            <div class="form-divider-label">Last 5</div>
-            <div class="form-team-side right">
-              <span class="form-team-label">${match.awayTeam.name} ${match.awayTeam.flag}</span>
-              <div class="form-strip">${(aData.form||'WDWLW').split('').map(formBadge).join('')}</div>
+          <div class="mp-info-section-title">Match Information</div>
+
+          <div class="mp-info-row">
+            <div class="mp-info-icon">🏟️</div>
+            <div class="mp-info-body">
+              <div class="mp-info-label">VENUE / STADIUM</div>
+              <div class="mp-info-value mp-info-link" data-action="open-venue-by-name" data-name="${vi.fullName||vi.name}">${vi.fullName||vi.name}</div>
+              ${vi.city ? `<div class="mp-info-sub">${[vi.city, vi.country].filter(Boolean).join(', ')}</div>` : ''}
             </div>
           </div>
+
+          <div class="mp-info-row">
+            <div class="mp-info-icon">🏆</div>
+            <div class="mp-info-body">
+              <div class="mp-info-label">LEAGUE / SERIES</div>
+              <div class="mp-info-value">FIFA World Cup 2026</div>
+              <div class="mp-info-sub">${stageLabel}</div>
+            </div>
+          </div>
+
+          <div class="mp-info-row">
+            <div class="mp-info-icon">📊</div>
+            <div class="mp-info-body">
+              <div class="mp-info-label">STATUS</div>
+              <div class="mp-info-value">${statusLabel}</div>
+            </div>
+          </div>
+
+          ${vi.capacity ? `
+          <div class="mp-info-row">
+            <div class="mp-info-icon">🎟️</div>
+            <div class="mp-info-body">
+              <div class="mp-info-label">CAPACITY</div>
+              <div class="mp-info-value">${Number(vi.capacity).toLocaleString()}</div>
+            </div>
+          </div>` : ''}
         </div>
-        ${intel ? `
-        <div class="intel-storyline">
-          <div class="intel-section-label">Match Story</div>
-          <div class="intel-headline">${intel.headline}</div>
-          <div class="intel-narrative">${intel.narrative}</div>
-        </div>
+
+        <!-- Recent Matches: Home -->
         <div class="glass-card">
-          <div class="intel-section-label">Prediction</div>
+          <div class="mp-recent-header">
+            <span class="mp-recent-flag">${match.homeTeam.flag}</span>
+            <div class="mp-recent-title">Recent Matches · ${displayName(match.homeTeam.name)}</div>
+            <div class="mp-form-strip">${hRecent.length ? hRecent.map(r => formBadge(r.result)).join('') : '<span class="mp-form-empty">No data</span>'}</div>
+          </div>
+          <div class="mp-recent-scroll">${hRecentHTML}</div>
+        </div>
+
+        <!-- Recent Matches: Away -->
+        <div class="glass-card">
+          <div class="mp-recent-header">
+            <span class="mp-recent-flag">${match.awayTeam.flag}</span>
+            <div class="mp-recent-title">Recent Matches · ${displayName(match.awayTeam.name)}</div>
+            <div class="mp-form-strip">${aRecent.length ? aRecent.map(r => formBadge(r.result)).join('') : '<span class="mp-form-empty">No data</span>'}</div>
+          </div>
+          <div class="mp-recent-scroll">${aRecentHTML}</div>
+        </div>
+
+        <div class="glass-card">
+          <div class="action-row">
+            <button class="btn ${starred?'btn-primary':''}" data-action="toggle-star" data-id="${match.id}">
+              ${starred ? '⭐ Starred' : '☆ Star Match'}
+            </button>
+            <button class="btn" data-action="share-card" data-id="${match.id}">🖼️ Share</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Predictions ── -->
+      <div class="tab-panel" data-tab="predictions">
+        ${intel ? `
+        <div class="glass-card">
+          <div class="intel-section-label">Win Probability</div>
           <div class="prediction-row">
             <div class="pred-team"><div class="pred-pct">${intel.prediction.home}%</div><div class="pred-label">${match.homeTeam.flag} Win</div></div>
             <div class="pred-draw"><div class="pred-draw-pct">${intel.prediction.draw}%</div><div class="pred-draw-label">Draw</div></div>
@@ -976,11 +1056,12 @@ export function renderMatchDetail(id) {
             <div class="pred-bar-away" style="width:${intel.prediction.away}%"></div>
           </div>
           <p class="pred-disclaimer">Based on FIFA rankings, H2H &amp; form. For entertainment only.</p>
+        </div>
+        <div class="intel-storyline">
+          <div class="intel-section-label">Match Story</div>
+          <div class="intel-headline">${intel.headline}</div>
+          <div class="intel-narrative">${intel.narrative}</div>
         </div>` : ''}
-      </div>
-
-      <!-- ── Tab: Intelligence ── -->
-      <div class="tab-panel" data-tab="intelligence">
         ${intelTabHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">🔍</div><p class="empty-state-text">Intelligence available for group stage matches once teams are confirmed.</p></div></div>'}
       </div>
 
@@ -998,36 +1079,19 @@ export function renderMatchDetail(id) {
           </div>
           ${photoThumbsHTML ? `<div class="photo-preview">${photoThumbsHTML}</div>` : ''}
         </div>
-
-        <div class="glass-card">
-          <div class="intel-section-label">Tactical Notes</div>
-          <div class="journal-prompt">Observations on formations, key battles and tactical decisions.</div>
-          <textarea class="tactical-input" placeholder="e.g. High press vs low block, wing overloads, set-piece routines…"></textarea>
-        </div>
-
-        ${intel ? `
-        <div class="glass-card">
-          <div class="intel-section-label">Match Story</div>
-          <div class="intel-headline">${intel.headline}</div>
-          <div class="intel-narrative" style="margin-top:8px;">${intel.narrative}</div>
-        </div>` : ''}
-
-        <div class="glass-card">
-          <div class="intel-section-label">AI Generated Summary</div>
-          <div class="gb-watch-note" style="margin-bottom:0;">
-            ${status === 'completed'
-              ? `${intel ? intel.narrative : 'Match completed. Full AI analysis available when connected to live data.'}`
-              : 'AI summary will be generated after the match is complete.'}
-          </div>
-        </div>
       </div>
 
-      <!-- ── Tab: Info ── -->
-      <div class="tab-panel" data-tab="info">
-
-        <!-- Venue Intelligence Card -->
+      <!-- ── Tab: Squads ── -->
+      <div class="tab-panel" data-tab="squads">
+        ${homeSquad.length || awaySquad.length ? `
         <div class="glass-card">
-          <div class="intel-section-label">Venue Intelligence</div>
+          <div class="intel-section-label">Squads</div>
+          ${squadPills(homeSquad, match.homeTeam.name)}
+          ${squadPills(awaySquad, match.awayTeam.name)}
+        </div>` : '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">👥</div><p class="empty-state-text">Squad data not available.</p></div></div>'}
+
+        <div class="glass-card">
+          <div class="intel-section-label">Venue</div>
           <div class="venue-intel-card">
             <div class="vic-header">
               <span class="vic-flag">${vi.flag || '🏟️'}</span>
@@ -1037,39 +1101,20 @@ export function renderMatchDetail(id) {
               </div>
             </div>
             <div class="vic-stats">
-              <div class="vic-stat">
-                <div class="vic-stat-val">${vi.capacity ? vi.capacity.toLocaleString() : '—'}</div>
-                <div class="vic-stat-label">Capacity</div>
-              </div>
-              <div class="vic-stat">
-                <div class="vic-stat-val">${vi.opened || '—'}</div>
-                <div class="vic-stat-label">Opened</div>
-              </div>
-              <div class="vic-stat">
-                <div class="vic-stat-val">${vi.surface || 'Grass'}</div>
-                <div class="vic-stat-label">Surface</div>
-              </div>
+              <div class="vic-stat"><div class="vic-stat-val">${vi.capacity ? Number(vi.capacity).toLocaleString() : '—'}</div><div class="vic-stat-label">Capacity</div></div>
+              <div class="vic-stat"><div class="vic-stat-val">${vi.opened || '—'}</div><div class="vic-stat-label">Opened</div></div>
+              <div class="vic-stat"><div class="vic-stat-val">${vi.surface || 'Grass'}</div><div class="vic-stat-label">Surface</div></div>
             </div>
-            <div class="vic-fact">
-              🏆 Hosting FIFA World Cup 2026 · ${match.stage}${match.group ? ` Group ${match.group}` : ''}
-            </div>
-            <div style="margin-top:4px;">
+            <div style="margin-top:8px;">
               <a href="https://maps.google.com?q=${encodeURIComponent(vi.fullName||vi.name)}" target="_blank" rel="noreferrer" class="btn btn-sm" style="display:inline-flex;text-decoration:none;">🗺️ View on Map</a>
             </div>
           </div>
         </div>
 
-        ${homeSquad.length||awaySquad.length ? `
-        <div class="glass-card">
-          <div class="intel-section-label">Squads</div>
-          ${squadPills(homeSquad, match.homeTeam.name)}
-          ${squadPills(awaySquad, match.awayTeam.name)}
-        </div>` : ''}
-
         <div class="glass-card">
           <div class="action-row">
             <button class="btn ${starred?'btn-primary':''}" data-action="toggle-star" data-id="${match.id}">
-              ${starred?'⭐ Starred':'☆ Star Match'}
+              ${starred ? '⭐ Starred' : '☆ Star Match'}
             </button>
             <button class="btn" data-action="share-card" data-id="${match.id}">🖼️ Share Card</button>
             <button class="btn" data-action="export-pdf" data-id="${match.id}">📄 Export PDF</button>
@@ -1972,7 +2017,7 @@ export function renderSettings() {
         </div>
         <div class="setting-row">
           <div class="setting-label">Version</div>
-          <span class="text-muted">CupVerse v2.6.0</span>
+          <span class="text-muted">CupVerse v2.7.0</span>
         </div>
       </div>
     </div>

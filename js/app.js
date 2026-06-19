@@ -24,7 +24,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.7.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -698,10 +698,15 @@ async function init() {
     }
   });
 
-  await Promise.all([performSync(), loadSquads()]);
+  // Phase 1 — render immediately from cached local data
+  await Promise.all([loadMatches(false), loadSquads()]);
   renderCurrentRoute();
   hideSplash();
   registerServiceWorker();
+
+  // Phase 2 — background sync: fetch live scores + refresh local data if stale
+  // Don't block the UI on the external worldcup26.ir request
+  performSync().then(() => renderCurrentRoute()).catch(() => {});
 }
 
 function hideSplash() {
