@@ -1634,8 +1634,8 @@
     {
       "id": 73,
       "group": "R32",
-      "homeTeam": "❷ A",
-      "awayTeam": "❷ B",
+      "homeTeam": "South Africa",
+      "awayTeam": "Canada",
       "venue": "SoFi Stadium, Los Angeles 🇺🇸",
       "venueInfo": {
         "city": "Inglewood, CA",
@@ -1653,8 +1653,8 @@
     {
       "id": 74,
       "group": null,
-      "homeTeam": "❶ E",
-      "awayTeam": "❸ A/B/C/D/F",
+      "homeTeam": "Germany",
+      "awayTeam": "Paraguay",
       "venue": "Gillette Stadium, Boston 🇺🇸",
       "venueInfo": {
         "city": "Foxborough, MA",
@@ -1672,8 +1672,8 @@
     {
       "id": 75,
       "group": null,
-      "homeTeam": "❶ F",
-      "awayTeam": "❷ C",
+      "homeTeam": "Netherlands",
+      "awayTeam": "Morocco",
       "venue": "Estadio BBVA, Monterrey 🇲🇽",
       "venueInfo": {
         "city": "Monterrey",
@@ -1691,8 +1691,8 @@
     {
       "id": 76,
       "group": null,
-      "homeTeam": "❶ C",
-      "awayTeam": "❷ F",
+      "homeTeam": "Brazil",
+      "awayTeam": "Japan",
       "venue": "NRG Stadium, Houston 🇺🇸",
       "venueInfo": {
         "city": "Houston, TX",
@@ -1710,8 +1710,8 @@
     {
       "id": 77,
       "group": null,
-      "homeTeam": "❶ I",
-      "awayTeam": "❸ C/D/F/G/H",
+      "homeTeam": "France",
+      "awayTeam": "Sweden",
       "venue": "MetLife Stadium, NY/NJ 🇺🇸",
       "venueInfo": {
         "city": "East Rutherford, NJ",
@@ -1729,8 +1729,8 @@
     {
       "id": 78,
       "group": null,
-      "homeTeam": "❷ E",
-      "awayTeam": "❷ I",
+      "homeTeam": "Cote D'Voire",
+      "awayTeam": "Norway",
       "venue": "AT&T Stadium, Dallas 🇺🇸",
       "venueInfo": {
         "city": "Arlington, TX",
@@ -1748,8 +1748,8 @@
     {
       "id": 79,
       "group": null,
-      "homeTeam": "❶ A",
-      "awayTeam": "❸ C/E/F/H/I",
+      "homeTeam": "Mexico",
+      "awayTeam": "Ecuador",
       "venue": "Estadio Azteca, Mexico City 🇲🇽",
       "venueInfo": {
         "city": "Mexico City",
@@ -1767,8 +1767,8 @@
     {
       "id": 80,
       "group": null,
-      "homeTeam": "❶ L",
-      "awayTeam": "❸ E/H/I/J/K",
+      "homeTeam": "England",
+      "awayTeam": "DR Congo",
       "venue": "Mercedes-Benz Stadium, Atlanta 🇺🇸",
       "venueInfo": {
         "city": "Atlanta, GA",
@@ -1786,8 +1786,8 @@
     {
       "id": 81,
       "group": null,
-      "homeTeam": "❶ D",
-      "awayTeam": "❸ B/E/F/I/J",
+      "homeTeam": "USA",
+      "awayTeam": "Bosnia and Herzegovina",
       "venue": "Levi’s Stadium, San Francisco 🇺🇸",
       "venueInfo": {
         "name": "Levi’s Stadium, San Francisco 🇺🇸",
@@ -1802,8 +1802,8 @@
     {
       "id": 82,
       "group": null,
-      "homeTeam": "❶ G",
-      "awayTeam": "❸ A/E/H/I/J",
+      "homeTeam": "Belgium",
+      "awayTeam": "Senegal",
       "venue": "Lumen Field, Seattle 🇺🇸",
       "venueInfo": {
         "name": "Lumen Field, Seattle 🇺🇸",
@@ -1818,8 +1818,8 @@
     {
       "id": 83,
       "group": null,
-      "homeTeam": "❷ K",
-      "awayTeam": "❷ L",
+      "homeTeam": "Portugal",
+      "awayTeam": "Croatia",
       "venue": "BMO Field, Toronto 🇨🇦",
       "venueInfo": {
         "city": "Toronto",
@@ -1837,8 +1837,8 @@
     {
       "id": 84,
       "group": null,
-      "homeTeam": "❶ H",
-      "awayTeam": "❷ J",
+      "homeTeam": "Spain",
+      "awayTeam": "Austria",
       "venue": "SoFi Stadium, Los Angeles 🇺🇸",
       "venueInfo": {
         "city": "Inglewood, CA",
@@ -1856,8 +1856,8 @@
     {
       "id": 85,
       "group": null,
-      "homeTeam": "❶ B",
-      "awayTeam": "❸ E/F/G/I/J",
+      "homeTeam": "Switzerland",
+      "awayTeam": "Algeria",
       "venue": "BC Place, Vancouver 🇨🇦",
       "venueInfo": {
         "city": "Vancouver",
@@ -1875,8 +1875,8 @@
     {
       "id": 86,
       "group": null,
-      "homeTeam": "❶ J",
-      "awayTeam": "❷ H",
+      "homeTeam": "Argentina",
+      "awayTeam": "Cabo Verde",
       "venue": "Hard Rock Stadium, Miami 🇺🇸",
       "venueInfo": {
         "city": "Miami Gardens, FL",
@@ -1894,8 +1894,8 @@
     {
       "id": 87,
       "group": null,
-      "homeTeam": "❶ K",
-      "awayTeam": "❸ D/E/I/J/L",
+      "homeTeam": "Colombia",
+      "awayTeam": "Ghana",
       "venue": "Arrowhead Stadium, Kansas City 🇺🇸",
       "venueInfo": {
         "city": "Kansas City, MO",
@@ -1913,8 +1913,8 @@
     {
       "id": 88,
       "group": null,
-      "homeTeam": "❷ D",
-      "awayTeam": "❷ G",
+      "homeTeam": "Australia",
+      "awayTeam": "Egypt",
       "venue": "AT&T Stadium, Dallas 🇺🇸",
       "venueInfo": {
         "city": "Arlington, TX",
