@@ -5557,7 +5557,10 @@ a { text-decoration: none; color: inherit; }
   padding: 9px 8px;
   transition: var(--transition);
   min-width: 0;
+  cursor: pointer;
 }
+.kb-match:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.kb-match:active { transform: scale(0.98); }
 .kb-match--done { border-color: rgba(255,255,255,0.1); }
 .kb-match--live { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px rgba(0,229,255,0.2); }
 

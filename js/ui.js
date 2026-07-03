@@ -348,7 +348,7 @@ function buildKnockoutBracketHTML() {
     const aCls = aWon ? 'kb-half--win' : (st === 'completed' ? 'kb-half--out' : '');
 
     return `
-      <div class="kb-match ${st === 'completed' ? 'kb-match--done' : st === 'live' ? 'kb-match--live' : ''}">
+      <div class="kb-match ${st === 'completed' ? 'kb-match--done' : st === 'live' ? 'kb-match--live' : ''}" data-action="open-match" data-id="${m.id}">
         <div class="kb-half kb-half--home ${hCls}">
           <span class="kb-name">${displayName(m.homeTeam.name)}</span>
           <span class="kb-flag">${m.homeTeam.flag}</span>
