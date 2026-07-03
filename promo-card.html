@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>CupVerse Promo Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: #0A1128;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 56px 64px 48px;
+    overflow: hidden;
+  }
+
+  /* Background glow orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  .orb-1 { width: 500px; height: 500px; background: #00E5FF; top: -120px; right: -100px; }
+  .orb-2 { width: 420px; height: 420px; background: #F5B042; bottom: -80px; left: -80px; }
+  .orb-3 { width: 300px; height: 300px; background: #6C63FF; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.12; }
+
+  /* Noise texture overlay */
+  .noise {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  /* Top section */
+  .top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .wc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245,176,66,0.12);
+    border: 1px solid rgba(245,176,66,0.35);
+    border-radius: 100px;
+    padding: 6px 18px;
+    color: #F5B042;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .headline {
+    font-size: 52px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.02em;
+    text-align: center;
+    line-height: 1.1;
+    margin-top: 4px;
+  }
+  .headline span { color: #00E5FF; }
+
+  .subline {
+    font-size: 18px;
+    color: #B0B8D0;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* Matches grid */
+  .matches {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .match-row {
+    display: flex;
+    align-items: center;
+    background: rgba(18,25,55,0.65);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 18px 28px;
+    gap: 0;
+    transition: all .25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .match-row.featured {
+    border-color: rgba(0,229,255,0.25);
+    background: rgba(0,229,255,0.06);
+    padding: 22px 28px;
+  }
+
+  .match-row.featured::before {
+    content: 'FEATURED';
+    position: absolute;
+    top: 0; right: 20px;
+    background: #00E5FF;
+    color: #0A1128;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 3px 10px;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .group-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #B0B8D0;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    width: 70px;
+    flex-shrink: 0;
+  }
+
+  .team-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .team-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    text-align: right;
+  }
+
+  .match-row.featured .team-name { font-size: 22px; }
+
+  .flag {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .match-row.featured .flag { font-size: 34px; }
+
+  .vs {
+    font-size: 13px;
+    font-weight: 800;
+    color: #B0B8D0;
+    letter-spacing: 0.08em;
+    padding: 0 18px;
+    flex-shrink: 0;
+  }
+
+  .match-row.featured .vs { font-size: 16px; color: #00E5FF; }
+
+  .team-block.away {
+    justify-content: flex-start;
+    flex-direction: row-reverse;
+  }
+  .team-block.away .team-name { text-align: left; }
+
+  .match-time {
+    font-size: 13px;
+    font-weight: 600;
+    color: #F5B042;
+    width: 70px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Bottom branding */
+  .bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-name {
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .brand-name span { color: #00E5FF; }
+
+  .brand-tagline {
+    font-size: 14px;
+    color: #B0B8D0;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  .cta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .cta-text {
+    font-size: 15px;
+    color: #B0B8D0;
+    font-weight: 500;
+  }
+
+  .cta-url {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00E5FF;
+    letter-spacing: -0.01em;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent);
+    margin: 0;
+    position: relative;
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="noise"></div>
+
+  <!-- Top -->
+  <div class="top">
+    <div class="wc-badge">⚽ FIFA World Cup 2026 · June 20</div>
+    <div class="headline">Matchday <span>Lineup</span></div>
+    <div class="subline">5 Matches · Track Every Kick Live</div>
+  </div>
+
+  <!-- Matches -->
+  <div class="matches">
+
+    <!-- USA vs Australia — FEATURED -->
+    <div class="match-row featured">
+      <div class="group-tag">Group D</div>
+      <div class="team-block home">
+        <div class="team-name">USA</div>
+        <div class="flag">🇺🇸</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-block away">
+        <div class="flag">🇦🇺</div>
+        <div class="team-name">Australia</div>
+      </div>
+      <div class="match-time">1:00 AM</div>
+    </div>
+
+    <!-- Scotland vs Morocco -->
+    <div class="match-row">
+      <div class="group-tag">Group C</div>
+      <div class="team-block home">
+        <div class="team-name">Scotland</div>
+        <div class="flag">🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-block away">
+        <div class="flag">🇲🇦</div>
+        <div class="team-name">Morocco</div>
+      </div>
+      <div class="match-time">4:00 AM</div>
+    </div>
+
+    <!-- Brazil vs Haiti -->
+    <div class="match-row">
+      <div class="group-tag">Group C</div>
+      <div class="team-block home">
+        <div class="team-name">Brazil</div>
+        <div class="flag">🇧🇷</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-block away">
+        <div class="flag">🇭🇹</div>
+        <div class="team-name">Haiti</div>
+      </div>
+      <div class="match-time">6:30 AM</div>
+    </div>
+
+    <!-- Türkiye vs Paraguay -->
+    <div class="match-row">
+      <div class="group-tag">Group D</div>
+      <div class="team-block home">
+        <div class="team-name">Türkiye</div>
+        <div class="flag">🇹🇷</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-block away">
+        <div class="flag">🇵🇾</div>
+        <div class="team-name">Paraguay</div>
+      </div>
+      <div class="match-time">9:00 AM</div>
+    </div>
+
+    <!-- Netherlands vs Sweden -->
+    <div class="match-row">
+      <div class="group-tag">Group F</div>
+      <div class="team-block home">
+        <div class="team-name">Netherlands</div>
+        <div class="flag">🇳🇱</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-block away">
+        <div class="flag">🇸🇪</div>
+        <div class="team-name">Sweden</div>
+      </div>
+      <div class="match-time">11:00 PM</div>
+    </div>
+
+  </div>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- Bottom branding -->
+  <div class="bottom">
+    <div class="brand">
+      <div class="brand-name">Cup<span>Verse</span></div>
+      <div class="brand-tagline">Your Tournament Command Center</div>
+    </div>
+    <div class="cta">
+      <div class="cta-text">Track scores, countdowns & standings</div>
+      <div class="cta-url">cupverse.app</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CupVerse — An immersive virtual tour of all 16 FIFA World Cup 2026 stadiums across the United States, Mexico and Canada.">
+  <meta property="og:title" content="CupVerse · World Cup 2026 Stadium Tour">
+  <meta property="og:description" content="Explore all 16 FIFA World Cup 2026 venues across 3 nations.">
+  <title>CupVerse · World Cup 2026 Stadium Virtual Tour</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,300;1,600&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ── LOADER ─────────────────────────────────────────── -->
+  <div id="loader">
+    <div class="loader-logo">CupVerse</div>
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill"></div>
+    </div>
+    <div class="loader-text">Loading 16 World Cup Venues</div>
+  </div>
+
+  <!-- ── TOP NAVIGATION ─────────────────────────────────── -->
+  <nav id="top-nav">
+    <a href="#" class="nav-brand">
+      <span class="nav-logo-text">CupVerse</span>
+      <span class="nav-logo-badge">2026</span>
+    </a>
+
+    <div class="nav-center">
+      <button class="nav-filter-btn active" data-filter="All">All Venues</button>
+      <button class="nav-filter-btn" data-filter="USA">🇺🇸 USA</button>
+      <button class="nav-filter-btn" data-filter="Mexico">🇲🇽 Mexico</button>
+      <button class="nav-filter-btn" data-filter="Canada">🇨🇦 Canada</button>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-counter"><span id="stadiums-count">16</span> Venues</div>
+      <div class="nav-view-toggle">
+        <button class="view-btn active" data-view="grid" title="Grid view">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="0" y="0" width="6" height="6" fill="currentColor" rx="1"/>
+            <rect x="8" y="0" width="6" height="6" fill="currentColor" rx="1"/>
+            <rect x="0" y="8" width="6" height="6" fill="currentColor" rx="1"/>
+            <rect x="8" y="8" width="6" height="6" fill="currentColor" rx="1"/>
+          </svg>
+        </button>
+        <button class="view-btn" data-view="list" title="List view">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="0" y="0" width="14" height="3" fill="currentColor" rx="1"/>
+            <rect x="0" y="5.5" width="14" height="3" fill="currentColor" rx="1"/>
+            <rect x="0" y="11" width="14" height="3" fill="currentColor" rx="1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ───────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-eyebrow">FIFA World Cup · June–July 2026</div>
+
+    <h1 class="hero-title">
+      The <span>16</span> Stages<br>of Glory
+    </h1>
+    <p class="hero-subtitle">A virtual tour of every World Cup 2026 venue</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">16</div>
+        <div class="hero-stat-label">Stadiums</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">3</div>
+        <div class="hero-stat-label">Nations</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">48</div>
+        <div class="hero-stat-label">Teams</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="hero-total-cap">0</div>
+        <div class="hero-stat-label">Combined Seats</div>
+      </div>
+    </div>
+
+    <a id="hero-explore-btn" class="hero-cta" href="#stadiums-section">
+      Explore Venues
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 2L7 12M7 12L3 8M7 12L11 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    <div class="hero-scroll-hint">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3L8 13M8 13L4 9M8 13L12 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Scroll to explore
+    </div>
+  </section>
+
+  <!-- ── COUNTRY OVERVIEW ────────────────────────────────── -->
+  <section id="country-overview">
+    <div class="section-label">Host Nations</div>
+    <div class="country-bands">
+
+      <div class="country-band" data-country="USA">
+        <div class="country-flag">🇺🇸</div>
+        <div class="country-name">United States</div>
+        <div class="country-venue-count"><span>11</span> venues</div>
+      </div>
+
+      <div class="country-band" data-country="Mexico">
+        <div class="country-flag">🇲🇽</div>
+        <div class="country-name">Mexico</div>
+        <div class="country-venue-count"><span>3</span> venues</div>
+      </div>
+
+      <div class="country-band" data-country="Canada">
+        <div class="country-flag">🇨🇦</div>
+        <div class="country-name">Canada</div>
+        <div class="country-venue-count"><span>2</span> venues</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── STADIUMS GRID ───────────────────────────────────── -->
+  <section id="stadiums-section">
+    <div style="max-width:1400px;margin:0 auto;padding: 0 2rem 1.5rem;">
+      <div class="section-label">All Venues</div>
+    </div>
+    <div id="stadiums-grid">
+      <!-- Cards injected by JS -->
+    </div>
+  </section>
+
+  <!-- ── MODAL OVERLAY ───────────────────────────────────── -->
+  <div id="modal-overlay" role="dialog" aria-modal="true">
+    <div id="modal-container">
+      <!-- Modal content injected by JS -->
+    </div>
+  </div>
+
+  <!-- ── FOOTER ──────────────────────────────────────────── -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">CupVerse</div>
+      <div class="footer-meta">
+        FIFA World Cup 2026 · 16 Venues · USA · Mexico · Canada<br>
+        <span style="color: var(--text-muted); font-size: 0.65rem;">
+          Stadium data compiled from FIFA official sources &amp; Olympics.com. Images via Wikimedia Commons.
+        </span>
+      </div>
+      <div class="footer-tagline">Every Pitch. Every Story.</div>
+    </div>
+  </footer>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────── -->
+  <script src="js/stadiums-data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
