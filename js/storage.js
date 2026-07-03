@@ -122,9 +122,6 @@ export function isFavTeam(teamCode) {
   return getFavTeams().includes(teamCode);
 }
 
-// Legacy aliases (used by V1 code paths still referenced)
-export function addFavTeam(code) { if (!isFavTeam(code)) toggleFavTeam(code); }
-export function removeFavTeam(code) { if (isFavTeam(code)) toggleFavTeam(code); }
 
 // ── Favorite Matches (starred) ───────────────────────────
 export function getFavoriteMatches() {
@@ -144,9 +141,6 @@ export function isMatchFavorite(matchId) {
   return getFavoriteMatches().map(String).includes(String(matchId));
 }
 
-// Legacy alias
-export function toggleStarredMatch(id) { return toggleFavoriteMatch(id); }
-export function getStarredMatches() { return getFavoriteMatches(); }
 
 // ── AI enabled (kept for settings toggle) ───────────────
 export function isAiEnabled() {
