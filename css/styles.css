@@ -5540,90 +5540,99 @@ a { text-decoration: none; color: inherit; }
 .kb-panels { padding: 12px; }
 .kb-panel { display: none; }
 .kb-panel--active { display: block; }
-.kb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-@media (max-width: 480px) { .kb-grid { grid-template-columns: 1fr; } }
-@media (min-width: 900px) { .kb-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+/* Grid: 1-col on small phones, 2-col on tablets, 4-col only at desktop */
+.kb-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+@media (min-width: 540px) { .kb-grid { grid-template-columns: 1fr 1fr; gap: 8px; } }
+@media (min-width: 960px) { .kb-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+
+/* Match card — horizontal: [home] [score] [away] */
 .kb-match {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 10px;
-  padding: 10px 10px;
+  padding: 9px 8px;
   transition: var(--transition);
+  min-width: 0;
 }
 .kb-match--done { border-color: rgba(255,255,255,0.1); }
-.kb-match--live { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px var(--accent-cyan)33; }
-.kb-teams { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.kb-team {
+.kb-match--live { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px rgba(0,229,255,0.2); }
+
+/* Each team half */
+.kb-half {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.kb-half--home { justify-content: flex-end; }
+.kb-half--away { justify-content: flex-start; }
+
+/* Winner highlight / loser dim */
+.kb-half--win .kb-name { color: var(--text-primary); font-weight: 800; }
+.kb-half--out .kb-name { opacity: 0.4; text-decoration: line-through; text-decoration-thickness: 1px; }
+
+.kb-flag { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+.kb-name {
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-secondary);
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
-.kb-team--win {
-  color: var(--text-primary);
-  font-weight: 800;
-}
-.kb-team--out { opacity: 0.45; text-decoration: line-through; text-decoration-thickness: 1px; }
-.kb-flag { font-size: 1rem; flex-shrink: 0; }
-.kb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kb-score-col {
+
+/* Centre column: score / live / date */
+.kb-centre {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  min-width: 24px;
+  justify-content: center;
+  gap: 1px;
+  flex-shrink: 0;
+  min-width: 52px;
+  padding: 0 2px;
 }
-.kb-score {
-  font-size: 0.9rem;
+.kb-scoreline {
+  font-size: 0.88rem;
   font-weight: 800;
-  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
   line-height: 1;
 }
-.kb-score--win { color: var(--accent-cyan); }
-.kb-tag-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.kb-tag {
-  font-size: 0.5rem;
+.kb-meta {
+  font-size: 0.48rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 2px 4px;
-  border-radius: 3px;
-  background: rgba(245,176,66,0.2);
   color: var(--accent-gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
+  margin-top: 2px;
+}
+.kb-upcoming {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted, var(--text-secondary));
+  white-space: nowrap;
+  text-align: center;
 }
 .kb-live-dot {
-  width: 8px; height: 8px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--accent-cyan);
   animation: pulse-dot 1.2s ease-in-out infinite;
+  margin-bottom: 2px;
 }
 @keyframes pulse-dot {
   0%,100% { opacity:1; transform:scale(1); }
-  50%      { opacity:0.4; transform:scale(0.6); }
-}
-.kb-tbd-col, .kb-date-col { min-width: 32px; justify-content: center; }
-.kb-tbd {
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-.kb-date {
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-align: center;
-  line-height: 1.3;
+  50%      { opacity:0.35; transform:scale(0.55); }
 }
 [data-theme="light"] .kb-match { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
 [data-theme="light"] .kb-tabs { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.02); }

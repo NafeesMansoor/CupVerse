@@ -316,50 +316,48 @@ function buildKnockoutBracketHTML() {
   };
 
   const matchCard = (m) => {
-    const st = effectiveStatus(m);
-    const sc = m.score;
-    const isTBD  = m.homeTeam.name.startsWith('Winner') || m.homeTeam.name.startsWith('Loser')
-                || m.awayTeam.name.startsWith('Winner') || m.awayTeam.name.startsWith('Loser');
+    const st   = effectiveStatus(m);
+    const sc   = m.score;
+    const isTBD = m.homeTeam.name.startsWith('Winner') || m.homeTeam.name.startsWith('Loser')
+               || m.awayTeam.name.startsWith('Winner') || m.awayTeam.name.startsWith('Loser');
     const hWon = st === 'completed' && m.winner === m.homeTeam.name;
     const aWon = st === 'completed' && m.winner === m.awayTeam.name;
-    const hFlag = m.homeTeam.flag;
-    const aFlag = m.awayTeam.flag;
-    const hName = displayName(m.homeTeam.name);
-    const aName = displayName(m.awayTeam.name);
 
-    let scoreHTML = '';
+    // Centre column: score / live / date / TBD
+    let centre = '';
     if (st === 'completed' && sc) {
-      const et  = m.extraTime    ? '<span class="kb-tag">AET</span>' : '';
-      const pks = m.penaltyScore ? `<span class="kb-tag">PKS ${m.penaltyScore.home}–${m.penaltyScore.away}</span>` : '';
-      scoreHTML = `
-        <div class="kb-score-col">
-          <span class="kb-score ${hWon ? 'kb-score--win' : ''}">${sc.home}</span>
-          <span class="kb-score ${aWon ? 'kb-score--win' : ''}">${sc.away}</span>
-        </div>
-        ${et || pks ? `<div class="kb-tag-col">${et}${pks}</div>` : ''}`;
+      const meta = [
+        m.extraTime    ? 'AET' : '',
+        m.penaltyScore ? `PKS ${m.penaltyScore.home}–${m.penaltyScore.away}` : '',
+      ].filter(Boolean).join(' · ');
+      centre = `<div class="kb-centre">
+        <div class="kb-scoreline">${sc.home} – ${sc.away}</div>
+        ${meta ? `<div class="kb-meta">${meta}</div>` : ''}
+      </div>`;
     } else if (st === 'live') {
-      scoreHTML = `<div class="kb-score-col"><span class="kb-live-dot"></span></div>`;
+      centre = `<div class="kb-centre"><span class="kb-live-dot"></span><span class="kb-meta" style="color:var(--accent-cyan)">LIVE</span></div>`;
     } else if (isTBD) {
-      scoreHTML = `<div class="kb-score-col kb-tbd-col"><span class="kb-tbd">TBD</span></div>`;
+      centre = `<div class="kb-centre"><span class="kb-upcoming">TBD</span></div>`;
     } else {
       const d = new Date(m.datetime);
       const label = d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
-      scoreHTML = `<div class="kb-score-col kb-date-col"><span class="kb-date">${label}</span></div>`;
+      centre = `<div class="kb-centre"><span class="kb-upcoming">${label}</span></div>`;
     }
+
+    const hCls = hWon ? 'kb-half--win' : (st === 'completed' ? 'kb-half--out' : '');
+    const aCls = aWon ? 'kb-half--win' : (st === 'completed' ? 'kb-half--out' : '');
 
     return `
       <div class="kb-match ${st === 'completed' ? 'kb-match--done' : st === 'live' ? 'kb-match--live' : ''}">
-        <div class="kb-teams">
-          <div class="kb-team ${hWon ? 'kb-team--win' : st === 'completed' ? 'kb-team--out' : ''}">
-            <span class="kb-flag">${hFlag}</span>
-            <span class="kb-name">${hName}</span>
-          </div>
-          <div class="kb-team ${aWon ? 'kb-team--win' : st === 'completed' ? 'kb-team--out' : ''}">
-            <span class="kb-flag">${aFlag}</span>
-            <span class="kb-name">${aName}</span>
-          </div>
+        <div class="kb-half kb-half--home ${hCls}">
+          <span class="kb-name">${displayName(m.homeTeam.name)}</span>
+          <span class="kb-flag">${m.homeTeam.flag}</span>
         </div>
-        ${scoreHTML}
+        ${centre}
+        <div class="kb-half kb-half--away ${aCls}">
+          <span class="kb-name">${displayName(m.awayTeam.name)}</span>
+          <span class="kb-flag">${m.awayTeam.flag}</span>
+        </div>
       </div>`;
   };
 
