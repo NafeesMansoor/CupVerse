@@ -5677,3 +5677,146 @@ a { text-decoration: none; color: inherit; }
 .gvc-q-badge--out { background: rgba(220,53,69,0.18); color: #dc3545; }
 [data-theme="light"] .gvc-q-badge--in  { background: rgba(40,167,69,0.15); }
 [data-theme="light"] .gvc-q-badge--out { background: rgba(220,53,69,0.12); }
+
+/* ── MATCH DETAIL: AET / PKS hero display ──────────────────── */
+.mp-aet-badge {
+  display: inline-block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(245,176,66,0.2);
+  color: var(--accent-gold);
+  vertical-align: middle;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+.mp-pks-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.mp-pks-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--text-secondary));
+  opacity: 0.7;
+}
+.mp-pks-side { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.mp-pks--win { color: var(--accent-cyan); font-weight: 900; font-size: 0.9rem; }
+
+/* ── MATCH SUMMARY CARD (ms-*) ──────────────────────────────── */
+.ms-card { padding: 16px; }
+.ms-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 14px;
+}
+.ms-res-flag { font-size: 2.2rem; line-height: 1; }
+.ms-res-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.ms-res-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-top: 2px;
+}
+.ms-score-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ms-half {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 0;
+}
+.ms-half--home { justify-content: flex-end; }
+.ms-half--away { justify-content: flex-start; }
+.ms-tname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-half--win .ms-tname { color: var(--text-primary); font-weight: 800; }
+.ms-half--out .ms-tname { opacity: 0.4; text-decoration: line-through; text-decoration-thickness: 1px; }
+.ms-centre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 64px;
+}
+.ms-final-score {
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.ms-badge {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(245,176,66,0.2);
+  color: var(--accent-gold);
+}
+.ms-pks-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-cyan);
+  white-space: nowrap;
+}
+.ms-narrative {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 10px;
+}
+.ms-advancement {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(245,176,66,0.1);
+  border: 1px solid rgba(245,176,66,0.2);
+}
+
+/* Journal summary wrapper */
+.ms-journal-summary { margin-bottom: 0; }
+.ms-journal-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0 4px 6px;
+  opacity: 0.7;
+}
+
+/* Predictions tab — "Summary" state indicator */
+.tab-btn--done { color: var(--accent-cyan) !important; }

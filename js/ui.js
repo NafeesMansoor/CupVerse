@@ -961,7 +961,7 @@ export function renderMatchDetail(id) {
   const match = getMatchById(id);
   if (!match) return makeSection('<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">❌</div><p>Match not found.</p></div></div>');
 
-  const score      = getScore(match.id);
+  const score      = effectiveScore(match);
   const status     = effectiveStatus(match);
   const apiScorers = getApiScorers(match.id);
   const note       = getNote(match.id) || { text: '', photos: [] };
@@ -980,7 +980,17 @@ export function renderMatchDetail(id) {
   // ── Hero center ──
   let heroScore;
   if (score) {
-    heroScore = `<div class="mp-score-display">${score.home} – ${score.away}</div>`;
+    const aetBadge = match.extraTime ? `<span class="mp-aet-badge">AET</span>` : '';
+    const pksLine  = match.penaltyScore
+      ? `<div class="mp-pks-line">
+           <span class="mp-pks-side ${match.winner === match.homeTeam.name ? 'mp-pks--win' : ''}">${match.penaltyScore.home}</span>
+           <span class="mp-pks-label">Penalties</span>
+           <span class="mp-pks-side ${match.winner === match.awayTeam.name ? 'mp-pks--win' : ''}">${match.penaltyScore.away}</span>
+         </div>`
+      : '';
+    heroScore = `
+      <div class="mp-score-display">${score.home} – ${score.away} ${aetBadge}</div>
+      ${pksLine}`;
   } else if (status === 'live') {
     heroScore = `<div class="mp-score-display mp-score-live"><span class="sb-live-dot"></span> LIVE</div>`;
   } else {
@@ -988,10 +998,13 @@ export function renderMatchDetail(id) {
   }
 
   // ── Status badge ──
+  const ftLabel = match.penaltyScore ? 'AET · Penalties'
+    : match.extraTime ? 'After Extra Time'
+    : 'Full Time';
   const statusBadge = status === 'live'
     ? `<span class="mp-status-badge mp-status--live"><span class="sb-live-dot"></span> LIVE</span>`
     : status === 'completed'
-    ? `<span class="mp-status-badge mp-status--ft">Full Time</span>`
+    ? `<span class="mp-status-badge mp-status--ft">${ftLabel}</span>`
     : '';
 
   // ── Scorers row (completed) ──
@@ -1074,8 +1087,67 @@ export function renderMatchDetail(id) {
 
   const stageLabel   = `${match.stage}${match.group ? ` · Group ${match.group}` : ''}`;
   const statusLabel  = status === 'live' ? 'In Progress'
-    : status === 'completed' ? 'Full Time'
+    : status === 'completed' ? ftLabel
     : `${fmtDate(match.datetime)} · ${fmtTime(match.datetime)}`;
+
+  // ── Auto match summary (completed only) ──
+  const matchSummaryHTML = (() => {
+    if (status !== 'completed' || !score || !match.winner) return '';
+    const isHomeWin = match.winner === match.homeTeam.name;
+    const wTeam     = isHomeWin ? match.homeTeam : match.awayTeam;
+    const lTeam     = isHomeWin ? match.awayTeam : match.homeTeam;
+
+    let narrative;
+    if (match.penaltyScore) {
+      const pkW = isHomeWin ? match.penaltyScore.home : match.penaltyScore.away;
+      const pkL = isHomeWin ? match.penaltyScore.away : match.penaltyScore.home;
+      narrative = `${wTeam.flag} ${esc(wTeam.name)} beat ${lTeam.flag} ${esc(lTeam.name)} on penalties (${pkW}–${pkL}) after a ${score.home}–${score.away} draw through extra time.`;
+    } else if (match.extraTime) {
+      narrative = `${wTeam.flag} ${esc(wTeam.name)} beat ${lTeam.flag} ${esc(lTeam.name)} ${score.home}–${score.away} after extra time.`;
+    } else {
+      const margin = Math.abs(score.home - score.away);
+      const adj = margin >= 3 ? 'comfortably' : margin === 1 ? 'narrowly' : 'decisively';
+      narrative = `${wTeam.flag} ${esc(wTeam.name)} beat ${lTeam.flag} ${esc(lTeam.name)} ${score.home}–${score.away} ${adj}.`;
+    }
+
+    const nextRoundMap = {
+      'Round of 32': 'the Round of 16', 'Round of 16': 'the Quarter-finals',
+      'Quarterfinals': 'the Semi-finals', 'Semifinals': 'the Final',
+    };
+    const advancement = match.stage === 'Final'
+      ? `${wTeam.flag} ${esc(wTeam.name)} are the FIFA World Cup 2026 Champions! 🏆`
+      : nextRoundMap[match.stage]
+        ? `${wTeam.flag} ${esc(wTeam.name)} advance to ${nextRoundMap[match.stage]}.`
+        : '';
+
+    return `
+      <div class="glass-card ms-card">
+        <div class="ms-header">
+          <span class="ms-res-flag">${wTeam.flag}</span>
+          <div>
+            <div class="ms-res-name">${esc(wTeam.name)}</div>
+            <div class="ms-res-label">${match.stage === 'Final' ? '🏆 Champions' : '✓ Advanced'}</div>
+          </div>
+        </div>
+        <div class="ms-score-row">
+          <div class="ms-half ms-half--home ${isHomeWin ? 'ms-half--win' : 'ms-half--out'}">
+            <span>${match.homeTeam.flag}</span>
+            <span class="ms-tname">${displayName(match.homeTeam.name)}</span>
+          </div>
+          <div class="ms-centre">
+            <div class="ms-final-score">${score.home} – ${score.away}</div>
+            ${match.extraTime ? '<div class="ms-badge">AET</div>' : ''}
+            ${match.penaltyScore ? `<div class="ms-pks-badge">PKS ${match.penaltyScore.home}–${match.penaltyScore.away}</div>` : ''}
+          </div>
+          <div class="ms-half ms-half--away ${isHomeWin ? 'ms-half--out' : 'ms-half--win'}">
+            <span class="ms-tname">${displayName(match.awayTeam.name)}</span>
+            <span>${match.awayTeam.flag}</span>
+          </div>
+        </div>
+        <div class="ms-narrative">${narrative}</div>
+        ${advancement ? `<div class="ms-advancement">${advancement}</div>` : ''}
+      </div>`;
+  })();
 
   return makeSection(`
 
@@ -1116,7 +1188,9 @@ export function renderMatchDetail(id) {
     <div class="match-tabs">
       <div class="tab-bar">
         <button class="tab-btn active" data-action="match-tab" data-tab="info">Info</button>
-        <button class="tab-btn"        data-action="match-tab" data-tab="predictions">Predictions</button>
+        <button class="tab-btn ${status === 'completed' ? 'tab-btn--done' : ''}" data-action="match-tab" data-tab="predictions">
+          ${status === 'completed' ? 'Summary' : 'Predictions'}
+        </button>
         <button class="tab-btn"        data-action="match-tab" data-tab="journal">Journal</button>
         <button class="tab-btn"        data-action="match-tab" data-tab="squads">Squads</button>
       </div>
@@ -1193,33 +1267,42 @@ export function renderMatchDetail(id) {
         </div>
       </div>
 
-      <!-- ── Tab: Predictions ── -->
+      <!-- ── Tab: Summary (completed) / Predictions (upcoming) ── -->
       <div class="tab-panel" data-tab="predictions">
-        ${intel ? `
-        <div class="glass-card">
-          <div class="intel-section-label">Win Probability</div>
-          <div class="prediction-row">
-            <div class="pred-team"><div class="pred-pct">${intel.prediction.home}%</div><div class="pred-label">${match.homeTeam.flag} Win</div></div>
-            <div class="pred-draw"><div class="pred-draw-pct">${intel.prediction.draw}%</div><div class="pred-draw-label">Draw</div></div>
-            <div class="pred-team"><div class="pred-pct" style="color:var(--accent-gold)">${intel.prediction.away}%</div><div class="pred-label">${match.awayTeam.flag} Win</div></div>
+        ${status === 'completed' ? `
+          ${matchSummaryHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">📋</div><p class="empty-state-text">Match summary not available.</p></div></div>'}
+        ` : `
+          ${intel ? `
+          <div class="glass-card">
+            <div class="intel-section-label">Win Probability</div>
+            <div class="prediction-row">
+              <div class="pred-team"><div class="pred-pct">${intel.prediction.home}%</div><div class="pred-label">${match.homeTeam.flag} Win</div></div>
+              <div class="pred-draw"><div class="pred-draw-pct">${intel.prediction.draw}%</div><div class="pred-draw-label">Draw</div></div>
+              <div class="pred-team"><div class="pred-pct" style="color:var(--accent-gold)">${intel.prediction.away}%</div><div class="pred-label">${match.awayTeam.flag} Win</div></div>
+            </div>
+            <div class="pred-bar-wrap">
+              <div class="pred-bar-home" style="width:${intel.prediction.home}%"></div>
+              <div class="pred-bar-draw" style="width:${intel.prediction.draw}%"></div>
+              <div class="pred-bar-away" style="width:${intel.prediction.away}%"></div>
+            </div>
+            <p class="pred-disclaimer">Based on FIFA rankings, H2H &amp; form. For entertainment only.</p>
           </div>
-          <div class="pred-bar-wrap">
-            <div class="pred-bar-home" style="width:${intel.prediction.home}%"></div>
-            <div class="pred-bar-draw" style="width:${intel.prediction.draw}%"></div>
-            <div class="pred-bar-away" style="width:${intel.prediction.away}%"></div>
-          </div>
-          <p class="pred-disclaimer">Based on FIFA rankings, H2H &amp; form. For entertainment only.</p>
-        </div>
-        <div class="intel-storyline">
-          <div class="intel-section-label">Match Story</div>
-          <div class="intel-headline">${intel.headline}</div>
-          <div class="intel-narrative">${intel.narrative}</div>
-        </div>` : ''}
-        ${intelTabHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">🔍</div><p class="empty-state-text">Intelligence available for group stage matches once teams are confirmed.</p></div></div>'}
+          <div class="intel-storyline">
+            <div class="intel-section-label">Match Story</div>
+            <div class="intel-headline">${intel.headline}</div>
+            <div class="intel-narrative">${intel.narrative}</div>
+          </div>` : ''}
+          ${intelTabHTML || '<div class="glass-card"><div class="empty-state"><div class="empty-state-icon">🔍</div><p class="empty-state-text">Intelligence available for group stage matches once teams are confirmed.</p></div></div>'}
+        `}
       </div>
 
       <!-- ── Tab: Journal ── -->
       <div class="tab-panel" data-tab="journal">
+        ${matchSummaryHTML ? `
+          <div class="ms-journal-summary">
+            <div class="ms-journal-label">Match Report</div>
+            ${matchSummaryHTML}
+          </div>` : ''}
         <div class="glass-card">
           <div class="intel-section-label">Match Notes</div>
           <div class="journal-prompt">Your personal notes for this match. Only visible to you.</div>
