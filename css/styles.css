@@ -5820,3 +5820,214 @@ a { text-decoration: none; color: inherit; }
 
 /* Predictions tab — "Summary" state indicator */
 .tab-btn--done { color: var(--accent-cyan) !important; }
+
+/* ── ESPN LIVE CARD ─────────────────────────────────────────── */
+.espn-live-wrap { margin-bottom: 0; }
+.espn-live-card { padding: 14px; }
+
+.espn-live-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.espn-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+.espn-clock-label {
+  flex: 1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.espn-refresh-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.espn-refresh-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+/* Hero live score update */
+.espn-hero-live-score {
+  font-size: 2.2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+.espn-hero-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* Possession bar */
+.espn-poss-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.espn-poss-pct {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.espn-poss-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+.espn-poss-fill {
+  height: 100%;
+  background: var(--accent-cyan);
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.espn-poss-title {
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+/* Stats rows */
+.espn-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+  padding: 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+}
+.espn-stat-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  font-size: 0.72rem;
+  gap: 8px;
+}
+.espn-stat-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: center;
+}
+.espn-stat-label {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Key events */
+.espn-events-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  opacity: 0.7;
+}
+.espn-events { display: flex; flex-direction: column; gap: 5px; }
+.espn-event {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.03);
+}
+.espn-event--away { flex-direction: row-reverse; text-align: right; }
+.espn-ev-clock {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 28px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.espn-ev-icon { font-size: 0.9rem; flex-shrink: 0; }
+.espn-ev-desc {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.espn-ev-score {
+  font-size: 0.65rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+
+/* Commentary */
+.espn-commentary { display: flex; flex-direction: column; gap: 4px; }
+.espn-comment {
+  display: flex;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  line-height: 1.4;
+}
+.espn-comment:last-child { border-bottom: none; }
+
+/* Loading shimmer */
+.espn-shimmer {
+  height: 80px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+[data-theme="light"] .espn-live-card { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .espn-stats { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .espn-event { background: rgba(0,0,0,0.03); }

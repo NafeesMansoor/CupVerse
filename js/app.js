@@ -14,6 +14,7 @@ import {
   getPredMode, setPredMode,
 } from './prediction.js';
 import { getStadiumByName } from './venues.js';
+import { findEspnEventId, fetchEspnLiveData } from './espn.js';
 import { parseRoute, navigateTo } from './router.js';
 import { observePlayerPhotos, stopObservingPhotos, initPhotoObserver, preloadPhotoMap } from './photos.js';
 import { createCountdown, createBlockCountdown } from './countdown.js';
@@ -25,7 +26,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.9.3';
+const APP_VERSION = '2.9.4';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -33,6 +34,7 @@ let countdownClear = null;
 let fixtureFilterTimer = null;
 let squadFilterTimer = null;
 let deferredInstallPrompt = null;
+let espnRefreshTimer = null;
 let squadState = { pos: 'ALL', view: 'cards', query: '' };
 
 function applySquadFilter(players, state) {
@@ -75,13 +77,127 @@ function attachCountdown() {
   if (clearFns.length) countdownClear = () => clearFns.forEach(f => f());
 }
 
+// ── ESPN Live Refresh ──────────────────────────────────────
+function stopEspnLiveRefresh() {
+  if (espnRefreshTimer) { clearInterval(espnRefreshTimer); espnRefreshTimer = null; }
+}
+
+async function populateEspnLiveCard(matchId, homeTeam, awayTeam, dateStr) {
+  const container = document.getElementById(`espn-live-${matchId}`);
+  if (!container) return;
+
+  try {
+    const eventId = await findEspnEventId(homeTeam, awayTeam, dateStr);
+    if (!eventId) throw new Error('no ESPN event');
+    const data = await fetchEspnLiveData(eventId);
+    if (!data) throw new Error('no ESPN data');
+
+    // Update hero score
+    const heroEl = document.getElementById(`espn-hero-score-${matchId}`);
+    if (heroEl) {
+      heroEl.innerHTML = `
+        <div class="espn-hero-live-score">${data.homeScore} – ${data.awayScore}</div>
+        <div class="espn-hero-clock"><span class="sb-live-dot"></span> ${data.clock}</div>`;
+    }
+
+    const hs = data.stats.home || {};
+    const as = data.stats.away || {};
+    const hPoss = parseFloat(hs['POSSESSION'] || 50);
+    const aPoss = parseFloat(as['POSSESSION'] || 50);
+
+    const statRow = (label, hv, av) =>
+      `<div class="espn-stat-row">
+        <span class="espn-stat-val">${hv || '0'}</span>
+        <span class="espn-stat-label">${label}</span>
+        <span class="espn-stat-val">${av || '0'}</span>
+       </div>`;
+
+    const eventsHTML = data.events.map(e => {
+      const icon = e.type === 'goal' ? '⚽'
+        : e.type === 'yellowcard' ? '🟡'
+        : e.type === 'redcard' ? '🔴'
+        : e.type === 'substitution' ? '🔄'
+        : '•';
+      const scoreTag = e.scoringPlay && e.homeScore != null
+        ? `<span class="espn-ev-score">${e.homeScore}–${e.awayScore}</span>` : '';
+      return `<div class="espn-event espn-event--${e.homeAway || 'home'}">
+        <span class="espn-ev-clock">${e.clock}'</span>
+        <span class="espn-ev-icon">${icon}</span>
+        <span class="espn-ev-desc">${e.athlete || e.desc}</span>
+        ${scoreTag}
+      </div>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="glass-card espn-live-card">
+        <div class="espn-live-header">
+          <span class="espn-live-badge"><span class="sb-live-dot"></span> LIVE</span>
+          <span class="espn-clock-label">${data.periodShort} · ${data.clock}</span>
+          <button class="espn-refresh-btn" id="espn-refresh-btn-${matchId}" title="Refresh">���</button>
+        </div>
+
+        <div class="espn-poss-wrap">
+          <span class="espn-poss-pct">${hPoss.toFixed(0)}%</span>
+          <div class="espn-poss-bar"><div class="espn-poss-fill" style="width:${hPoss}%"></div></div>
+          <span class="espn-poss-pct">${aPoss.toFixed(0)}%</span>
+        </div>
+        <div class="espn-poss-title">Possession</div>
+
+        <div class="espn-stats">
+          ${statRow('Shots', hs['SHOTS'], as['SHOTS'])}
+          ${statRow('On Target', hs['ON GOAL'], as['ON GOAL'])}
+          ${statRow('Corners', hs['Corner Kicks'], as['Corner Kicks'])}
+          ${statRow('Fouls', hs['Fouls'], as['Fouls'])}
+          ${statRow('Yellows', hs['Yellow Cards'], as['Yellow Cards'])}
+          ${statRow('Reds', hs['Red Cards'], as['Red Cards'])}
+        </div>
+
+        ${data.events.length ? `
+          <div class="espn-events-title">Key Events</div>
+          <div class="espn-events">${eventsHTML}</div>` : ''}
+
+        ${data.commentary.length ? `
+          <div class="espn-events-title" style="margin-top:12px">Commentary</div>
+          <div class="espn-commentary">
+            ${data.commentary.map(c =>
+              `<div class="espn-comment">
+                ${c.clock?.displayValue ? `<span class="espn-ev-clock">${c.clock.displayValue}'</span>` : ''}
+                <span>${c.text}</span>
+              </div>`
+            ).join('')}
+          </div>` : ''}
+      </div>`;
+
+    document.getElementById(`espn-refresh-btn-${matchId}`)
+      ?.addEventListener('click', () => populateEspnLiveCard(matchId, homeTeam, awayTeam, dateStr));
+
+  } catch {
+    const container2 = document.getElementById(`espn-live-${matchId}`);
+    if (container2) container2.innerHTML = '';
+  }
+}
+
+function startEspnLiveRefresh(matchId, homeTeam, awayTeam, dateStr) {
+  stopEspnLiveRefresh();
+  populateEspnLiveCard(matchId, homeTeam, awayTeam, dateStr);
+  espnRefreshTimer = setInterval(
+    () => populateEspnLiveCard(matchId, homeTeam, awayTeam, dateStr),
+    30000
+  );
+}
+
 // ── Route rendering ────────────────────────────────────────
 function renderCurrentRoute() {
   const route = parseRoute();
   let view;
   switch (route.page) {
     case 'matches':   view = renderMatches(); break;
-    case 'match':     view = renderMatchDetail(route.params.id); break;
+    case 'match': {
+      const mid = route.params.id;
+      view = renderMatchDetail(mid);
+      // ESPN live refresh — start after render (handled below via matchId sentinel)
+      break;
+    }
     case 'teams':     view = renderTeams(); break;
     case 'team':
       squadState = { pos: 'ALL', view: 'cards', query: '' };
@@ -119,6 +235,15 @@ function renderCurrentRoute() {
   }
 
   attachCountdown();
+
+  // ESPN live refresh — start for live match pages, stop everywhere else
+  stopEspnLiveRefresh();
+  if (route.page === 'match') {
+    const m = getMatchById(route.params.id);
+    if (m && m.status === 'live') {
+      startEspnLiveRefresh(m.id, m.homeTeam.name, m.awayTeam.name, m.date);
+    }
+  }
 }
 
 // ── Fixture filters ───────────────────────────────────────

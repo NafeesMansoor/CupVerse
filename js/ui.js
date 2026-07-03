@@ -978,6 +978,7 @@ export function renderMatchDetail(id) {
   const aRecent = getTeamRecentResults(match.awayTeam.name, match.id);
 
   // ── Hero center ──
+  const heroScoreId = status === 'live' ? `id="espn-hero-score-${match.id}"` : '';
   let heroScore;
   if (score) {
     const aetBadge = match.extraTime ? `<span class="mp-aet-badge">AET</span>` : '';
@@ -992,7 +993,7 @@ export function renderMatchDetail(id) {
       <div class="mp-score-display">${score.home} – ${score.away} ${aetBadge}</div>
       ${pksLine}`;
   } else if (status === 'live') {
-    heroScore = `<div class="mp-score-display mp-score-live"><span class="sb-live-dot"></span> LIVE</div>`;
+    heroScore = `<div class="mp-score-display mp-score-live" ${heroScoreId}><span class="sb-live-dot"></span> LIVE</div>`;
   } else {
     heroScore = `<div class="mp-score-display mp-score-vs">VS</div>`;
   }
@@ -1183,6 +1184,18 @@ export function renderMatchDetail(id) {
       ${countdownHTML}
       ${scorersRowHTML}
     </div>
+
+    <!-- ══ ESPN LIVE CARD (live matches only) ══ -->
+    ${status === 'live' ? `
+    <div id="espn-live-${match.id}" class="espn-live-wrap">
+      <div class="glass-card espn-live-card">
+        <div class="espn-live-header">
+          <span class="espn-live-badge"><span class="sb-live-dot"></span> LIVE</span>
+          <span class="espn-clock-label">Loading stats…</span>
+        </div>
+        <div class="espn-shimmer"></div>
+      </div>
+    </div>` : ''}
 
     <!-- ══ TAB BAR ══ -->
     <div class="match-tabs">
