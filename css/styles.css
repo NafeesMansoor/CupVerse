@@ -5508,3 +5508,160 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: -0.01em;
 }
 .mp-rc-comp  { font-size: 0.55rem; color: var(--text-muted); letter-spacing: 0.04em; }
+
+/* ── KNOCKOUT BRACKET CARD ─────────────────────────────────── */
+.kb-card { padding: 0; overflow: hidden; }
+.kb-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.kb-tab {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.kb-tab--active {
+  color: var(--accent-cyan);
+  border-bottom-color: var(--accent-cyan);
+  background: rgba(0,229,255,0.06);
+}
+.kb-tab:hover:not(.kb-tab--active) { color: var(--text-primary); }
+.kb-panels { padding: 12px; }
+.kb-panel { display: none; }
+.kb-panel--active { display: block; }
+.kb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 480px) { .kb-grid { grid-template-columns: 1fr; } }
+@media (min-width: 900px) { .kb-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+.kb-match {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 10px;
+  transition: var(--transition);
+}
+.kb-match--done { border-color: rgba(255,255,255,0.1); }
+.kb-match--live { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px var(--accent-cyan)33; }
+.kb-teams { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.kb-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.kb-team--win {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+.kb-team--out { opacity: 0.45; text-decoration: line-through; text-decoration-thickness: 1px; }
+.kb-flag { font-size: 1rem; flex-shrink: 0; }
+.kb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 24px;
+}
+.kb-score {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.kb-score--win { color: var(--accent-cyan); }
+.kb-tag-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.kb-tag {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(245,176,66,0.2);
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+.kb-live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.4; transform:scale(0.6); }
+}
+.kb-tbd-col, .kb-date-col { min-width: 32px; justify-content: center; }
+.kb-tbd {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.kb-date {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+[data-theme="light"] .kb-match { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .kb-tabs { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.02); }
+
+/* ── GROUP STANDINGS QUALIFICATION BADGE ───────────────────── */
+.gs-q-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.gs-q-badge--in {
+  background: rgba(40,167,69,0.2);
+  color: #28a745;
+}
+.gs-q-badge--out {
+  background: rgba(220,53,69,0.18);
+  color: #dc3545;
+}
+[data-theme="light"] .gs-q-badge--in  { background: rgba(40,167,69,0.15); }
+[data-theme="light"] .gs-q-badge--out { background: rgba(220,53,69,0.12); }
+
+/* ── STANDINGS PAGE QUALIFICATION BADGE ────────────────────── */
+.gvc-q-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.gvc-q-badge--in  { background: rgba(40,167,69,0.2);  color: #28a745; }
+.gvc-q-badge--out { background: rgba(220,53,69,0.18); color: #dc3545; }
+[data-theme="light"] .gvc-q-badge--in  { background: rgba(40,167,69,0.15); }
+[data-theme="light"] .gvc-q-badge--out { background: rgba(220,53,69,0.12); }

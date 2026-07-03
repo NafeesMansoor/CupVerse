@@ -25,7 +25,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.8.1';
+const APP_VERSION = '2.9.0';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -131,7 +131,6 @@ function initMatchFilters() {
     const q = (search?.value || '').trim().toLowerCase();
     const stage = stageFilter?.value || '';
     const group = groupFilter?.value || '';
-    const favOnly = false;
 
     const filtered = getMatches().filter(m => {
       const text = `${m.homeTeam.name} ${m.awayTeam.name} ${m.stadium} ${m.venue}`.toLowerCase();
@@ -522,6 +521,15 @@ function handleAction(event) {
     case 'generate-pdf':
       window.print();
       break;
+
+    case 'kb-tab': {
+      const stage = btn.dataset.stage;
+      const card = document.getElementById('kb-card');
+      if (!card) break;
+      card.querySelectorAll('.kb-tab').forEach(b => b.classList.toggle('kb-tab--active', b.dataset.stage === stage));
+      card.querySelectorAll('.kb-panel').forEach(p => p.classList.toggle('kb-panel--active', p.dataset.stage === stage));
+      break;
+    }
 
     case 'match-tab': {
       const tab = btn.dataset.tab;

@@ -2,6 +2,7 @@ import {
   getMatches, getMatchById, getNextMatch, getTodaysMatches,
   getTournamentStats, getTeams, getTeamSquad, getTeamNextMatch,
   getMatchesByDate, getAllMatchDates, getGroupStandings,
+  getKnockoutBracket, getQualifiedTeams,
 } from './data.js';
 import { getSquad } from './squad.js';
 import {
@@ -128,6 +129,15 @@ function jerseyKitSVG(primary, secondary, pattern = 'plain', label = '') {
     <path d="M98 35 L84 42 L80 34 L89 21Z"
           fill="${secondary}" opacity="0.85"/>
   </svg>`;
+}
+
+// ── HTML escape (prevents XSS from API-sourced strings) ──
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ── Display name normalization ────────────────────────────
@@ -292,6 +302,91 @@ function getPulseMatches(pulse, allMatches, favTeams) {
         .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
         .slice(0, 8);
   }
+}
+
+// ── KNOCKOUT BRACKET CARD ────────────────────────────────────────────────────
+function buildKnockoutBracketHTML() {
+  const { stages, grouped } = getKnockoutBracket();
+  if (!stages.length) return '';
+
+  const stageLabels = {
+    'Round of 32': 'R32', 'Round of 16': 'R16',
+    'Quarterfinals': 'QF', 'Semifinals': 'SF',
+    'Final': '🏆', 'Third Place': '3rd',
+  };
+
+  const matchCard = (m) => {
+    const st = effectiveStatus(m);
+    const sc = m.score;
+    const isTBD  = m.homeTeam.name.startsWith('Winner') || m.homeTeam.name.startsWith('Loser')
+                || m.awayTeam.name.startsWith('Winner') || m.awayTeam.name.startsWith('Loser');
+    const hWon = st === 'completed' && m.winner === m.homeTeam.name;
+    const aWon = st === 'completed' && m.winner === m.awayTeam.name;
+    const hFlag = m.homeTeam.flag;
+    const aFlag = m.awayTeam.flag;
+    const hName = displayName(m.homeTeam.name);
+    const aName = displayName(m.awayTeam.name);
+
+    let scoreHTML = '';
+    if (st === 'completed' && sc) {
+      const et  = m.extraTime    ? '<span class="kb-tag">AET</span>' : '';
+      const pks = m.penaltyScore ? `<span class="kb-tag">PKS ${m.penaltyScore.home}–${m.penaltyScore.away}</span>` : '';
+      scoreHTML = `
+        <div class="kb-score-col">
+          <span class="kb-score ${hWon ? 'kb-score--win' : ''}">${sc.home}</span>
+          <span class="kb-score ${aWon ? 'kb-score--win' : ''}">${sc.away}</span>
+        </div>
+        ${et || pks ? `<div class="kb-tag-col">${et}${pks}</div>` : ''}`;
+    } else if (st === 'live') {
+      scoreHTML = `<div class="kb-score-col"><span class="kb-live-dot"></span></div>`;
+    } else if (isTBD) {
+      scoreHTML = `<div class="kb-score-col kb-tbd-col"><span class="kb-tbd">TBD</span></div>`;
+    } else {
+      const d = new Date(m.datetime);
+      const label = d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+      scoreHTML = `<div class="kb-score-col kb-date-col"><span class="kb-date">${label}</span></div>`;
+    }
+
+    return `
+      <div class="kb-match ${st === 'completed' ? 'kb-match--done' : st === 'live' ? 'kb-match--live' : ''}">
+        <div class="kb-teams">
+          <div class="kb-team ${hWon ? 'kb-team--win' : st === 'completed' ? 'kb-team--out' : ''}">
+            <span class="kb-flag">${hFlag}</span>
+            <span class="kb-name">${hName}</span>
+          </div>
+          <div class="kb-team ${aWon ? 'kb-team--win' : st === 'completed' ? 'kb-team--out' : ''}">
+            <span class="kb-flag">${aFlag}</span>
+            <span class="kb-name">${aName}</span>
+          </div>
+        </div>
+        ${scoreHTML}
+      </div>`;
+  };
+
+  const tabBtns = stages
+    .filter(s => s !== 'Third Place')
+    .map((s, i) => `<button class="kb-tab ${i === 0 ? 'kb-tab--active' : ''}" data-action="kb-tab" data-stage="${s}">${stageLabels[s] || s}</button>`)
+    .join('');
+
+  const panels = stages
+    .filter(s => s !== 'Third Place')
+    .map((s, i) => {
+      const cards = grouped[s].map(matchCard).join('');
+      return `<div class="kb-panel ${i === 0 ? 'kb-panel--active' : ''}" data-stage="${s}">
+        <div class="kb-grid">${cards}</div>
+      </div>`;
+    })
+    .join('');
+
+  return `
+    <div class="home-section-header">
+      <span class="hsh-title">⚡ KNOCKOUT BRACKET</span>
+      <a href="#calendar" class="hsh-more">Fixtures →</a>
+    </div>
+    <div class="glass-card kb-card" id="kb-card">
+      <div class="kb-tabs">${tabBtns}</div>
+      <div class="kb-panels">${panels}</div>
+    </div>`;
 }
 
 export function renderHomeDashboard(pulse) {
@@ -477,21 +572,36 @@ export function renderHomeDashboard(pulse) {
     </div>
     <div class="lc-grid">${liveCenterCards.join('')}</div>`;
 
-  // ── § 3.5  GROUP STANDINGS ────────────────────────────
+  // ── § 3.5  KNOCKOUT BRACKET ──────────────────────────
+  const bracketCardHTML = buildKnockoutBracketHTML();
+
+  // ── § 3.6  GROUP STANDINGS ────────────────────────────
   const allScores = getAllScores();
   const groupStandings = getGroupStandings(allScores);
   const groupKeys = Object.keys(groupStandings).sort();
+  const qualifiedTeams = getQualifiedTeams();
 
   const gsCards = groupKeys.map(grp => {
     const gColor = groupColor(grp);
     const rows = groupStandings[grp].map((t, i) => {
       const gd = t.gf - t.ga;
+      const qualified = qualifiedTeams.has(t.name);
+      let qBadge = '';
+      if (qualified) {
+        qBadge = `<span class="gs-q-badge gs-q-badge--in" title="Advanced to Round of 32">Q</span>`;
+      } else if (i < 2 && qualifiedTeams.size > 0) {
+        // top-2 who were expected to qualify but aren't in R32 = shouldn't happen; show nothing
+        qBadge = '';
+      } else if (qualifiedTeams.size > 0) {
+        qBadge = `<span class="gs-q-badge gs-q-badge--out" title="Eliminated">✕</span>`;
+      }
       return `
-        <div class="gs-row${i < 2 ? ' gs-row--qualify' : ''}">
+        <div class="gs-row${qualified ? ' gs-row--qualify' : ''}">
           <div class="gs-col-team">
             <span class="gs-rank">${i + 1}</span>
             <span class="gs-flag-sm">${t.flag}</span>
             <span class="gs-team-name">${displayName(t.name)}</span>
+            ${qBadge}
           </div>
           <span class="gs-stat-val">${t.mp}</span>
           <span class="gs-stat-val">${t.w}</span>
@@ -715,6 +825,7 @@ export function renderHomeDashboard(pulse) {
   return makeSection(`
     ${dashHeroHTML}
     ${liveCenterHTML}
+    ${bracketCardHTML}
     ${groupStandingsHTML}
     ${goldenBootHTML}
     ${favTeamHTML}
@@ -889,7 +1000,7 @@ export function renderMatchDetail(id) {
   let scorersRowHTML = '';
   if (score && apiScorers) {
     const goalRow = scorers => scorers.length
-      ? scorers.map(s => `<span class="mp-scorer-name">⚽ ${s}</span>`).join('')
+      ? scorers.map(s => `<span class="mp-scorer-name">⚽ ${esc(s)}</span>`).join('')
       : '';
     scorersRowHTML = `
       <div class="mp-scorers-row">
@@ -2193,6 +2304,7 @@ export function renderStandings() {
   const MEDALS = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
   // Base qualification chances; shift up if a team has points on the board
   const baseChances = [95, 82, 30, 4];
+  const qualifiedTeamsStandings = getQualifiedTeams();
 
   const groupCards = groups.map(g => {
     const teams = standings[g];
@@ -2203,8 +2315,13 @@ export function renderStandings() {
       const gd = team.gf - team.ga;
       const gdStr = gd > 0 ? `+${gd}` : String(gd);
       const record = `${team.w}W ${team.d}D ${team.l}L`;
-      const qualifyClass = i < 2 ? `qualify-${i + 1}` : i === 2 ? 'qualify-3' : '';
-      const chance = baseChances[i] ?? 2;
+      const qualified = qualifiedTeamsStandings.has(team.name);
+      const qualifyClass = qualified ? `qualify-${Math.min(i + 1, 3)}` : '';
+      const qBadge = qualifiedTeamsStandings.size > 0
+        ? (qualified
+            ? `<span class="gvc-q-badge gvc-q-badge--in">✓ Advanced</span>`
+            : `<span class="gvc-q-badge gvc-q-badge--out">Eliminated</span>`)
+        : '';
       return `
         <div class="gvc-team-row ${qualifyClass}" data-action="open-team" data-name="${team.name}">
           <span class="gvc-medal">${MEDALS[i] || `${i + 1}`}</span>
@@ -2212,6 +2329,7 @@ export function renderStandings() {
           <span class="gvc-name">${displayName(team.name)}</span>
           <span class="gvc-record">${record} · GD ${gdStr}</span>
           <span class="gvc-pts">${team.pts}pts</span>
+          ${qBadge}
         </div>
       `;
     }).join('');

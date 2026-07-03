@@ -57,6 +57,7 @@ let rawTeams = [];
 let rawMatches = [];
 let rawPlayers = {};
 let loaded = false;
+let enrichedCache = null;
 
 function teamMeta(name) {
   return TEAM_META[name] || { flag: '🏳️', code: name.slice(0, 3).toUpperCase() };
@@ -87,6 +88,12 @@ function enrichMatch(raw) {
   const awayMeta = teamMeta(raw.awayTeam);
   const venueInfo = raw.venueInfo || {};
   const venueName = venueInfo.name || (raw.venue ? raw.venue.split(',')[0].trim() : 'TBD');
+
+  // Stored API score takes precedence; fall back to baked-in result from JSON
+  const storedScores = getAllScores();
+  const storedScore = storedScores[String(raw.id)];
+  const score = storedScore || raw.score || null;
+
   return {
     id: String(raw.id),
     group: raw.group || null,
@@ -109,10 +116,48 @@ function enrichMatch(raw) {
     homeTeam: { name: raw.homeTeam, flag: meta.flag, code: meta.code },
     awayTeam: { name: raw.awayTeam, flag: awayMeta.flag, code: awayMeta.code },
     status: resolveStatus(raw.datetime, raw.id),
-    score: null,
+    score,
+    // Knockout result enrichment
+    winner: raw.winner || null,
+    extraTime: raw.extraTime || false,
+    penaltyScore: raw.penaltyScore || null,
     goals: [],
     potm: null,
   };
+}
+
+// Resolve "Winner #X" / "Loser #X" placeholder team names in future knockout rounds.
+// Runs over the already-enriched list so it can look up winners by match ID.
+function resolveBracket(enriched) {
+  const winnerMap = {};   // matchId → winning team name
+  const loserMap  = {};   // matchId → losing team name
+  enriched.forEach(m => {
+    if (!m.winner) return;
+    winnerMap[m.id] = m.winner;
+    loserMap[m.id]  = m.winner === m.homeTeam.name ? m.awayTeam.name : m.homeTeam.name;
+  });
+
+  const resolve = (name) => {
+    if (!name) return name;
+    const wm = name.match(/^Winner #(\d+)$/);
+    if (wm && winnerMap[wm[1]]) return winnerMap[wm[1]];
+    const lm = name.match(/^Loser #(\d+)$/);
+    if (lm && loserMap[lm[1]])  return loserMap[lm[1]];
+    return name;
+  };
+
+  return enriched.map(m => {
+    const home = resolve(m.homeTeam.name);
+    const away = resolve(m.awayTeam.name);
+    if (home === m.homeTeam.name && away === m.awayTeam.name) return m;
+    const hm = teamMeta(home);
+    const am = teamMeta(away);
+    return {
+      ...m,
+      homeTeam: { name: home, flag: hm.flag, code: hm.code },
+      awayTeam: { name: away, flag: am.flag, code: am.code },
+    };
+  });
 }
 
 export async function loadMatches(forceReload = false) {
@@ -124,6 +169,7 @@ export async function loadMatches(forceReload = false) {
     rawTeams = data.teams || [];
     rawMatches = data.matches || [];
     rawPlayers = data.players || {};
+    enrichedCache = null;
     loaded = true;
   } catch (err) {
     console.warn('Failed to load data from network', err);
@@ -135,6 +181,7 @@ export async function loadMatches(forceReload = false) {
           rawTeams = data.teams || [];
           rawMatches = data.matches || [];
           rawPlayers = data.players || {};
+          enrichedCache = null;
           loaded = true;
         }
       } catch (_) { /* no cache either */ }
@@ -143,7 +190,39 @@ export async function loadMatches(forceReload = false) {
 }
 
 export function getMatches() {
-  return rawMatches.map(enrichMatch).filter(Boolean);
+  if (!enrichedCache) {
+    const base = rawMatches.map(enrichMatch).filter(Boolean);
+    enrichedCache = resolveBracket(base);
+  }
+  return enrichedCache;
+}
+
+const KO_STAGES = new Set(['Round of 32','Round of 16','Quarterfinals','Semifinals','Third Place','Final']);
+
+// Returns knockout matches grouped by stage, with bracket resolution applied.
+export function getKnockoutBracket() {
+  const matches = getMatches().filter(m => KO_STAGES.has(m.stage));
+  const order = ['Round of 32','Round of 16','Quarterfinals','Semifinals','Final','Third Place'];
+  const grouped = {};
+  order.forEach(s => { grouped[s] = []; });
+  matches.forEach(m => {
+    if (grouped[m.stage]) grouped[m.stage].push(m);
+    else grouped[m.stage] = [m];
+  });
+  return { stages: order.filter(s => grouped[s]?.length), grouped };
+}
+
+// Returns the set of team names that qualified to the knockout rounds (appeared in any R32 match).
+export function getQualifiedTeams() {
+  const r32 = getMatches().filter(m => m.stage === 'Round of 32');
+  const names = new Set();
+  r32.forEach(m => {
+    if (!m.homeTeam.name.startsWith('Winner') && !m.homeTeam.name.startsWith('Loser'))
+      names.add(m.homeTeam.name);
+    if (!m.awayTeam.name.startsWith('Winner') && !m.awayTeam.name.startsWith('Loser'))
+      names.add(m.awayTeam.name);
+  });
+  return names;
 }
 
 export function getMatchById(id) {

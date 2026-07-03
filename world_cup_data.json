@@ -1648,7 +1648,14 @@
         "fullName": "SoFi Stadium, Los Angeles"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-28T15:00:00-04:00"
+      "datetime": "2026-06-28T15:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 1
+      },
+      "winner": "Canada",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 74,
@@ -1667,7 +1674,17 @@
         "fullName": "Gillette Stadium, Boston"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-29T16:30:00-04:00"
+      "datetime": "2026-06-29T16:30:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 1
+      },
+      "winner": "Paraguay",
+      "extraTime": true,
+      "penaltyScore": {
+        "home": 3,
+        "away": 4
+      }
     },
     {
       "id": 75,
@@ -1686,7 +1703,17 @@
         "fullName": "Estadio BBVA, Monterrey"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-29T21:00:00-04:00"
+      "datetime": "2026-06-29T21:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 1
+      },
+      "winner": "Morocco",
+      "extraTime": true,
+      "penaltyScore": {
+        "home": 2,
+        "away": 3
+      }
     },
     {
       "id": 76,
@@ -1705,7 +1732,14 @@
         "fullName": "NRG Stadium, Houston"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-29T13:00:00-04:00"
+      "datetime": "2026-06-29T13:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 1
+      },
+      "winner": "Brazil",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 77,
@@ -1724,7 +1758,14 @@
         "fullName": "MetLife Stadium, NY/NJ"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-30T17:00:00-04:00"
+      "datetime": "2026-06-30T17:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 0
+      },
+      "winner": "France",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 78,
@@ -1743,7 +1784,14 @@
         "fullName": "AT&T Stadium, Dallas"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-30T13:00:00-04:00"
+      "datetime": "2026-06-30T13:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 2
+      },
+      "winner": "Norway",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 79,
@@ -1762,7 +1810,14 @@
         "fullName": "Estadio Azteca, Mexico City"
       },
       "stage": "Round of 32",
-      "datetime": "2026-06-30T21:00:00-04:00"
+      "datetime": "2026-06-30T21:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 0
+      },
+      "winner": "Mexico",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 80,
@@ -1781,7 +1836,14 @@
         "fullName": "Mercedes-Benz Stadium, Atlanta"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-01T12:00:00-04:00"
+      "datetime": "2026-07-01T12:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 1
+      },
+      "winner": "England",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 81,
@@ -1797,7 +1859,14 @@
         "capacity": null
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-01T20:00:00-04:00"
+      "datetime": "2026-07-01T20:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 0
+      },
+      "winner": "USA",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 82,
@@ -1813,7 +1882,14 @@
         "capacity": null
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-01T16:00:00-04:00"
+      "datetime": "2026-07-01T16:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 2
+      },
+      "winner": "Belgium",
+      "extraTime": true,
+      "penaltyScore": null
     },
     {
       "id": 83,
@@ -1832,7 +1908,14 @@
         "fullName": "BMO Field, Toronto"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-02T19:00:00-04:00"
+      "datetime": "2026-07-02T19:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 1
+      },
+      "winner": "Portugal",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 84,
@@ -1851,7 +1934,14 @@
         "fullName": "SoFi Stadium, Los Angeles"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-02T15:00:00-04:00"
+      "datetime": "2026-07-02T15:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 0
+      },
+      "winner": "Spain",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 85,
@@ -1870,7 +1960,14 @@
         "fullName": "BC Place, Vancouver"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-02T23:00:00-04:00"
+      "datetime": "2026-07-02T23:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 0
+      },
+      "winner": "Switzerland",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 86,
@@ -1932,8 +2029,8 @@
     {
       "id": 89,
       "group": "R16",
-      "homeTeam": "Winner #74",
-      "awayTeam": "Winner #77",
+      "homeTeam": "Paraguay",
+      "awayTeam": "France",
       "venue": "Lincoln Financial Field, Philadelphia 🇺🇸",
       "venueInfo": {
         "city": "Philadelphia, PA",
@@ -1951,8 +2048,8 @@
     {
       "id": 90,
       "group": null,
-      "homeTeam": "Winner #73",
-      "awayTeam": "Winner #75",
+      "homeTeam": "Canada",
+      "awayTeam": "Morocco",
       "venue": "NRG Stadium, Houston 🇺🇸",
       "venueInfo": {
         "city": "Houston, TX",
@@ -1970,8 +2067,8 @@
     {
       "id": 91,
       "group": null,
-      "homeTeam": "Winner #76",
-      "awayTeam": "Winner #78",
+      "homeTeam": "Brazil",
+      "awayTeam": "Norway",
       "venue": "MetLife Stadium, NY/NJ 🇺🇸",
       "venueInfo": {
         "city": "East Rutherford, NJ",
@@ -1989,8 +2086,8 @@
     {
       "id": 92,
       "group": null,
-      "homeTeam": "Winner #79",
-      "awayTeam": "Winner #80",
+      "homeTeam": "Mexico",
+      "awayTeam": "England",
       "venue": "Estadio Azteca, Mexico City 🇲🇽",
       "venueInfo": {
         "city": "Mexico City",
@@ -2008,8 +2105,8 @@
     {
       "id": 93,
       "group": null,
-      "homeTeam": "Winner #83",
-      "awayTeam": "Winner #84",
+      "homeTeam": "Portugal",
+      "awayTeam": "Spain",
       "venue": "AT&T Stadium, Dallas 🇺🇸",
       "venueInfo": {
         "city": "Arlington, TX",
@@ -2027,8 +2124,8 @@
     {
       "id": 94,
       "group": null,
-      "homeTeam": "Winner #81",
-      "awayTeam": "Winner #82",
+      "homeTeam": "USA",
+      "awayTeam": "Belgium",
       "venue": "Lumen Field, Seattle 🇺🇸",
       "venueInfo": {
         "name": "Lumen Field, Seattle 🇺🇸",
@@ -2094,7 +2191,7 @@
         "name": "Gillette Stadium",
         "fullName": "Gillette Stadium, Boston"
       },
-      "stage": "Round of 16",
+      "stage": "Quarterfinals",
       "datetime": "2026-07-09T16:00:00-04:00"
     },
     {
@@ -2113,7 +2210,7 @@
         "name": "SoFi Stadium",
         "fullName": "SoFi Stadium, Los Angeles"
       },
-      "stage": "Round of 16",
+      "stage": "Quarterfinals",
       "datetime": "2026-07-10T15:00:00-04:00"
     },
     {
@@ -2132,7 +2229,7 @@
         "name": "Hard Rock Stadium",
         "fullName": "Hard Rock Stadium, Miami"
       },
-      "stage": "Round of 16",
+      "stage": "Quarterfinals",
       "datetime": "2026-07-11T17:00:00-04:00"
     },
     {
@@ -2151,7 +2248,7 @@
         "name": "Arrowhead Stadium",
         "fullName": "Arrowhead Stadium, Kansas City"
       },
-      "stage": "Round of 16",
+      "stage": "Quarterfinals",
       "datetime": "2026-07-11T21:00:00-04:00"
     },
     {
@@ -2170,7 +2267,7 @@
         "name": "AT&T Stadium",
         "fullName": "AT&T Stadium, Dallas"
       },
-      "stage": "Round of 16",
+      "stage": "Semifinals",
       "datetime": "2026-07-14T15:00:00-04:00"
     },
     {
@@ -2189,7 +2286,7 @@
         "name": "Mercedes-Benz Stadium",
         "fullName": "Mercedes-Benz Stadium, Atlanta"
       },
-      "stage": "Round of 16",
+      "stage": "Semifinals",
       "datetime": "2026-07-15T15:00:00-04:00"
     },
     {
@@ -2213,7 +2310,7 @@
     },
     {
       "id": 104,
-      "group": "F",
+      "group": "Final",
       "homeTeam": "Winner #101",
       "awayTeam": "Winner #102",
       "venue": "MetLife Stadium, NY/NJ 🇺🇸",
@@ -2229,16 +2326,6 @@
       },
       "stage": "Final",
       "datetime": "2026-07-19T15:00:00-04:00"
-    },
-    {
-      "id": 105,
-      "group": null,
-      "homeTeam": null,
-      "awayTeam": null,
-      "venue": null,
-      "venueInfo": null,
-      "stage": "knockout",
-      "datetime": null
     }
   ],
   "players": {
