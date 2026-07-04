@@ -8,6 +8,7 @@ const KEYS = {
   sync:        'wc2026_sync',
   apiScorers:  'wc2026_api_scorers',
   goldenBoot:  'wc2026_golden_boot',
+  koWinners:   'wc2026_ko_winners',
 };
 
 function readJSON(key, fallback) {
@@ -201,6 +202,23 @@ export function setLastSyncDate(dateStr) {
 
 export function getLastSyncDate() {
   return getSyncRecord().date;
+}
+
+// ── Knockout Winners (derived from API, used by resolveBracket) ─────────────
+// Stores winner team names for finished knockout matches so bracket resolution
+// survives across sessions without re-fetching the full API each time.
+export function getStoredWinners() {
+  return readJSON(KEYS.koWinners, {});
+}
+
+export function setStoredWinner(matchId, winnerName) {
+  const w = getStoredWinners();
+  w[String(matchId)] = winnerName;
+  writeJSON(KEYS.koWinners, w);
+}
+
+export function clearStoredWinners() {
+  localStorage.removeItem(KEYS.koWinners);
 }
 
 // ── Clear All ────────────────────────────────────────────

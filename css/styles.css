@@ -6031,3 +6031,63 @@ a { text-decoration: none; color: inherit; }
 [data-theme="light"] .espn-live-card { background: rgba(0,0,0,0.03); }
 [data-theme="light"] .espn-stats { background: rgba(0,0,0,0.04); }
 [data-theme="light"] .espn-event { background: rgba(0,0,0,0.03); }
+
+/* ── BRACKET SYNC TOAST ─────────────────────────────────────── */
+.bsync-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(10,17,40,0.96);
+  border: 1px solid rgba(0,229,255,0.3);
+  border-radius: 14px;
+  padding: 12px 14px 12px 14px;
+  min-width: 220px;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 9999;
+  pointer-events: auto;
+}
+.bsync-toast--in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.bsync-icon { font-size: 1.3rem; flex-shrink: 0; line-height: 1.2; }
+.bsync-body { flex: 1; min-width: 0; }
+.bsync-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+.bsync-line {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bsync-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  line-height: 1;
+  margin-top: -2px;
+}
+.bsync-close:hover { opacity: 1; }
+[data-theme="light"] .bsync-toast {
+  background: rgba(255,255,255,0.97);
+  border-color: rgba(0,229,255,0.4);
+}

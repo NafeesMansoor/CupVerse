@@ -1,5 +1,5 @@
 import { getMatches } from './data.js';
-import { setScore, setApiScorers, setGoldenBoot } from './storage.js';
+import { setScore, setApiScorers, setGoldenBoot, setStoredWinner, getStoredWinners } from './storage.js';
 import { getSquad } from './squad.js';
 
 const API_BASE = 'https://worldcup26.ir';
@@ -226,6 +226,21 @@ export async function applyApiScores() {
 
     setScore(localId, g.homeScore, g.awayScore);
 
+    // Derive and store the knockout winner so resolveBracket() can propagate
+    // the team name into downstream rounds (QF, SF, Final).
+    // Skip tied scores — PKS winners need manual JSON entry since the API
+    // only returns the score through extra time, not the shootout result.
+    const KO_TYPES = new Set(['r32', 'r16', 'qf', 'sf', 'third', 'final']);
+    if (KO_TYPES.has(g.type) && g.homeScore !== g.awayScore) {
+      const storedWinners = getStoredWinners();
+      if (!storedWinners[localId]) {
+        const winner = g.homeScore > g.awayScore
+          ? localMatch.homeTeam.name
+          : localMatch.awayTeam.name;
+        setStoredWinner(localId, winner);
+      }
+    }
+
     const override = SCORER_OVERRIDES[localId];
     const cleanHome = override?.home || g.homeScorers.map(resolveHome).filter(Boolean);
     const cleanAway = override?.away || g.awayScorers.map(resolveAway).filter(Boolean);
@@ -245,5 +260,6 @@ export async function applyApiScores() {
     .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
   setGoldenBoot(boot);
 
-  return { updated: games.filter(g => g.finished).length, total: games.length };
+  const newWinners = Object.keys(getStoredWinners()).length;
+  return { updated: games.filter(g => g.finished).length, total: games.length, newWinners };
 }

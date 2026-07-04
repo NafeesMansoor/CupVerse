@@ -1,5 +1,5 @@
-import { loadMatches } from './data.js';
-import { getLastSyncDate, setLastSyncDate } from './storage.js';
+import { loadMatches, invalidateCache } from './data.js';
+import { getLastSyncDate, setLastSyncDate, getStoredWinners } from './storage.js';
 import { applyApiScores } from './api.js';
 
 function todayStr() {
@@ -46,4 +46,29 @@ export async function performSync({ force = false } = {}) {
   } catch (_) { /* offline or API down — silently continue with cached scores */ }
 
   return { success: true, date: today, skipped: !shouldFetch };
+}
+
+// Bracket sync — runs on a schedule to detect new knockout results,
+// store derived winners, and invalidate the bracket cache.
+// Returns { newResults: number, winnerNames: string[] }
+export async function runBracketSync() {
+  const before = { ...getStoredWinners() };
+  try {
+    await applyApiScores();
+  } catch {
+    return { newResults: 0, winnerNames: [] };
+  }
+
+  const after = getStoredWinners();
+  const newIds = Object.keys(after).filter(id => !before[id]);
+
+  if (newIds.length > 0) {
+    // Invalidate so next getMatches() call re-resolves the full bracket
+    invalidateCache();
+  }
+
+  return {
+    newResults: newIds.length,
+    winnerNames: newIds.map(id => after[id]),
+  };
 }

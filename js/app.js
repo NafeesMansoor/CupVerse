@@ -1,5 +1,5 @@
-import { loadMatches, getMatchById, getMatches, getTeams } from './data.js';
-import { performSync, getSyncStatus } from './sync.js';
+import { loadMatches, getMatchById, getMatches, getTeams, invalidateCache, getActiveKnockoutStage } from './data.js';
+import { performSync, getSyncStatus, runBracketSync } from './sync.js';
 import { loadSquads, getSquad } from './squad.js';
 import {
   renderApp, renderHomeDashboard, renderMatches, renderMatchesList,
@@ -26,7 +26,7 @@ import {
   toggleCardCollapse,
 } from './storage.js';
 
-const APP_VERSION = '2.9.4';
+const APP_VERSION = '2.9.5';
 
 const splash = document.getElementById('splash');
 const offlineBanner = document.getElementById('offline-banner');
@@ -35,6 +35,7 @@ let fixtureFilterTimer = null;
 let squadFilterTimer = null;
 let deferredInstallPrompt = null;
 let espnRefreshTimer = null;
+let bracketSyncTimer = null;
 let squadState = { pos: 'ALL', view: 'cards', query: '' };
 
 function applySquadFilter(players, state) {
@@ -75,6 +76,48 @@ function attachCountdown() {
     clearFns.push(createCountdown(el.dataset.countdownTarget, el));
   });
   if (clearFns.length) countdownClear = () => clearFns.forEach(f => f());
+}
+
+// ── Bracket Sync Scheduler ────────────────────────────────
+function showSyncToast(lines) {
+  document.getElementById('bracket-sync-toast')?.remove();
+  const toast = document.createElement('div');
+  toast.id = 'bracket-sync-toast';
+  toast.className = 'bsync-toast';
+  toast.innerHTML = `
+    <div class="bsync-icon">🏆</div>
+    <div class="bsync-body">
+      <div class="bsync-title">Bracket Updated</div>
+      ${lines.map(l => `<div class="bsync-line">${l}</div>`).join('')}
+    </div>
+    <button class="bsync-close" onclick="this.closest('.bsync-toast').remove()">✕</button>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('bsync-toast--in'), 50);
+  setTimeout(() => {
+    toast.classList.remove('bsync-toast--in');
+    setTimeout(() => toast.remove(), 400);
+  }, 6000);
+}
+
+async function scheduledBracketSync() {
+  try {
+    const { newResults, winnerNames } = await runBracketSync();
+    if (newResults > 0) {
+      const lines = winnerNames.map(n => `✓ ${n} advanced`);
+      showSyncToast(lines);
+      // Re-render the current page so bracket card / home reflects new results
+      renderCurrentRoute();
+    }
+  } catch { /* silent — offline */ }
+}
+
+function startBracketSyncScheduler() {
+  if (bracketSyncTimer) return; // already running
+  // First run after 4 seconds, then every 5 minutes
+  setTimeout(() => {
+    scheduledBracketSync();
+    bracketSyncTimer = setInterval(scheduledBracketSync, 5 * 60 * 1000);
+  }, 4000);
 }
 
 // ── ESPN Live Refresh ──────────────────────────────────────
@@ -867,6 +910,10 @@ async function init() {
   // Phase 2 — background sync: fetch live scores + refresh local data if stale
   // Don't block the UI on the external worldcup26.ir request
   performSync().then(() => renderCurrentRoute()).catch(() => {});
+
+  // Phase 3 — bracket sync scheduler: detects new knockout results every 5 min
+  // and updates the bracket / home screen automatically
+  startBracketSyncScheduler();
 }
 
 function hideSplash() {

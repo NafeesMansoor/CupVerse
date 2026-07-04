@@ -1,4 +1,4 @@
-import { getAllScores } from './storage.js';
+import { getAllScores, getStoredWinners } from './storage.js';
 
 const DATA_URL = './world_cup_data.json';
 
@@ -94,6 +94,10 @@ function enrichMatch(raw) {
   const storedScore = storedScores[String(raw.id)];
   const score = storedScore || raw.score || null;
 
+  // Winner: stored (derived by bracket sync) > baked-in JSON > null
+  const storedWinners = getStoredWinners();
+  const winner = storedWinners[String(raw.id)] || raw.winner || null;
+
   return {
     id: String(raw.id),
     group: raw.group || null,
@@ -117,8 +121,7 @@ function enrichMatch(raw) {
     awayTeam: { name: raw.awayTeam, flag: awayMeta.flag, code: awayMeta.code },
     status: resolveStatus(raw.datetime, raw.id),
     score,
-    // Knockout result enrichment
-    winner: raw.winner || null,
+    winner,
     extraTime: raw.extraTime || false,
     penaltyScore: raw.penaltyScore || null,
     goals: [],
@@ -195,6 +198,29 @@ export function getMatches() {
     enrichedCache = resolveBracket(base);
   }
   return enrichedCache;
+}
+
+// Force bracket re-resolution on the next getMatches() call.
+// Called by the bracket sync scheduler after storing new winners.
+export function invalidateCache() {
+  enrichedCache = null;
+}
+
+// Returns the current active knockout stage (the stage with the most
+// upcoming/live matches). Used by the home screen to focus the bracket card.
+export function getActiveKnockoutStage() {
+  const KO_ORDER = ['Round of 32','Round of 16','Quarterfinals','Semifinals','Final','Third Place'];
+  const matches = getMatches();
+  for (const stage of KO_ORDER) {
+    const inStage = matches.filter(m => m.stage === stage);
+    if (!inStage.length) continue;
+    const hasUpcomingOrLive = inStage.some(m => m.status === 'upcoming' || m.status === 'live');
+    if (hasUpcomingOrLive) return stage;
+    // All done in this stage — check if any have results (don't skip to next if still pending)
+    const allDone = inStage.every(m => m.status === 'completed');
+    if (!allDone) return stage; // some still TBD (no score, no winner yet)
+  }
+  return 'Final';
 }
 
 const KO_STAGES = new Set(['Round of 32','Round of 16','Quarterfinals','Semifinals','Third Place','Final']);

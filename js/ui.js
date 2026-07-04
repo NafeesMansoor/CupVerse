@@ -2,7 +2,7 @@ import {
   getMatches, getMatchById, getNextMatch, getTodaysMatches,
   getTournamentStats, getTeams, getTeamSquad, getTeamNextMatch,
   getMatchesByDate, getAllMatchDates, getGroupStandings,
-  getKnockoutBracket, getQualifiedTeams,
+  getKnockoutBracket, getQualifiedTeams, getActiveKnockoutStage,
 } from './data.js';
 import { getSquad } from './squad.js';
 import {
@@ -361,16 +361,19 @@ function buildKnockoutBracketHTML() {
       </div>`;
   };
 
-  const tabBtns = stages
-    .filter(s => s !== 'Third Place')
-    .map((s, i) => `<button class="kb-tab ${i === 0 ? 'kb-tab--active' : ''}" data-action="kb-tab" data-stage="${s}">${stageLabels[s] || s}</button>`)
+  // Default the active tab to the current active knockout stage
+  const activeStage = getActiveKnockoutStage();
+  const filteredStages = stages.filter(s => s !== 'Third Place');
+  const defaultStage = filteredStages.includes(activeStage) ? activeStage : filteredStages[0];
+
+  const tabBtns = filteredStages
+    .map(s => `<button class="kb-tab ${s === defaultStage ? 'kb-tab--active' : ''}" data-action="kb-tab" data-stage="${s}">${stageLabels[s] || s}</button>`)
     .join('');
 
-  const panels = stages
-    .filter(s => s !== 'Third Place')
-    .map((s, i) => {
+  const panels = filteredStages
+    .map(s => {
       const cards = grouped[s].map(matchCard).join('');
-      return `<div class="kb-panel ${i === 0 ? 'kb-panel--active' : ''}" data-stage="${s}">
+      return `<div class="kb-panel ${s === defaultStage ? 'kb-panel--active' : ''}" data-stage="${s}">
         <div class="kb-grid">${cards}</div>
       </div>`;
     })
