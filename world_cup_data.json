@@ -1986,7 +1986,14 @@
         "fullName": "Hard Rock Stadium, Miami"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-03T18:00:00-04:00"
+      "datetime": "2026-07-03T18:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 2
+      },
+      "winner": "Argentina",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 87,
@@ -2005,7 +2012,14 @@
         "fullName": "Arrowhead Stadium, Kansas City"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-03T21:30:00-04:00"
+      "datetime": "2026-07-03T21:30:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 0
+      },
+      "winner": "Colombia",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 88,
@@ -2024,7 +2038,17 @@
         "fullName": "AT&T Stadium, Dallas"
       },
       "stage": "Round of 32",
-      "datetime": "2026-07-03T14:00:00-04:00"
+      "datetime": "2026-07-03T14:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 1
+      },
+      "winner": "Egypt",
+      "extraTime": true,
+      "penaltyScore": {
+        "home": 2,
+        "away": 4
+      }
     },
     {
       "id": 89,
