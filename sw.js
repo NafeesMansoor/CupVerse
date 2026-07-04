@@ -1,4 +1,4 @@
-const APP_VERSION = '2.9.6';
+const APP_VERSION = '3.0.0';
 const CACHE_NAME = `cupverse-v${APP_VERSION}`;
 
 const STATIC_ASSETS = [

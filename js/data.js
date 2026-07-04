@@ -252,15 +252,12 @@ export function getQualifiedTeams() {
 }
 
 export function getMatchById(id) {
-  const raw = rawMatches.find(m => String(m.id) === String(id));
-  return raw ? enrichMatch(raw) : null;
+  return getMatches().find(m => String(m.id) === String(id)) || null;
 }
 
 export function getNextMatch() {
   const now = new Date();
-  const upcoming = rawMatches
-    .map(enrichMatch)
-    .filter(Boolean)
+  const upcoming = getMatches()
     .filter(m => new Date(m.datetime) > now)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   return upcoming[0] || null;
@@ -268,17 +265,13 @@ export function getNextMatch() {
 
 export function getTodaysMatches() {
   const today = new Date().toISOString().slice(0, 10);
-  return rawMatches
-    .filter(m => m.datetime && m.datetime.slice(0, 10) === today)
-    .map(enrichMatch)
-    .filter(Boolean);
+  return getMatches()
+    .filter(m => m.datetime && m.datetime.slice(0, 10) === today);
 }
 
 export function getMatchesByDate(dateStr) {
-  return rawMatches
+  return getMatches()
     .filter(m => m.datetime && m.datetime.slice(0, 10) === dateStr)
-    .map(enrichMatch)
-    .filter(Boolean)
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 }
 
@@ -311,11 +304,9 @@ export function getTeamSquad(teamName) {
 
 export function getTeamNextMatch(teamName) {
   const now = new Date();
-  return rawMatches
-    .filter(m => m.datetime && (m.homeTeam === teamName || m.awayTeam === teamName) && new Date(m.datetime) > now)
-    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-    .map(enrichMatch)
-    .filter(Boolean)[0] || null;
+  return getMatches()
+    .filter(m => m.datetime && (m.homeTeam.name === teamName || m.awayTeam.name === teamName) && new Date(m.datetime) > now)
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))[0] || null;
 }
 
 export function getGroupStandings(storedScores = {}) {
