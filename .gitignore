@@ -1,3 +1,6 @@
 .DS_Store
 codecortex/
 node_modules/
+Ref/
+doc/
+.venv/
