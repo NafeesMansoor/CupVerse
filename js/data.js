@@ -1,4 +1,4 @@
-import { getAllScores, getStoredWinners } from './storage.js';
+import { getAllScores, getStoredWinners, setGoldenBoot } from './storage.js';
 
 const DATA_URL = './world_cup_data.json';
 
@@ -172,6 +172,7 @@ export async function loadMatches(forceReload = false) {
     rawTeams = data.teams || [];
     rawMatches = data.matches || [];
     rawPlayers = data.players || {};
+    if (data.goldenBoot?.length) setGoldenBoot(data.goldenBoot);
     enrichedCache = null;
     loaded = true;
   } catch (err) {
@@ -184,6 +185,7 @@ export async function loadMatches(forceReload = false) {
           rawTeams = data.teams || [];
           rawMatches = data.matches || [];
           rawPlayers = data.players || {};
+          if (data.goldenBoot?.length) setGoldenBoot(data.goldenBoot);
           enrichedCache = null;
           loaded = true;
         }

@@ -1,5 +1,5 @@
-import { getMatches } from './data.js';
-import { setScore, setApiScorers, setGoldenBoot, setStoredWinner, getStoredWinners } from './storage.js';
+import { getMatches, invalidateCache } from './data.js';
+import { setScore, setApiScorers, setGoldenBoot, setStoredWinner, getStoredWinners, getGoldenBoot } from './storage.js';
 import { getSquad } from './squad.js';
 
 const API_BASE = 'https://worldcup26.ir';
@@ -238,6 +238,7 @@ export async function applyApiScores() {
           ? localMatch.homeTeam.name
           : localMatch.awayTeam.name;
         setStoredWinner(localId, winner);
+        invalidateCache(); // rebuild bracket so downstream rounds resolve immediately
       }
     }
 
@@ -256,9 +257,16 @@ export async function applyApiScores() {
     tally(cleanAway, g.awayTeamName);
   });
 
-  const boot = Object.values(goalMap)
+  // Merge API-computed goals into the manually curated JSON-seeded list.
+  // JSON list is authoritative floor; API can only raise a player's count.
+  const merged = {};
+  getGoldenBoot().forEach(p => { merged[p.name] = { ...p }; });
+  Object.values(goalMap).forEach(p => {
+    if (!merged[p.name] || p.goals > merged[p.name].goals) merged[p.name] = p;
+  });
+  const boot = Object.values(merged)
     .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
-  setGoldenBoot(boot);
+  if (boot.length) setGoldenBoot(boot);
 
   const newWinners = Object.keys(getStoredWinners()).length;
   return { updated: games.filter(g => g.finished).length, total: games.length, newWinners };

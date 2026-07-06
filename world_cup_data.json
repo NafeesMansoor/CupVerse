@@ -2067,7 +2067,14 @@
         "fullName": "Lincoln Financial Field, Philadelphia"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-04T17:00:00-04:00"
+      "datetime": "2026-07-04T17:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 1
+      },
+      "winner": "France",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 90,
@@ -2086,7 +2093,14 @@
         "fullName": "NRG Stadium, Houston"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-04T13:00:00-04:00"
+      "datetime": "2026-07-04T13:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 3
+      },
+      "winner": "Morocco",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 91,
@@ -2105,7 +2119,14 @@
         "fullName": "MetLife Stadium, NY/NJ"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-05T16:00:00-04:00"
+      "datetime": "2026-07-05T16:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 2
+      },
+      "winner": "Norway",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 92,
@@ -2124,7 +2145,14 @@
         "fullName": "Estadio Azteca, Mexico City"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-05T20:00:00-04:00"
+      "datetime": "2026-07-05T20:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 3
+      },
+      "winner": "England",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 93,
@@ -3639,5 +3667,57 @@
       "Orlando Mosquera",
       "Roderick Miller"
     ]
-  }
+  },
+  "goldenBoot": [
+    {
+      "name": "Erling Haaland",
+      "team": "Norway",
+      "goals": 7
+    },
+    {
+      "name": "Kylian Mbappé",
+      "team": "France",
+      "goals": 7
+    },
+    {
+      "name": "Lionel Messi",
+      "team": "Argentina",
+      "goals": 7
+    },
+    {
+      "name": "Harry Kane",
+      "team": "England",
+      "goals": 6
+    },
+    {
+      "name": "Ismaïla Sarr",
+      "team": "Senegal",
+      "goals": 4
+    },
+    {
+      "name": "Jude Bellingham",
+      "team": "England",
+      "goals": 4
+    },
+    {
+      "name": "Julián Quiñones",
+      "team": "Mexico",
+      "goals": 4
+    },
+    {
+      "name": "Mikel Oyarzabal",
+      "team": "Spain",
+      "goals": 4
+    },
+    {
+      "name": "Ousmane Dembélé",
+      "team": "France",
+      "goals": 4
+    },
+    {
+      "name": "Vinícius Júnior",
+      "team": "Brazil",
+      "goals": 4
+    }
+  ]
 }
