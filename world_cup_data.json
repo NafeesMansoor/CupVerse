@@ -2171,7 +2171,14 @@
         "fullName": "AT&T Stadium, Dallas"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-06T15:00:00-04:00"
+      "datetime": "2026-07-06T15:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 1
+      },
+      "winner": "Spain",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 94,
@@ -2187,7 +2194,14 @@
         "capacity": null
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-06T20:00:00-04:00"
+      "datetime": "2026-07-06T20:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 4
+      },
+      "winner": "Belgium",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 95,
@@ -2206,7 +2220,14 @@
         "fullName": "Mercedes-Benz Stadium, Atlanta"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-07T12:00:00-04:00"
+      "datetime": "2026-07-07T12:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 2
+      },
+      "winner": "Argentina",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 96,
@@ -2225,7 +2246,17 @@
         "fullName": "BC Place, Vancouver"
       },
       "stage": "Round of 16",
-      "datetime": "2026-07-07T16:00:00-04:00"
+      "datetime": "2026-07-07T16:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 0
+      },
+      "winner": "Switzerland",
+      "extraTime": true,
+      "penaltyScore": {
+        "home": 4,
+        "away": 3
+      }
     },
     {
       "id": 97,
