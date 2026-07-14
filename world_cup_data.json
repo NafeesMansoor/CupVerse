@@ -2379,7 +2379,14 @@
         "fullName": "AT&T Stadium, Dallas"
       },
       "stage": "Semifinals",
-      "datetime": "2026-07-14T15:00:00-04:00"
+      "datetime": "2026-07-14T15:00:00-04:00",
+      "score": {
+        "home": 0,
+        "away": 2
+      },
+      "winner": "Spain",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 102,
