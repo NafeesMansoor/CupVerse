@@ -2275,7 +2275,14 @@
         "fullName": "Gillette Stadium, Boston"
       },
       "stage": "Quarterfinals",
-      "datetime": "2026-07-09T16:00:00-04:00"
+      "datetime": "2026-07-09T16:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 0
+      },
+      "winner": "France",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 98,
@@ -2294,7 +2301,14 @@
         "fullName": "SoFi Stadium, Los Angeles"
       },
       "stage": "Quarterfinals",
-      "datetime": "2026-07-10T15:00:00-04:00"
+      "datetime": "2026-07-10T15:00:00-04:00",
+      "score": {
+        "home": 2,
+        "away": 1
+      },
+      "winner": "Spain",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 99,
@@ -2313,7 +2327,14 @@
         "fullName": "Hard Rock Stadium, Miami"
       },
       "stage": "Quarterfinals",
-      "datetime": "2026-07-11T17:00:00-04:00"
+      "datetime": "2026-07-11T17:00:00-04:00",
+      "score": {
+        "home": 1,
+        "away": 2
+      },
+      "winner": "England",
+      "extraTime": false,
+      "penaltyScore": null
     },
     {
       "id": 100,
@@ -2332,7 +2353,14 @@
         "fullName": "Arrowhead Stadium, Kansas City"
       },
       "stage": "Quarterfinals",
-      "datetime": "2026-07-11T21:00:00-04:00"
+      "datetime": "2026-07-11T21:00:00-04:00",
+      "score": {
+        "home": 3,
+        "away": 1
+      },
+      "winner": "Argentina",
+      "extraTime": true,
+      "penaltyScore": null
     },
     {
       "id": 101,
@@ -3701,13 +3729,13 @@
   },
   "goldenBoot": [
     {
-      "name": "Erling Haaland",
-      "team": "Norway",
-      "goals": 7
-    },
-    {
       "name": "Kylian Mbappé",
       "team": "France",
+      "goals": 8
+    },
+    {
+      "name": "Erling Haaland",
+      "team": "Norway",
       "goals": 7
     },
     {
@@ -3721,13 +3749,18 @@
       "goals": 6
     },
     {
-      "name": "Ismaïla Sarr",
-      "team": "Senegal",
-      "goals": 4
-    },
-    {
       "name": "Jude Bellingham",
       "team": "England",
+      "goals": 6
+    },
+    {
+      "name": "Ousmane Dembélé",
+      "team": "France",
+      "goals": 5
+    },
+    {
+      "name": "Ismaïla Sarr",
+      "team": "Senegal",
       "goals": 4
     },
     {
@@ -3738,11 +3771,6 @@
     {
       "name": "Mikel Oyarzabal",
       "team": "Spain",
-      "goals": 4
-    },
-    {
-      "name": "Ousmane Dembélé",
-      "team": "France",
       "goals": 4
     },
     {
