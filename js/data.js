@@ -134,10 +134,24 @@ function enrichMatch(raw) {
 function resolveBracket(enriched) {
   const winnerMap = {};   // matchId → winning team name
   const loserMap  = {};   // matchId → losing team name
+
+  // Pass 1: build winnerMap from explicit winner fields.
+  enriched.forEach(m => { if (m.winner) winnerMap[String(m.id)] = m.winner; });
+
+  // Resolve a single "Winner #X" placeholder using winnerMap only.
+  const resolveWinner = (name) => {
+    const wm = name?.match(/^Winner #(\d+)$/);
+    return (wm && winnerMap[wm[1]]) ? winnerMap[wm[1]] : name;
+  };
+
+  // Pass 2: build loserMap using already-resolved home/away names so that
+  // "Loser #101" (where 101's teams are "Winner #97" / "Winner #98") correctly
+  // resolves to the actual team name rather than another placeholder.
   enriched.forEach(m => {
     if (!m.winner) return;
-    winnerMap[m.id] = m.winner;
-    loserMap[m.id]  = m.winner === m.homeTeam.name ? m.awayTeam.name : m.homeTeam.name;
+    const home = resolveWinner(m.homeTeam.name);
+    const away = resolveWinner(m.awayTeam.name);
+    loserMap[String(m.id)] = m.winner === home ? away : home;
   });
 
   const resolve = (name) => {

@@ -258,14 +258,19 @@ export async function applyApiScores() {
   });
 
   // Merge API-computed goals into the manually curated JSON-seeded list.
-  // JSON list is authoritative floor; API can only raise a player's count.
+  // JSON list is authoritative floor; API can only raise goal count, never
+  // overwrite assists or other manual fields.
   const merged = {};
   getGoldenBoot().forEach(p => { merged[p.name] = { ...p }; });
   Object.values(goalMap).forEach(p => {
-    if (!merged[p.name] || p.goals > merged[p.name].goals) merged[p.name] = p;
+    if (!merged[p.name]) {
+      merged[p.name] = p;
+    } else if (p.goals > merged[p.name].goals) {
+      merged[p.name] = { ...merged[p.name], goals: p.goals };
+    }
   });
   const boot = Object.values(merged)
-    .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name));
+    .sort((a, b) => b.goals - a.goals || (b.assists || 0) - (a.assists || 0) || a.name.localeCompare(b.name));
   if (boot.length) setGoldenBoot(boot);
 
   const newWinners = Object.keys(getStoredWinners()).length;
