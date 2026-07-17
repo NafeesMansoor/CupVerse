@@ -3743,54 +3743,94 @@
   },
   "goldenBoot": [
     {
+      "name": "Lionel Messi",
+      "team": "Argentina",
+      "goals": 8,
+      "assists": 4
+    },
+    {
       "name": "Kylian Mbappé",
       "team": "France",
-      "goals": 8
+      "goals": 8,
+      "assists": 3
     },
     {
       "name": "Erling Haaland",
       "team": "Norway",
-      "goals": 7
-    },
-    {
-      "name": "Lionel Messi",
-      "team": "Argentina",
-      "goals": 7
-    },
-    {
-      "name": "Harry Kane",
-      "team": "England",
-      "goals": 6
+      "goals": 7,
+      "assists": 0
     },
     {
       "name": "Jude Bellingham",
       "team": "England",
-      "goals": 6
+      "goals": 6,
+      "assists": 1
+    },
+    {
+      "name": "Harry Kane",
+      "team": "England",
+      "goals": 6,
+      "assists": 1
     },
     {
       "name": "Ousmane Dembélé",
       "team": "France",
-      "goals": 5
-    },
-    {
-      "name": "Ismaïla Sarr",
-      "team": "Senegal",
-      "goals": 4
-    },
-    {
-      "name": "Julián Quiñones",
-      "team": "Mexico",
-      "goals": 4
+      "goals": 5,
+      "assists": 2
     },
     {
       "name": "Mikel Oyarzabal",
       "team": "Spain",
-      "goals": 4
+      "goals": 5,
+      "assists": 1
+    },
+    {
+      "name": "Ismaïla Sarr",
+      "team": "Senegal",
+      "goals": 4,
+      "assists": 1
+    },
+    {
+      "name": "Julián Quiñones",
+      "team": "Mexico",
+      "goals": 4,
+      "assists": 1
     },
     {
       "name": "Vinícius Júnior",
       "team": "Brazil",
-      "goals": 4
+      "goals": 4,
+      "assists": 1
+    },
+    {
+      "name": "Deniz Undav",
+      "team": "Germany",
+      "goals": 3,
+      "assists": 2
+    },
+    {
+      "name": "Johan Manzambi",
+      "team": "Switzerland",
+      "goals": 3,
+      "assists": 2
+    },
+    {
+      "name": "Romelu Lukaku",
+      "team": "Belgium",
+      "goals": 3,
+      "assists": 1
+    },
+    {
+      "name": "Lautaro Martínez",
+      "team": "Argentina",
+      "goals": 3,
+      "assists": 1
+    },
+    {
+      "name": "Charles De Ketelaere",
+      "team": "Belgium",
+      "goals": 3,
+      "assists": 1
     }
   ]
 }
